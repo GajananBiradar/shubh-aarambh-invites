@@ -2,31 +2,31 @@ import { motion } from 'framer-motion';
 import { Palette, PenTool, Share2 } from 'lucide-react';
 
 const steps = [
-  { icon: Palette, num: 1, title: 'Choose Template', desc: 'Pick from our curated collection of beautiful designs.' },
-  { icon: PenTool, num: 2, title: 'Fill Your Details', desc: 'Add your events, photos, music, and personal touches.' },
-  { icon: Share2, num: 3, title: 'Share the Love', desc: 'Get your unique link and share on WhatsApp instantly.' },
+  { icon: Palette, num: '01', title: 'Choose Your Template', desc: 'Browse our designer-crafted collection. 3 free templates to start.' },
+  { icon: PenTool, num: '02', title: 'Add Your Details', desc: 'Fill in your story, events, photos, and music. Save as draft anytime.' },
+  { icon: Share2, num: '03', title: 'Share With Your Guests', desc: 'Publish and share one beautiful link with everyone, everywhere.' },
 ];
 
 const HowItWorks = () => (
-  <section className="py-20 bg-background">
+  <section className="py-24 bg-background">
     <div className="container mx-auto px-4">
       <motion.h2
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="font-heading text-3xl md:text-4xl font-bold text-center mb-16"
+        className="font-display text-3xl md:text-5xl font-semibold text-center mb-20"
       >
-        Ready in Minutes
+        Ready in minutes
       </motion.h2>
-      <div className="flex flex-col md:flex-row items-start justify-center gap-8 md:gap-4 max-w-4xl mx-auto relative">
+      <div className="flex flex-col md:flex-row items-start justify-center gap-8 md:gap-6 max-w-5xl mx-auto relative">
         {/* Connector line */}
-        <div className="hidden md:block absolute top-10 left-[16%] right-[16%] h-0.5 bg-border">
+        <div className="hidden md:block absolute top-12 left-[18%] right-[18%] h-px bg-border">
           <motion.div
             initial={{ scaleX: 0 }}
             whileInView={{ scaleX: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-            className="h-full bg-accent origin-left"
+            className="h-full bg-gold origin-left"
           />
         </div>
         {steps.map((s, i) => (
@@ -38,12 +38,12 @@ const HowItWorks = () => (
             transition={{ delay: i * 0.2, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="flex-1 text-center relative z-10"
           >
-            <div className="w-20 h-20 mx-auto rounded-full bg-accent/10 border-2 border-accent flex items-center justify-center mb-4">
-              <s.icon className="w-8 h-8 text-accent" />
+            <div className="w-24 h-24 mx-auto rounded-full bg-card border border-border flex items-center justify-center mb-5 shadow-lg">
+              <s.icon className="w-10 h-10 text-gold" />
             </div>
-            <span className="font-body text-xs font-bold text-accent uppercase tracking-widest">Step {s.num}</span>
-            <h3 className="font-heading text-xl font-semibold mt-2 mb-2">{s.title}</h3>
-            <p className="font-body text-sm text-muted-foreground max-w-[200px] mx-auto">{s.desc}</p>
+            <span className="font-body text-xs font-bold text-gold uppercase tracking-[0.2em]">{s.num}</span>
+            <h3 className="font-display text-xl font-semibold mt-2 mb-3">{s.title}</h3>
+            <p className="font-body text-sm text-muted-foreground font-light max-w-[220px] mx-auto leading-relaxed">{s.desc}</p>
           </motion.div>
         ))}
       </div>

@@ -2,6 +2,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  role?: string;
 }
 
 export interface AuthResponse {
@@ -40,6 +41,8 @@ export interface Invitation {
   events: WeddingEvent[];
   galleryPhotos: string[];
   viewCount?: number;
+  rsvpCount?: number;
+  status?: 'DRAFT' | 'PUBLISHED';
   createdAt?: string;
   updatedAt?: string;
 }
@@ -48,8 +51,13 @@ export interface Template {
   id: string;
   name: string;
   theme: string;
+  category: string;
   description: string;
   price: number;
+  priceInr: number;
+  isFree: boolean;
+  isPremium?: boolean;
+  tags: string[];
   previewImage: string;
 }
 
@@ -71,6 +79,15 @@ export interface PaymentVerification {
   razorpay_payment_id: string;
   razorpay_order_id: string;
   razorpay_signature: string;
+}
+
+export interface QuoteRequest {
+  name: string;
+  email: string;
+  phone?: string;
+  vision: string;
+  budget: string;
+  eventDate?: string;
 }
 
 declare global {

@@ -5,10 +5,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
 import LandingPage from "./pages/LandingPage";
+import AllTemplatesPage from "./pages/AllTemplatesPage";
 import TemplateDemoPage from "./pages/TemplateDemoPage";
 import PublicInvitationPage from "./pages/PublicInvitationPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import DashboardPage from "./pages/DashboardPage";
 import CreateInvitationPage from "./pages/CreateInvitationPage";
 import EditInvitationPage from "./pages/EditInvitationPage";
@@ -23,9 +25,11 @@ const AppInner = () => {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/templates" element={<AllTemplatesPage />} />
       <Route path="/templates/:templateId/demo" element={<TemplateDemoPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/oauth2/callback" element={<OAuthCallbackPage />} />
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/create/:templateId" element={<CreateInvitationPage />} />
       <Route path="/edit/:invitationId" element={<EditInvitationPage />} />
@@ -38,7 +42,7 @@ const AppInner = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster position="top-center" toastOptions={{ style: { fontFamily: 'Poppins, sans-serif', fontSize: '14px' } }} />
+      <Toaster position="top-center" toastOptions={{ style: { fontFamily: 'Jost, sans-serif', fontSize: '14px' } }} />
       <BrowserRouter>
         <AppInner />
       </BrowserRouter>

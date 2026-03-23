@@ -1,15 +1,27 @@
 import toast from 'react-hot-toast';
-import { createOrder, verifyPayment, devBypass } from '@/api/payments';
+import { initiatePayment, verifyRazorpay, devBypass } from '@/api/payments';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigate } from 'react-router-dom';
+import { SAMPLE_TEMPLATES } from '@/mock/sampleInvitation';
 
 export const usePayment = () => {
   const { user, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
 
+  const getTemplate = (templateId: string) => {
+    return SAMPLE_TEMPLATES.find(t => t.id === templateId) || SAMPLE_TEMPLATES[0];
+  };
+
   const triggerPaymentFlow = async (templateId: string) => {
     if (!isAuthenticated) {
-      navigate('/login', { state: { redirectTo: `/create/${templateId}`, needsPayment: true } });
+      navigate('/login', { state: { redirectTo: `/create/${templateId}` } });
+      return;
+    }
+
+    // Free templates go straight to create
+    const template = getTemplate(templateId);
+    if (template.isFree) {
+      navigate(`/create/${templateId}`);
       return;
     }
 
@@ -24,7 +36,7 @@ export const usePayment = () => {
     }
 
     try {
-      const order = await createOrder(templateId);
+      const order = await initiatePayment(templateId);
       loadRazorpay(order, templateId);
     } catch {
       toast.error('Could not create payment order. Please try again.');
@@ -39,17 +51,18 @@ export const usePayment = () => {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         order_id: order.razorpayOrderId,
         amount: order.amount,
-        currency: order.currency,
+        currency: order.currency || 'INR',
         name: 'WeddingInvites.in',
-        description: 'Wedding Invitation — ₹500',
-        theme: { color: '#D4AF37' },
+        description: 'Wedding Invitation',
+        theme: { color: '#B8860B' },
         prefill: { name: user?.name, email: user?.email },
         handler: async (response: any) => {
           try {
-            await verifyPayment({
+            await verifyRazorpay({
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_order_id: response.razorpay_order_id,
               razorpay_signature: response.razorpay_signature,
+              templateId,
             });
             toast.success('Payment successful! 🎉 Let\'s build your invite.');
             navigate(`/create/${templateId}`);
@@ -66,5 +79,5 @@ export const usePayment = () => {
     document.body.appendChild(script);
   };
 
-  return { triggerPaymentFlow };
+  return { triggerPaymentFlow, getTemplate };
 };

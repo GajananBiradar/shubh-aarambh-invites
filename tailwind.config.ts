@@ -14,8 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
+        display: ['"Cormorant Garamond"', 'serif'],
         heading: ['"Playfair Display"', 'serif'],
-        body: ['"Poppins"', 'sans-serif'],
+        body: ['"Jost"', 'sans-serif'],
         script: ['"Great Vibes"', 'cursive'],
       },
       colors: {
@@ -56,6 +57,9 @@ export default {
           DEFAULT: "hsl(var(--gold))",
           light: "hsl(var(--gold-light))",
           dark: "hsl(var(--gold-dark))",
+        },
+        emerald: {
+          DEFAULT: "hsl(var(--emerald))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",

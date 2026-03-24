@@ -1,43 +1,75 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { SAMPLE_TEMPLATES, SAMPLE_INVITATION } from '@/mock/sampleInvitation';
-import { Eye, Sparkles, Crown, ChevronDown, ChevronUp } from 'lucide-react';
-import { usePayment } from '@/hooks/usePayment';
-import { Template } from '@/types';
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { SAMPLE_INVITATION } from "@/mock/sampleInvitation";
+import {
+  Eye,
+  Sparkles,
+  Crown,
+  ChevronDown,
+  ChevronUp,
+  AlertCircle,
+} from "lucide-react";
+import { usePayment } from "@/hooks/usePayment";
+import { Template } from "@/types";
+import { getTemplates } from "@/api/templates";
+import { SkeletonGrid } from "@/components/ui/SkeletonLoading";
 
 const MiniInvitePreview = ({ theme }: { theme: string }) => {
   const inv = SAMPLE_INVITATION;
   return (
     <div data-theme={theme} className="w-full bg-background text-foreground">
       <div className="h-52 bg-gradient-to-b from-primary/20 via-primary/5 to-background flex flex-col items-center justify-center p-6">
-        <p className="font-body text-[10px] text-muted-foreground italic tracking-wide">Together with their families</p>
-        <p className="font-script text-3xl text-primary mt-2">{inv.groomName.split(' ')[0]} & {inv.brideName.split(' ')[0]}</p>
+        <p className="font-body text-[10px] text-muted-foreground italic tracking-wide">
+          Together with their families
+        </p>
+        <p className="font-script text-3xl text-primary mt-2">
+          {inv.groomName.split(" ")[0]} & {inv.brideName.split(" ")[0]}
+        </p>
         <div className="w-12 h-px bg-accent mt-3" />
-        <p className="text-[9px] text-muted-foreground mt-2 font-body tracking-widest uppercase">invite you to celebrate</p>
+        <p className="text-[9px] text-muted-foreground mt-2 font-body tracking-widest uppercase">
+          invite you to celebrate
+        </p>
       </div>
       <div className="flex justify-center gap-6 py-8 px-4">
         <div className="text-center">
           <div className="w-14 h-14 rounded-full bg-primary/15 mx-auto mb-2 ring-2 ring-accent/20" />
-          <p className="text-[9px] font-display font-semibold">{inv.brideName.split(' ')[0]}</p>
+          <p className="text-[9px] font-display font-semibold">
+            {inv.brideName.split(" ")[0]}
+          </p>
         </div>
         <div className="flex items-center text-accent text-xs">✦</div>
         <div className="text-center">
           <div className="w-14 h-14 rounded-full bg-accent/15 mx-auto mb-2 ring-2 ring-accent/20" />
-          <p className="text-[9px] font-display font-semibold">{inv.groomName.split(' ')[0]}</p>
+          <p className="text-[9px] font-display font-semibold">
+            {inv.groomName.split(" ")[0]}
+          </p>
         </div>
       </div>
       <div className="px-4 py-6 space-y-2">
         {inv.events.slice(0, 3).map((e, i) => (
           <div key={i} className="bg-card rounded-lg p-3 border border-border">
-            <p className="text-[9px] font-display font-semibold">{e.eventName}</p>
-            <p className="text-[8px] text-muted-foreground font-body">{e.venueName}</p>
+            <p className="text-[9px] font-display font-semibold">
+              {e.eventName}
+            </p>
+            <p className="text-[8px] text-muted-foreground font-body">
+              {e.venueName}
+            </p>
           </div>
         ))}
       </div>
       <div className="grid grid-cols-3 gap-1.5 px-4 pb-6">
         {inv.galleryPhotos.slice(0, 3).map((p, i) => (
-          <div key={i} className="aspect-square rounded-md bg-muted overflow-hidden">
-            <img src={p} alt="" className="w-full h-full object-cover" loading="lazy" />
+          <div
+            key={i}
+            className="aspect-square rounded-md bg-muted overflow-hidden"
+          >
+            <img
+              src={p}
+              alt=""
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
           </div>
         ))}
       </div>
@@ -63,33 +95,8 @@ const PriceBadge = ({ template }: { template: Template }) => {
   );
 };
 
-const TemplateCard = ({ template, isComingSoon }: { template: Template; isComingSoon?: boolean }) => {
+const TemplateCard = ({ template }: { template: Template }) => {
   const { triggerPaymentFlow } = usePayment();
-
-  if (isComingSoon) {
-    return (
-      <div className="bg-card rounded-2xl overflow-hidden border border-border relative opacity-60">
-        <div className="h-72 overflow-hidden relative">
-          <div className="absolute inset-0 bg-muted/80 backdrop-blur-md flex items-center justify-center z-10">
-            <span className="font-body text-sm font-semibold text-muted-foreground bg-background/80 px-4 py-2 rounded-full border border-border">
-              Coming Soon
-            </span>
-          </div>
-          <div className="filter blur-sm">
-            <MiniInvitePreview theme="crimson" />
-          </div>
-        </div>
-        <div className="p-5">
-          <h3 className="font-display text-lg font-semibold text-muted-foreground">New Template</h3>
-          <p className="font-body text-xs text-muted-foreground mt-1">Stay tuned for more designs</p>
-          <div className="flex gap-3 mt-4">
-            <button disabled className="flex-1 btn-outline-accent px-4 py-2.5 rounded-xl text-sm opacity-40 cursor-not-allowed">Preview</button>
-            <button disabled className="flex-1 btn-gold px-4 py-2.5 rounded-xl text-sm opacity-40 cursor-not-allowed">Coming Soon</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <motion.div
@@ -107,29 +114,38 @@ const TemplateCard = ({ template, isComingSoon }: { template: Template; isComing
       <PriceBadge template={template} />
 
       <div className="h-72 overflow-hidden relative">
-        <div style={{ animation: 'autoScroll 25s linear infinite' }}>
+        <div style={{ animation: "autoScroll 25s linear infinite" }}>
           <MiniInvitePreview theme={template.theme} />
         </div>
       </div>
 
       <div className="p-5">
         <div className="flex items-center justify-between mb-1">
-          <h3 className="font-display text-lg font-semibold">{template.name}</h3>
-          <span className="font-body text-[10px] text-muted-foreground border border-border px-2 py-0.5 rounded-full">{template.category}</span>
+          <h3 className="font-display text-lg font-semibold">
+            {template.name}
+          </h3>
+          <span className="font-body text-[10px] text-muted-foreground border border-border px-2 py-0.5 rounded-full">
+            {template.category}
+          </span>
         </div>
-        <p className="font-body text-xs text-muted-foreground line-clamp-1">{template.description}</p>
+        <p className="font-body text-xs text-muted-foreground line-clamp-1">
+          {template.description}
+        </p>
         <div className="flex gap-3 mt-4">
           <button
-            onClick={() => window.open(`/templates/${template.id}/demo`, '_blank')}
-            className="flex-1 btn-outline-accent px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"
+            onClick={() =>
+              window.open(`/templates/${template.id}/demo`, "_blank")
+            }
+            className="flex-1 btn-outline-accent px-3 py-2 rounded-lg text-sm font-body font-semibold flex items-center justify-center gap-1.5"
           >
-            <Eye size={15} /> See Demo
+            <Eye size={16} /> Demo
           </button>
           <button
             onClick={() => triggerPaymentFlow(template.id)}
-            className={`flex-1 ${template.isFree ? 'btn-emerald' : 'btn-gold'} px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2`}
+            className={`flex-1 ${template.isFree ? "btn-emerald" : "btn-gold"} px-3 py-2 rounded-lg text-sm font-body font-semibold flex items-center justify-center gap-1.5`}
           >
-            <Sparkles size={15} /> {template.isFree ? 'Start Free' : 'Use This'}
+            <Sparkles size={16} />{" "}
+            {template.isFree ? "Start Free" : "Use This Template"}
           </button>
         </div>
       </div>
@@ -138,8 +154,18 @@ const TemplateCard = ({ template, isComingSoon }: { template: Template; isComing
 };
 
 const TemplateShowcase = () => {
-  const [showAll, setShowAll] = useState(false);
-  const visibleTemplates = showAll ? SAMPLE_TEMPLATES : SAMPLE_TEMPLATES.slice(0, 6);
+  const navigate = useNavigate();
+  const {
+    data: templates = [],
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["templates"],
+    queryFn: getTemplates,
+  });
+
+  const visibleTemplates = templates.slice(0, 6);
 
   return (
     <section id="templates" className="py-24 bg-background">
@@ -159,19 +185,44 @@ const TemplateShowcase = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {visibleTemplates.map(t => (
-            <TemplateCard key={t.id} template={t} />
-          ))}
-          {/* Coming soon cards */}
-          {showAll && (
-            <>
-              <TemplateCard template={SAMPLE_TEMPLATES[0]} isComingSoon />
-              <TemplateCard template={SAMPLE_TEMPLATES[0]} isComingSoon />
-              <TemplateCard template={SAMPLE_TEMPLATES[0]} isComingSoon />
-            </>
-          )}
-        </div>
+        {/* Error State */}
+        {isError && (
+          <div className="max-w-6xl mx-auto mb-8 p-6 bg-destructive/10 border border-destructive/30 rounded-2xl flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="font-body font-semibold text-destructive mb-1">
+                Unable to load templates
+              </p>
+              <p className="font-body text-sm text-destructive/80">
+                {error instanceof Error
+                  ? error.message
+                  : "Please try refreshing the page"}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {isLoading && <SkeletonGrid count={6} />}
+
+        {/* Loaded State */}
+        {!isLoading && !isError && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {visibleTemplates.map((t) => (
+                <TemplateCard key={t.id} template={t} />
+              ))}
+            </div>
+
+            {templates.length === 0 && (
+              <div className="text-center py-20">
+                <p className="font-body text-muted-foreground">
+                  No templates available yet. Check back soon!
+                </p>
+              </div>
+            )}
+          </>
+        )}
 
         <motion.div
           initial={{ opacity: 0 }}
@@ -180,14 +231,10 @@ const TemplateShowcase = () => {
           className="text-center mt-12"
         >
           <button
-            onClick={() => setShowAll(!showAll)}
+            onClick={() => navigate("/templates")}
             className="btn-outline-accent px-8 py-3 rounded-xl text-sm inline-flex items-center gap-2"
           >
-            {showAll ? (
-              <>Show Less <ChevronUp size={16} /></>
-            ) : (
-              <>Show All Templates <ChevronDown size={16} /></>
-            )}
+            Show All Templates <ChevronDown size={16} />
           </button>
         </motion.div>
       </div>

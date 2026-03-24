@@ -19,14 +19,21 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const AppInner = () => {
-  const loadFromStorage = useAuthStore(s => s.loadFromStorage);
-  useEffect(() => { loadFromStorage(); }, [loadFromStorage]);
+  const loadFromStorage = useAuthStore((s) => s.loadFromStorage);
+
+  // Load auth state as early as possible
+  useEffect(() => {
+    loadFromStorage();
+  }, [loadFromStorage]);
 
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/templates" element={<AllTemplatesPage />} />
-      <Route path="/templates/:templateId/demo" element={<TemplateDemoPage />} />
+      <Route
+        path="/templates/:templateId/demo"
+        element={<TemplateDemoPage />}
+      />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/oauth2/callback" element={<OAuthCallbackPage />} />
@@ -39,15 +46,25 @@ const AppInner = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster position="top-center" toastOptions={{ style: { fontFamily: 'Jost, sans-serif', fontSize: '14px' } }} />
-      <BrowserRouter>
-        <AppInner />
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Immediately restore auth from localStorage to prevent flash of logged-out state
+  useAuthStore.getState().loadFromStorage();
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            style: { fontFamily: "Jost, sans-serif", fontSize: "14px" },
+          }}
+        />
+        <BrowserRouter>
+          <AppInner />
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

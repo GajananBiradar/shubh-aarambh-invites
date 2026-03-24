@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { submitRsvp } from '@/api/rsvp';
 import toast from 'react-hot-toast';
 import { Check } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 interface RsvpSectionProps {
   invitation: Invitation;

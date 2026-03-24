@@ -3,7 +3,7 @@ import { PaymentOrder, PaymentVerification } from '@/types';
 
 export const checkPayment = async (templateId: string): Promise<boolean> => {
   try {
-    const { data } = await api.get(`/payments/check?templateId=${templateId}`);
+    const { data } = await api.get(`/api/payments/check?templateId=${templateId}`);
     return data.hasPaid;
   } catch {
     return import.meta.env.VITE_DEV_MODE === 'true';
@@ -11,20 +11,20 @@ export const checkPayment = async (templateId: string): Promise<boolean> => {
 };
 
 export const initiatePayment = async (templateId: string, currency: string = 'INR'): Promise<PaymentOrder> => {
-  const { data } = await api.post('/payments/initiate', { templateId, currency });
+  const { data } = await api.post('/api/payments/initiate', { templateId, currency });
   return data;
 };
 
 export const verifyRazorpay = async (verification: PaymentVerification & { templateId: string }): Promise<void> => {
-  await api.post('/payments/verify/razorpay', verification);
+  await api.post('/api/payments/verify/razorpay', verification);
 };
 
 export const verifyStripe = async (data: any): Promise<void> => {
-  await api.post('/payments/verify/stripe', data);
+  await api.post('/api/payments/verify/stripe', data);
 };
 
 export const devBypass = async (templateId: string): Promise<void> => {
-  await api.post('/payments/dev-bypass', {
+  await api.post('/api/payments/dev-bypass', {
     templateId,
     bypassToken: import.meta.env.VITE_DEV_BYPASS_TOKEN,
   });

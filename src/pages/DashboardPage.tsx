@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { useMyInvitations } from '@/hooks/useInvitation';
 import PageWrapper from '@/components/layout/PageWrapper';
+import AdminDashboard from '@/components/admin/AdminDashboard';
 import { Eye, Pencil, Copy, ExternalLink, Plus, Heart, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
@@ -141,6 +142,9 @@ const DashboardPage = () => {
             </Link>
           </div>
         )}
+
+        {/* Admin Panel */}
+        {user?.role === 'ADMIN' && <AdminDashboard />}
 
         {/* Account */}
         <div className="mt-12 bg-card rounded-2xl border border-border p-6">

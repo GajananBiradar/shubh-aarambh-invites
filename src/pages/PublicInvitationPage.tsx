@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Invitation } from '@/types';
 import { getInvitationBySlug, recordView } from '@/api/invitations';
+import api from '@/api/axios';
 import { SAMPLE_INVITATION } from '@/mock/sampleInvitation';
 import InvitationHero from '@/components/invitation/HeroSection';
 import CoupleSection from '@/components/invitation/CoupleSection';
@@ -17,14 +18,23 @@ const PublicInvitationPage = () => {
   const { code, slug } = useParams<{ code: string; slug: string }>();
   const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [loading, setLoading] = useState(true);
+  const [viewCount, setViewCount] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     const load = async () => {
       if (code && slug) {
-        recordView(code, slug);
         try {
           const data = await getInvitationBySlug(code, slug);
           setInvitation(data);
+
+          // Fire and forget view recording
+          if (data.id) {
+            api.post(`/api/invitations/${data.id}/view`).catch(() => {});
+            // Fetch view count
+            api.get(`/api/invitations/${data.id}/view-count`)
+              .then(res => setViewCount(res.data?.count))
+              .catch(() => {});
+          }
         } catch {
           setInvitation(SAMPLE_INVITATION);
         }
@@ -39,7 +49,6 @@ const PublicInvitationPage = () => {
   if (loading) {
     return (
       <div className="fixed inset-0 bg-background flex flex-col items-center justify-center overflow-hidden">
-        {/* Loading petals */}
         {Array.from({ length: 8 }).map((_, i) => (
           <div
             key={i}
@@ -57,24 +66,33 @@ const PublicInvitationPage = () => {
           />
         ))}
         <Heart className="w-8 h-8 text-primary fill-primary animate-pulse mb-4" />
-        <p className="font-heading text-xl text-foreground">Loading your invitation...</p>
+        <p className="font-heading text-xl text-foreground">Opening your invitation...</p>
       </div>
     );
   }
 
   if (!invitation) return null;
 
+  // Determine effective music URL
+  const effectiveMusicUrl = (invitation as any).effectiveMusicUrl || invitation.musicUrl;
+  // Override viewCount with fetched value
+  const displayInvitation = { ...invitation, viewCount: viewCount ?? invitation.viewCount };
+
   return (
     <div data-theme={invitation.templateTheme} className="min-h-screen bg-background text-foreground">
-      <InvitationHero invitation={invitation} />
-      <CoupleSection invitation={invitation} />
-      <CountdownTimer invitation={invitation} />
-      <EventsSection invitation={invitation} />
-      <GallerySection invitation={invitation} />
-      <RsvpSection invitation={invitation} />
-      <InvitationFooter invitation={invitation} />
-      {invitation.musicUrl && (
-        <FloatingMusicPlayer musicUrl={invitation.musicUrl} musicName={invitation.musicName} />
+      <InvitationHero invitation={displayInvitation} />
+      <CoupleSection invitation={displayInvitation} />
+      <CountdownTimer invitation={displayInvitation} />
+      {displayInvitation.events && displayInvitation.events.length > 0 && (
+        <EventsSection invitation={displayInvitation} />
+      )}
+      {displayInvitation.galleryPhotos && displayInvitation.galleryPhotos.length > 0 && (
+        <GallerySection invitation={displayInvitation} />
+      )}
+      <RsvpSection invitation={displayInvitation} />
+      <InvitationFooter invitation={displayInvitation} />
+      {effectiveMusicUrl && (
+        <FloatingMusicPlayer musicUrl={effectiveMusicUrl} musicName={invitation.musicName} />
       )}
     </div>
   );

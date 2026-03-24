@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { submitRsvp } from '@/api/rsvp';
 import toast from 'react-hot-toast';
 import { Check } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 interface RsvpSectionProps {
   invitation: Invitation;
@@ -15,6 +16,7 @@ const RsvpSection = ({ invitation, isDemo }: RsvpSectionProps) => {
   const [phone, setPhone] = useState('');
   const [attending, setAttending] = useState<'yes' | 'maybe' | 'no'>('yes');
   const [guestCount, setGuestCount] = useState(2);
+  const [message, setMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +32,14 @@ const RsvpSection = ({ invitation, isDemo }: RsvpSectionProps) => {
 
     setLoading(true);
     try {
-      await submitRsvp(invitation.id || '', { name, phone, attending, guestCount });
+      const attendingMap: Record<string, string> = { yes: 'YES', maybe: 'MAYBE', no: 'NO' };
+      await submitRsvp(invitation.id || '', {
+        guestName: name,
+        guestPhone: phone,
+        attending: attendingMap[attending] || 'YES',
+        guestCount,
+        message: message || undefined,
+      });
       setSubmitted(true);
     } catch {
       toast.error('Could not submit RSVP. Please try again.');
@@ -135,6 +144,16 @@ const RsvpSection = ({ invitation, isDemo }: RsvpSectionProps) => {
                   +
                 </button>
               </div>
+            </div>
+            <div>
+              <label className="font-body text-sm font-medium block mb-1.5">Message (optional)</label>
+              <Textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                className="rounded-xl border border-border bg-card font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                placeholder="Any message for the couple?"
+                rows={2}
+              />
             </div>
             <button
               type="submit"

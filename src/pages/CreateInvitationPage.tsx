@@ -4,11 +4,9 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuthStore } from "@/store/authStore";
-import { checkPayment, createInvitation } from "@/api/invitations";
 import { SAMPLE_TEMPLATES } from "@/mock/sampleInvitation";
 import PageWrapper from "@/components/layout/PageWrapper";
 import { slugify } from "@/utils/slugify";
-import { generateCode } from "@/utils/generateCode";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -20,14 +18,28 @@ import {
   ChevronRight,
   ChevronLeft,
   Music,
-  Image,
   Upload,
+  Pencil,
+  Loader2,
+  Eye,
+  Save,
+  Sparkles,
+  X,
+  Calendar,
+  MapPin,
+  Clock,
+  Image as ImageIcon,
+  User,
+  Heart,
+  MessageSquare,
+  Timer,
 } from "lucide-react";
 import { WeddingEvent } from "@/types";
 import {
   useFormPersistence,
   clearFormPersistence,
 } from "@/hooks/useFormPersistence";
+import api from "@/api/axios";
 
 const step1Schema = z.object({
   brideName: z.string().min(2, "Required"),
@@ -38,10 +50,38 @@ const step1Schema = z.object({
   slug: z.string().min(2),
 });
 
+// Helper to format date for display
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return "—";
+  try {
+    return new Date(dateStr).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
+};
+
+// Helper to format time for display
+const formatTime = (timeStr: string) => {
+  if (!timeStr) return "—";
+  try {
+    const [hours, minutes] = timeStr.split(":");
+    const h = parseInt(hours);
+    const ampm = h >= 12 ? "PM" : "AM";
+    const displayHour = h % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
+  } catch {
+    return timeStr;
+  }
+};
+
 const CreateInvitationPage = () => {
   const { templateId } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, logout } = useAuthStore();
   const [step, setStep] = useState(1);
   const [events, setEvents] = useState<WeddingEvent[]>([
     {
@@ -60,9 +100,18 @@ const CreateInvitationPage = () => {
   const [welcomeMessage, setWelcomeMessage] = useState("");
   const [showCountdown, setShowCountdown] = useState(true);
   const [weddingDate, setWeddingDate] = useState("");
-  const [published, setPublished] = useState(false);
-  const [publishedUrl, setPublishedUrl] = useState("");
+  const [couplePhotoUrl, setCouplePhotoUrl] = useState("");
+
+  // Step 4 specific state
+  const [invitationId, setInvitationId] = useState<string | null>(null);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [savingPreview, setSavingPreview] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState("");
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [apiErrors, setApiErrors] = useState<string[]>([]);
+
   const template =
     SAMPLE_TEMPLATES.find((t) => t.id === templateId) || SAMPLE_TEMPLATES[0];
   const isDevMode = import.meta.env.VITE_DEV_MODE === "true";
@@ -87,16 +136,20 @@ const CreateInvitationPage = () => {
 
   const groomName = watch("groomName");
   const brideName = watch("brideName");
+  const brideBio = watch("brideBio");
+  const groomBio = watch("groomBio");
+  const hashtag = watch("hashtag");
+  const slug = watch("slug");
 
   // Form persistence data
   const formData = {
     step,
     brideName,
     groomName,
-    brideBio: watch("brideBio"),
-    groomBio: watch("groomBio"),
-    hashtag: watch("hashtag"),
-    slug: watch("slug"),
+    brideBio,
+    groomBio,
+    hashtag,
+    slug,
     events,
     galleryPhotos,
     musicUrl,
@@ -105,6 +158,8 @@ const CreateInvitationPage = () => {
     welcomeMessage,
     showCountdown,
     weddingDate,
+    couplePhotoUrl,
+    invitationId,
   };
 
   // Restore form data from localStorage
@@ -128,7 +183,9 @@ const CreateInvitationPage = () => {
         if (data.hasOwnProperty("showCountdown"))
           setShowCountdown(data.showCountdown);
         if (data.weddingDate) setWeddingDate(data.weddingDate);
-        toast.success("Form data restored! 📝");
+        if (data.couplePhotoUrl) setCouplePhotoUrl(data.couplePhotoUrl);
+        if (data.invitationId) setInvitationId(data.invitationId);
+        toast.success("Form data restored!");
       } catch (error) {
         console.error("Failed to restore form data:", error);
       }
@@ -150,8 +207,8 @@ const CreateInvitationPage = () => {
 
   useEffect(() => {
     if (groomName && brideName) {
-      const slug = slugify(groomName, brideName);
-      setValue("slug", slug);
+      const generatedSlug = slugify(groomName, brideName);
+      setValue("slug", generatedSlug);
       setValue(
         "hashtag",
         `#${groomName.split(" ")[0]}Weds${brideName.split(" ")[0]}`,
@@ -197,45 +254,200 @@ const CreateInvitationPage = () => {
     toast.success("Sample photos added (dev mode)");
   };
 
-  const handlePublish = async (data: any) => {
-    setPublishing(true);
-    const code = generateCode();
-    const invData = {
-      ...data,
-      templateId: template.id,
-      templateTheme: template.theme,
-      events,
-      galleryPhotos,
-      musicUrl:
-        musicUrl ||
-        "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-      musicName: musicName || "Wedding Song",
-      welcomeMessage:
-        welcomeMessage ||
-        `Together with their families, ${data.groomName} & ${data.brideName} joyfully invite you to be part of their celebration of love.`,
-      showCountdown,
-      weddingDate: weddingDate || "2025-12-14",
-      code,
-      couplePhotoUrl:
-        "https://images.unsplash.com/photo-1519741497674-611481863552?w=800",
-    };
+  // Build the API request body
+  const buildRequestBody = () => {
+    const defaultWelcome = `Together with their families, ${groomName || "[Groom]"} & ${brideName || "[Bride]"} joyfully invite you to be part of their celebration of love.`;
 
-    try {
-      await createInvitation(invData);
-    } catch {
-      /* dev mode fallback */
+    return {
+      templateId: parseInt(templateId || "1"),
+      locale: "en",
+      brideName: brideName || "",
+      groomName: groomName || "",
+      couplePhotoUrl: couplePhotoUrl || null,
+      musicUrl: musicUrl || null,
+      musicName: musicName || null,
+      invitationData: {
+        bride_bio: brideBio || null,
+        groom_bio: groomBio || null,
+        hashtag: hashtag || null,
+        welcome_message: welcomeMessage || defaultWelcome,
+        show_countdown: showCountdown,
+        slug: slug || null,
+        wedding_date: weddingDate || null,
+      },
+      events: events
+        .filter((e) => e.eventName)
+        .map((e) => ({
+          eventName: e.eventName,
+          eventDate: e.date || null,
+          eventTime: e.time ? `${e.time}:00` : null,
+          venueName: e.venueName || null,
+          venueAddress: e.venueAddress || null,
+          mapsUrl: e.mapsUrl || null,
+        })),
+      galleryPhotos: galleryPhotos.map((url, idx) => ({
+        photoUrl: url,
+        sortOrder: idx,
+      })),
+    };
+  };
+
+  // Handle API errors
+  const handleApiError = (error: any) => {
+    setApiErrors([]);
+
+    if (!error.response) {
+      toast.error("Connection failed. Check your internet and try again.");
+      return;
     }
 
-    const url = `${window.location.origin}/${code}/invite/${data.slug}`;
-    setPublishedUrl(url);
-    setPublished(true);
-    setPublishing(false);
+    const status = error.response.status;
+    const data = error.response.data;
 
-    // Clear saved form data after successful publish
-    clearFormPersistence(STORAGE_KEY);
-
-    toast.success("Invitation published! 🎉");
+    switch (status) {
+      case 401:
+        logout();
+        navigate("/login");
+        toast.error("Session expired. Please login again.");
+        break;
+      case 402:
+        if (invitationId) {
+          navigate(`/invitations/${invitationId}/preview`);
+          toast.error("Please complete payment to publish.");
+        }
+        break;
+      case 400:
+        if (data?.errors && Array.isArray(data.errors)) {
+          setApiErrors(data.errors);
+        } else if (data?.message) {
+          setApiErrors([data.message]);
+        } else {
+          toast.error("Invalid data. Please check your inputs.");
+        }
+        break;
+      case 404:
+        toast.error("Something went wrong. Please try again.");
+        break;
+      case 500:
+      default:
+        toast.error("Server error. Please try again in a moment.");
+        break;
+    }
   };
+
+  // Save invitation (create or update)
+  const saveInvitation = async (): Promise<string | null> => {
+    try {
+      const body = buildRequestBody();
+
+      if (invitationId) {
+        // Update existing
+        const res = await api.put(`/api/invitations/${invitationId}`, body);
+        return res.data.id || invitationId;
+      } else {
+        // Create new
+        const res = await api.post("/api/invitations", body);
+        const newId = res.data.id;
+        setInvitationId(newId);
+        return newId;
+      }
+    } catch (error: any) {
+      handleApiError(error);
+      return null;
+    }
+  };
+
+  // Button 2: Save as Draft
+  const handleSaveDraft = async () => {
+    setApiErrors([]);
+    setSavingDraft(true);
+
+    const savedId = await saveInvitation();
+
+    setSavingDraft(false);
+
+    if (savedId) {
+      clearFormPersistence(STORAGE_KEY);
+      toast.success(
+        invitationId
+          ? "Draft updated!"
+          : "Draft saved! You can find it in your dashboard.",
+      );
+      navigate("/dashboard");
+    }
+  };
+
+  // Button 3: Preview
+  const handlePreview = async () => {
+    setApiErrors([]);
+    setSavingPreview(true);
+
+    const savedId = await saveInvitation();
+
+    setSavingPreview(false);
+
+    if (savedId) {
+      navigate(`/invitations/${savedId}/preview`);
+    }
+  };
+
+  // Button 4: Publish
+  const handlePublish = async () => {
+    setApiErrors([]);
+    setPublishing(true);
+
+    // Step A: Save the draft first
+    const savedId = await saveInvitation();
+
+    if (!savedId) {
+      setPublishing(false);
+      return;
+    }
+
+    try {
+      // Step B: Check payment status
+      const paymentCheck = await api.get(
+        `/api/payments/check?templateId=${templateId}`,
+      );
+      const { requiresPayment } = paymentCheck.data;
+
+      // Step C: Based on requiresPayment
+      if (requiresPayment === false || isDevMode) {
+        // Free to publish - call publish endpoint
+        const publishRes = await api.post(
+          `/api/invitations/${savedId}/publish`,
+        );
+        const publicUrl = publishRes.data.publicUrl || "";
+
+        // Build full URL
+        const fullUrl = publicUrl.startsWith("http")
+          ? publicUrl
+          : `${window.location.origin}${publicUrl}`;
+
+        setPublishedUrl(fullUrl);
+        setShowSuccessModal(true);
+        clearFormPersistence(STORAGE_KEY);
+        toast.success("Your invitation is now live!");
+      } else {
+        // Payment required - redirect to preview page
+        navigate(`/invitations/${savedId}/preview`);
+        toast.error("Review your invitation and complete payment to publish.");
+      }
+    } catch (error: any) {
+      handleApiError(error);
+    }
+
+    setPublishing(false);
+  };
+
+  // Copy link handler
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(publishedUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const isAnyLoading = savingDraft || savingPreview || publishing;
 
   const steps = [
     "Couple Details",
@@ -244,73 +456,114 @@ const CreateInvitationPage = () => {
     "Review & Publish",
   ];
 
-  if (published) {
+  // Success Modal
+  const SuccessModal = () => {
     const whatsappMsg = encodeURIComponent(
-      `You're invited to our wedding celebrations! 💌 ${publishedUrl} 🌸`,
+      `You're invited! Open our wedding invitation: ${publishedUrl}`,
     );
+
     return (
-      <PageWrapper>
-        <div className="container mx-auto px-4 py-16 max-w-lg text-center">
+      <AnimatePresence>
+        {showSuccessModal && (
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-card rounded-2xl border border-border p-8 shadow-lg"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
           >
-            <div className="text-5xl mb-4">🎉</div>
-            <h2 className="font-heading text-2xl font-bold mb-2">
-              Your invitation is live!
-            </h2>
-            <p className="font-body text-sm text-muted-foreground mb-6">
-              Share it with your loved ones
-            </p>
-            <div className="bg-muted rounded-xl p-3 mb-6">
-              <p className="font-body text-xs text-muted-foreground break-all select-all">
-                {publishedUrl}
-              </p>
-            </div>
-            <div className="flex flex-col gap-3">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-card border border-border rounded-2xl p-8 max-w-md w-full shadow-2xl relative"
+            >
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(publishedUrl);
-                  toast.success("Copied!");
+                  setShowSuccessModal(false);
+                  navigate("/dashboard");
                 }}
-                className="btn-outline-accent px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"
+                className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
               >
-                <Copy size={16} /> Copy Link
+                <X size={20} />
               </button>
-              <a
-                href={`https://wa.me/?text=${whatsappMsg}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-[hsl(142,70%,40%)] text-[hsl(0,0%,100%)] font-body font-medium px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"
-              >
-                💚 Share on WhatsApp
-              </a>
-              <button
-                onClick={() => window.open(publishedUrl, "_blank")}
-                className="btn-outline-accent px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"
-              >
-                <ExternalLink size={16} /> Preview
-              </button>
-              <button
-                onClick={() => navigate("/dashboard")}
-                className="font-body text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Go to Dashboard →
-              </button>
-            </div>
+
+              {/* Confetti animation placeholder */}
+              <div className="text-6xl text-center mb-4 animate-bounce">
+                🎉
+              </div>
+
+              <h2 className="font-heading text-2xl font-bold text-center mb-2">
+                Your Invitation is LIVE!
+              </h2>
+              <p className="font-body text-sm text-muted-foreground text-center mb-6">
+                Share it with your guests
+              </p>
+
+              {/* URL Box */}
+              <div className="bg-muted rounded-xl p-3 mb-6">
+                <p className="font-body text-xs text-muted-foreground break-all select-all text-center">
+                  {publishedUrl}
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleCopyLink}
+                  className="btn-outline-accent px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"
+                >
+                  {copiedLink ? (
+                    <>
+                      <Check size={16} /> Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={16} /> Copy Link
+                    </>
+                  )}
+                </button>
+
+                <a
+                  href={`https://wa.me/?text=${whatsappMsg}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-[hsl(142,70%,40%)] text-[hsl(0,0%,100%)] font-body font-medium px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"
+                >
+                  <Heart size={16} /> Share on WhatsApp
+                </a>
+
+                <button
+                  onClick={() => window.open(publishedUrl, "_blank")}
+                  className="btn-outline-accent px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"
+                >
+                  <Eye size={16} /> View My Invitation
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    navigate("/dashboard");
+                  }}
+                  className="font-body text-sm text-muted-foreground hover:text-foreground transition-colors mt-2"
+                >
+                  Go to Dashboard
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
-        </div>
-      </PageWrapper>
+        )}
+      </AnimatePresence>
     );
-  }
+  };
 
   return (
     <PageWrapper>
+      <SuccessModal />
+
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         {isDevMode && (
           <div className="bg-[hsl(45,100%,90%)] border border-[hsl(45,100%,70%)] text-[hsl(45,80%,20%)] font-body text-xs px-4 py-2 rounded-xl mb-6 text-center">
-            🛠️ DEV MODE — Payment check bypassed. Remove before going live.
+            DEV MODE — Payment check bypassed. Remove before going live.
           </div>
         )}
 
@@ -384,28 +637,28 @@ const CreateInvitationPage = () => {
                 <label className="font-body text-sm font-medium block mb-1.5">
                   Bride's Bio{" "}
                   <span className="text-muted-foreground">
-                    ({(watch("brideBio") || "").length}/100)
+                    ({(brideBio || "").length}/100)
                   </span>
                 </label>
                 <input
                   {...register("brideBio")}
                   maxLength={100}
                   className="w-full rounded-xl border border-border bg-card px-4 py-3 font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  placeholder="Software engineer & chai lover ☕"
+                  placeholder="Software engineer & chai lover"
                 />
               </div>
               <div>
                 <label className="font-body text-sm font-medium block mb-1.5">
                   Groom's Bio{" "}
                   <span className="text-muted-foreground">
-                    ({(watch("groomBio") || "").length}/100)
+                    ({(groomBio || "").length}/100)
                   </span>
                 </label>
                 <input
                   {...register("groomBio")}
                   maxLength={100}
                   className="w-full rounded-xl border border-border bg-card px-4 py-3 font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  placeholder="Architect who draws buildings & hearts 🏛️"
+                  placeholder="Architect who draws buildings & hearts"
                 />
               </div>
             </div>
@@ -439,7 +692,7 @@ const CreateInvitationPage = () => {
               />
               <p className="font-body text-xs text-muted-foreground mt-1">
                 Preview: {window.location.origin}/XXXXX/invite/
-                {watch("slug") || "your-slug"}
+                {slug || "your-slug"}
               </p>
             </div>
             <div className="flex justify-end">
@@ -665,7 +918,7 @@ const CreateInvitationPage = () => {
           </motion.div>
         )}
 
-        {/* Step 4 */}
+        {/* Step 4 - Review & Publish */}
         {step === 4 && (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
@@ -674,6 +927,21 @@ const CreateInvitationPage = () => {
           >
             <h2 className="font-heading text-xl font-bold">Review & Publish</h2>
 
+            {/* API Errors */}
+            {apiErrors.length > 0 && (
+              <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4">
+                <p className="font-body text-sm text-destructive font-medium mb-2">
+                  Please fix the following errors:
+                </p>
+                <ul className="list-disc list-inside font-body text-sm text-destructive space-y-1">
+                  {apiErrors.map((err, i) => (
+                    <li key={i}>{err}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Welcome Message Input */}
             <div>
               <label className="font-body text-sm font-medium block mb-1.5">
                 Welcome Message{" "}
@@ -692,6 +960,7 @@ const CreateInvitationPage = () => {
               />
             </div>
 
+            {/* Countdown Toggle */}
             <div className="flex items-center justify-between bg-card rounded-xl p-4 border border-border">
               <span className="font-body text-sm">Show Countdown Timer</span>
               <button
@@ -704,37 +973,370 @@ const CreateInvitationPage = () => {
               </button>
             </div>
 
-            {/* Summary */}
-            <div className="bg-card rounded-2xl border border-border p-5 space-y-3">
-              <h3 className="font-heading text-base font-semibold">Summary</h3>
-              <div className="grid grid-cols-2 gap-2 text-sm font-body">
-                <span className="text-muted-foreground">Bride</span>
-                <span>{brideName || "—"}</span>
-                <span className="text-muted-foreground">Groom</span>
-                <span>{groomName || "—"}</span>
-                <span className="text-muted-foreground">Events</span>
-                <span>{events.length}</span>
-                <span className="text-muted-foreground">Photos</span>
-                <span>{galleryPhotos.length}</span>
-                <span className="text-muted-foreground">Template</span>
-                <span>{template.name}</span>
+            {/* Summary Card 1: Couple Details */}
+            <div className="bg-card rounded-2xl border border-border overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <User size={16} className="text-primary" />
+                  <h3 className="font-heading text-base font-semibold">
+                    Couple Details
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setStep(1)}
+                  className="font-body text-xs text-primary hover:underline flex items-center gap-1"
+                >
+                  <Pencil size={12} /> Edit
+                </button>
+              </div>
+              <div className="p-5 space-y-3">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 font-body text-sm">
+                  <span className="text-muted-foreground">Bride</span>
+                  <span>{brideName || "—"}</span>
+                  <span className="text-muted-foreground">Groom</span>
+                  <span>{groomName || "—"}</span>
+                  {brideBio && (
+                    <>
+                      <span className="text-muted-foreground">Bride's Bio</span>
+                      <span className="text-muted-foreground italic">
+                        {brideBio}
+                      </span>
+                    </>
+                  )}
+                  {groomBio && (
+                    <>
+                      <span className="text-muted-foreground">Groom's Bio</span>
+                      <span className="text-muted-foreground italic">
+                        {groomBio}
+                      </span>
+                    </>
+                  )}
+                  {hashtag && (
+                    <>
+                      <span className="text-muted-foreground">Hashtag</span>
+                      <span className="text-primary">{hashtag}</span>
+                    </>
+                  )}
+                  <span className="text-muted-foreground">URL Slug</span>
+                  <span className="text-xs break-all">
+                    /.../{slug || "your-slug"}
+                  </span>
+                </div>
+                {couplePhotoUrl && (
+                  <div className="mt-3">
+                    <img
+                      src={couplePhotoUrl}
+                      alt="Couple"
+                      className="w-20 h-20 rounded-xl object-cover"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="flex justify-between">
-              <button
-                onClick={() => setStep(3)}
-                className="btn-outline-accent px-6 py-2.5 rounded-xl text-sm flex items-center gap-1.5"
-              >
-                <ChevronLeft size={16} /> Back
-              </button>
-              <button
-                onClick={handleSubmit(handlePublish)}
-                disabled={publishing}
-                className="btn-gold px-8 py-3 rounded-xl text-base flex items-center gap-2 disabled:opacity-50"
-              >
-                {publishing ? "Publishing..." : "✅ Publish My Invitation"}
-              </button>
+            {/* Summary Card 2: Ceremonies */}
+            <div className="bg-card rounded-2xl border border-border overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <Calendar size={16} className="text-primary" />
+                  <h3 className="font-heading text-base font-semibold">
+                    Ceremonies
+                  </h3>
+                  <span className="font-body text-xs text-muted-foreground">
+                    ({events.filter((e) => e.eventName).length} added)
+                  </span>
+                </div>
+                <button
+                  onClick={() => setStep(2)}
+                  className="font-body text-xs text-primary hover:underline flex items-center gap-1"
+                >
+                  <Pencil size={12} /> Edit
+                </button>
+              </div>
+              <div className="p-5 space-y-4">
+                {events.filter((e) => e.eventName).length === 0 ? (
+                  <p className="font-body text-sm text-muted-foreground">
+                    No ceremonies added yet.
+                  </p>
+                ) : (
+                  events
+                    .filter((e) => e.eventName)
+                    .map((event, i) => (
+                      <div
+                        key={i}
+                        className="border-l-2 border-primary/30 pl-4 space-y-1"
+                      >
+                        <p className="font-body text-sm font-medium">
+                          {event.eventName}
+                        </p>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 font-body text-xs text-muted-foreground">
+                          {event.date && (
+                            <span className="flex items-center gap-1">
+                              <Calendar size={12} /> {formatDate(event.date)}
+                            </span>
+                          )}
+                          {event.time && (
+                            <span className="flex items-center gap-1">
+                              <Clock size={12} /> {formatTime(event.time)}
+                            </span>
+                          )}
+                          {event.venueName && (
+                            <span className="flex items-center gap-1">
+                              <MapPin size={12} /> {event.venueName}
+                            </span>
+                          )}
+                        </div>
+                        {event.venueAddress && (
+                          <p className="font-body text-xs text-muted-foreground">
+                            {event.venueAddress}
+                          </p>
+                        )}
+                      </div>
+                    ))
+                )}
+              </div>
+            </div>
+
+            {/* Summary Card 3: Gallery & Music */}
+            <div className="bg-card rounded-2xl border border-border overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <ImageIcon size={16} className="text-primary" />
+                  <h3 className="font-heading text-base font-semibold">
+                    Gallery & Music
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setStep(3)}
+                  className="font-body text-xs text-primary hover:underline flex items-center gap-1"
+                >
+                  <Pencil size={12} /> Edit
+                </button>
+              </div>
+              <div className="p-5 space-y-4">
+                {/* Photos */}
+                <div>
+                  <p className="font-body text-xs text-muted-foreground mb-2">
+                    Photos ({galleryPhotos.length})
+                  </p>
+                  {galleryPhotos.length > 0 ? (
+                    <div className="flex gap-2 flex-wrap">
+                      {galleryPhotos.slice(0, 5).map((photo, i) => (
+                        <img
+                          key={i}
+                          src={photo}
+                          alt=""
+                          className="w-14 h-14 rounded-lg object-cover"
+                        />
+                      ))}
+                      {galleryPhotos.length > 5 && (
+                        <div className="w-14 h-14 rounded-lg bg-muted flex items-center justify-center font-body text-xs text-muted-foreground">
+                          +{galleryPhotos.length - 5}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="font-body text-sm text-muted-foreground">
+                      No photos added yet.
+                    </p>
+                  )}
+                </div>
+
+                {/* Music */}
+                <div>
+                  <p className="font-body text-xs text-muted-foreground mb-1">
+                    Music
+                  </p>
+                  {musicName || musicUrl ? (
+                    <div className="flex items-center gap-2">
+                      <Music size={14} className="text-primary" />
+                      <span className="font-body text-sm">
+                        {musicName || "Custom music"}
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="font-body text-sm text-muted-foreground italic">
+                      Default template music will be used
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Summary Card 4: Additional Details */}
+            <div className="bg-card rounded-2xl border border-border overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <MessageSquare size={16} className="text-primary" />
+                  <h3 className="font-heading text-base font-semibold">
+                    Additional Details
+                  </h3>
+                </div>
+              </div>
+              <div className="p-5 space-y-3">
+                {/* Welcome Message */}
+                {welcomeMessage && (
+                  <div className="bg-muted/50 rounded-xl p-4 border-l-2 border-primary/30">
+                    <p className="font-body text-sm italic text-muted-foreground">
+                      "{welcomeMessage}"
+                    </p>
+                  </div>
+                )}
+
+                {/* Countdown */}
+                <div className="flex items-center gap-2 font-body text-sm">
+                  <Timer size={14} className="text-muted-foreground" />
+                  <span className="text-muted-foreground">Countdown Timer:</span>
+                  <span
+                    className={
+                      showCountdown ? "text-primary" : "text-muted-foreground"
+                    }
+                  >
+                    {showCountdown ? "Enabled" : "Disabled"}
+                  </span>
+                </div>
+
+                {/* Template */}
+                <div className="flex items-center gap-2 font-body text-sm">
+                  <span className="text-muted-foreground">Template:</span>
+                  <span>{template.name}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Button Bar */}
+            <div className="border-t border-border pt-6 mt-6">
+              {/* Desktop: Row layout */}
+              <div className="hidden sm:flex items-center justify-between gap-3">
+                {/* Back button */}
+                <button
+                  onClick={() => setStep(3)}
+                  disabled={isAnyLoading}
+                  className="btn-outline-accent px-5 py-2.5 rounded-xl text-sm flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <ChevronLeft size={16} /> Back
+                </button>
+
+                <div className="flex items-center gap-3">
+                  {/* Save Draft */}
+                  <button
+                    onClick={handleSaveDraft}
+                    disabled={isAnyLoading}
+                    className="btn-outline-accent px-5 py-2.5 rounded-xl text-sm flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {savingDraft ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" /> Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save size={16} /> Save Draft
+                      </>
+                    )}
+                  </button>
+
+                  {/* Preview */}
+                  <button
+                    onClick={handlePreview}
+                    disabled={isAnyLoading}
+                    className="bg-secondary text-secondary-foreground font-body font-medium px-5 py-2.5 rounded-xl text-sm flex items-center gap-2 disabled:opacity-50 hover:bg-secondary/80 transition-colors"
+                  >
+                    {savingPreview ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" /> Loading
+                        Preview...
+                      </>
+                    ) : (
+                      <>
+                        <Eye size={16} /> Preview
+                      </>
+                    )}
+                  </button>
+
+                  {/* Publish */}
+                  <button
+                    onClick={handlePublish}
+                    disabled={isAnyLoading}
+                    className="btn-gold px-6 py-3 rounded-xl text-sm flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {publishing ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />{" "}
+                        Publishing...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={16} /> Publish
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Mobile: Stacked layout */}
+              <div className="sm:hidden flex flex-col gap-3">
+                {/* Publish - most prominent */}
+                <button
+                  onClick={handlePublish}
+                  disabled={isAnyLoading}
+                  className="btn-gold w-full px-6 py-3 rounded-xl text-base flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {publishing ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />{" "}
+                      Publishing...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={18} /> Publish
+                    </>
+                  )}
+                </button>
+
+                {/* Preview */}
+                <button
+                  onClick={handlePreview}
+                  disabled={isAnyLoading}
+                  className="bg-secondary text-secondary-foreground font-body font-medium w-full px-5 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-secondary/80 transition-colors"
+                >
+                  {savingPreview ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" /> Loading
+                      Preview...
+                    </>
+                  ) : (
+                    <>
+                      <Eye size={16} /> Preview My Invitation
+                    </>
+                  )}
+                </button>
+
+                {/* Save Draft */}
+                <button
+                  onClick={handleSaveDraft}
+                  disabled={isAnyLoading}
+                  className="btn-outline-accent w-full px-5 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {savingDraft ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" /> Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save size={16} /> Save as Draft
+                    </>
+                  )}
+                </button>
+
+                {/* Back */}
+                <button
+                  onClick={() => setStep(3)}
+                  disabled={isAnyLoading}
+                  className="font-body text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1 py-2"
+                >
+                  <ChevronLeft size={16} /> Back to Gallery & Music
+                </button>
+              </div>
             </div>
           </motion.div>
         )}

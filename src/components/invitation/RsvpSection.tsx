@@ -16,6 +16,7 @@ const RsvpSection = ({ invitation, isDemo }: RsvpSectionProps) => {
   const [phone, setPhone] = useState('');
   const [attending, setAttending] = useState<'yes' | 'maybe' | 'no'>('yes');
   const [guestCount, setGuestCount] = useState(2);
+  const [message, setMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 

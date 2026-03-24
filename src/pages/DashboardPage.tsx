@@ -143,6 +143,9 @@ const DashboardPage = () => {
           </div>
         )}
 
+        {/* Admin Panel */}
+        {user?.role === 'ADMIN' && <AdminDashboard />}
+
         {/* Account */}
         <div className="mt-12 bg-card rounded-2xl border border-border p-6">
           <h3 className="font-display text-lg font-semibold mb-4">Account</h3>

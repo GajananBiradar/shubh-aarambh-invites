@@ -32,7 +32,14 @@ const RsvpSection = ({ invitation, isDemo }: RsvpSectionProps) => {
 
     setLoading(true);
     try {
-      await submitRsvp(invitation.id || '', { name, phone, attending, guestCount });
+      const attendingMap: Record<string, string> = { yes: 'YES', maybe: 'MAYBE', no: 'NO' };
+      await submitRsvp(invitation.id || '', {
+        guestName: name,
+        guestPhone: phone,
+        attending: attendingMap[attending] || 'YES',
+        guestCount,
+        message: message || undefined,
+      });
       setSubmitted(true);
     } catch {
       toast.error('Could not submit RSVP. Please try again.');

@@ -145,6 +145,16 @@ const RsvpSection = ({ invitation, isDemo }: RsvpSectionProps) => {
                 </button>
               </div>
             </div>
+            <div>
+              <label className="font-body text-sm font-medium block mb-1.5">Message (optional)</label>
+              <Textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                className="rounded-xl border border-border bg-card font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                placeholder="Any message for the couple?"
+                rows={2}
+              />
+            </div>
             <button
               type="submit"
               disabled={loading}

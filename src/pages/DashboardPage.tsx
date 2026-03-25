@@ -194,17 +194,11 @@ const DashboardPage = () => {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  {/* CHANGE 2: Preview opens new tab */}
-                  <button
-                    onClick={() => window.open(`/invitations/${inv.id}/preview`, "_blank")}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card font-body text-xs hover:bg-secondary transition-colors"
-                  >
-                    <Eye size={13} /> Preview
-                  </button>
-                  {inv.status === "PUBLISHED" && inv.code && inv.slug && (
+                  {/* View published invitation */}
+                  {inv.status === "PUBLISHED" && (inv.accessCode || inv.code) && inv.slug && (
                     <button
                       onClick={() =>
-                        window.open(`/${inv.code}/invite/${inv.slug}`, "_blank")
+                        window.open(`/${inv.accessCode || inv.code}/invite/${inv.slug}`, "_blank")
                       }
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card font-body text-xs hover:bg-secondary transition-colors"
                     >

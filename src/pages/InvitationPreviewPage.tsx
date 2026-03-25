@@ -3,13 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { getInvitationPreview } from "@/api/invitations";
 import { SAMPLE_INVITATION } from "@/mock/sampleInvitation";
-import InvitationHero from "@/components/invitation/HeroSection";
-import CoupleSection from "@/components/invitation/CoupleSection";
-import CountdownTimer from "@/components/invitation/CountdownTimer";
-import EventsSection from "@/components/invitation/EventsSection";
-import GallerySection from "@/components/invitation/GallerySection";
-import RsvpSection from "@/components/invitation/RsvpSection";
-import InvitationFooter from "@/components/invitation/InvitationFooter";
+import {
+  getTemplateComponent,
+  getTemplateTheme,
+  getTemplateMetadata,
+} from "@/templates";
+import { InvitationData, TemplateComponent } from "@/templates/types";
 import FloatingMusicPlayer from "@/components/invitation/FloatingMusicPlayer";
 import {
   Loader2,
@@ -32,10 +31,14 @@ const InvitationPreviewPage = () => {
   const { isAuthenticated } = useAuthStore();
   const [invitation, setInvitation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [templateLoading, setTemplateLoading] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState("");
   const [copiedLink, setCopiedLink] = useState(false);
+  const [TemplateComp, setTemplateComp] = useState<TemplateComponent | null>(
+    null,
+  );
   const isDevMode = import.meta.env.VITE_DEV_MODE === "true";
 
   useEffect(() => {
@@ -51,6 +54,35 @@ const InvitationPreviewPage = () => {
     };
     if (id) load();
   }, [id]);
+
+  // Load template component dynamically
+  useEffect(() => {
+    const loadTemplate = async () => {
+      if (!invitation) return;
+      setTemplateLoading(true);
+      try {
+        const templateId =
+          invitation.template?.id?.toString() ||
+          invitation.templateId?.toString() ||
+          "1";
+        const component = await getTemplateComponent(templateId);
+        if (component) {
+          setTemplateComp(() => component);
+        } else {
+          toast.error("Template not found");
+          setTemplateComp(null);
+        }
+      } catch (error) {
+        console.error("Failed to load template component:", error);
+        toast.error("Failed to load template");
+        setTemplateComp(null);
+      } finally {
+        setTemplateLoading(false);
+      }
+    };
+
+    loadTemplate();
+  }, [invitation]);
 
   const handlePublish = async () => {
     if (!invitation || !id) return;
@@ -117,7 +149,7 @@ const InvitationPreviewPage = () => {
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  if (loading) {
+  if (loading || templateLoading) {
     return (
       <div className="fixed inset-0 bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -125,52 +157,69 @@ const InvitationPreviewPage = () => {
     );
   }
 
-  if (!invitation) return null;
+  if (!invitation || !TemplateComp) return null;
 
   const effectiveMusicUrl =
     (invitation as any).effectiveMusicUrl || invitation.musicUrl;
 
-  // Map invitation data for rendering
-  const displayInvitation = {
-    ...SAMPLE_INVITATION,
-    ...invitation,
-    brideName: invitation.brideName || SAMPLE_INVITATION.brideName,
-    groomName: invitation.groomName || SAMPLE_INVITATION.groomName,
+  // Build invitation data for template component
+  const templateTheme = getTemplateTheme(
+    (invitation.template?.id || invitation.templateId || 1).toString(),
+  );
+
+  // Build invitation data in the format expected by template components
+  const invitationData: InvitationData = {
+    invitationId: parseInt(id || "0") || null,
+    templateId: invitation.template?.id || invitation.templateId || 1,
+    templateSlug: templateTheme,
+    brideName: invitation.brideName || "",
+    groomName: invitation.groomName || "",
     brideBio: invitation.invitationData?.bride_bio || invitation.brideBio || "",
     groomBio: invitation.invitationData?.groom_bio || invitation.groomBio || "",
+    couplePhotoUrl: invitation.couplePhotoUrl || null,
     hashtag: invitation.invitationData?.hashtag || invitation.hashtag || "",
     welcomeMessage:
       invitation.invitationData?.welcome_message ||
       invitation.welcomeMessage ||
       "",
+    showCountdown: invitation.invitationData?.show_countdown !== false,
     weddingDate:
       invitation.invitationData?.wedding_date || invitation.weddingDate || "",
-    showCountdown: invitation.invitationData?.show_countdown !== false,
-    templateTheme:
-      invitation.template?.themeKey || invitation.templateTheme || "crimson",
-    events: (invitation.events || []).map((e: any) => ({
-      eventName: e.eventName,
-      date: e.eventDate || e.date,
-      time: e.eventTime || e.time,
+    events: (invitation.events || []).map((e: any, i: number) => ({
+      id: e.id || i,
+      eventName: e.eventName || "",
+      eventDate: e.eventDate || e.date || "",
+      eventTime: e.eventTime || e.time || "",
       venueName: e.venueName || "",
       venueAddress: e.venueAddress || "",
-      mapsUrl: e.mapsUrl || "",
+      mapsUrl: e.mapsUrl || null,
     })),
-    galleryPhotos: (invitation.galleryPhotos || []).map((p: any) =>
-      typeof p === "string" ? p : p.photoUrl,
-    ),
-    musicUrl: effectiveMusicUrl,
-    musicName: invitation.musicName || "",
+    galleryPhotos: (invitation.galleryPhotos || []).map((p: any, i: number) => ({
+      photoUrl: typeof p === "string" ? p : p.photoUrl,
+      sortOrder: i,
+      isDefault: false,
+    })),
+    musicUrl: invitation.musicUrl || null,
+    musicName: invitation.musicName || null,
+    effectiveMusicUrl: effectiveMusicUrl,
+    effectiveMusicName: invitation.musicName || "",
+    locale: "en",
+    slug: invitation.slug || "",
+    accessCode: invitation.accessCode || invitation.code || null,
+    status: invitation.status || "DRAFT",
+    templateDefaults: {
+      defaultPhotos: invitation.template?.defaultPhotos || [],
+      defaultMusicUrl: invitation.template?.defaultMusicUrl || "",
+      defaultMusicName: invitation.template?.defaultMusicName || "",
+      defaultVideoUrl: null,
+    },
   };
 
   const isFree = invitation.template?.isFree;
   const priceInr = invitation.template?.priceInr || 0;
 
   return (
-    <div
-      data-theme={displayInvitation.templateTheme}
-      className="min-h-screen bg-background text-foreground"
-    >
+    <div>
       {/* Dev mode banner */}
       {isDevMode && (
         <div className="fixed top-0 left-0 right-0 z-[60] bg-[hsl(45,100%,50%)] text-[hsl(45,80%,15%)] font-body text-xs px-4 py-1.5 text-center font-medium">
@@ -178,7 +227,7 @@ const InvitationPreviewPage = () => {
         </div>
       )}
 
-      {/* Top bar */}
+      {/* Fixed Top bar overlay */}
       <div
         className={`fixed ${isDevMode ? "top-7" : "top-0"} left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border h-12 flex items-center justify-between px-4`}
       >
@@ -219,28 +268,18 @@ const InvitationPreviewPage = () => {
         </div>
       </div>
 
-      {/* Content */}
-      <div className={isDevMode ? "pt-[4.75rem]" : "pt-12"}>
-        <InvitationHero invitation={displayInvitation} />
-        <CoupleSection invitation={displayInvitation} />
-        <CountdownTimer invitation={displayInvitation} />
-        {displayInvitation.events && displayInvitation.events.length > 0 && (
-          <EventsSection invitation={displayInvitation} />
-        )}
-        {displayInvitation.galleryPhotos &&
-          displayInvitation.galleryPhotos.length > 0 && (
-            <GallerySection invitation={displayInvitation} />
-          )}
-        <RsvpSection invitation={displayInvitation} />
-        <InvitationFooter invitation={displayInvitation} />
-      </div>
-
-      {effectiveMusicUrl && (
-        <FloatingMusicPlayer
-          musicUrl={effectiveMusicUrl}
-          musicName={displayInvitation.musicName}
+      {/* Render the dynamically loaded template component */}
+      <div className={isDevMode ? "pt-7" : ""}>
+        <TemplateComp
+          mode="view"
+          data={invitationData}
+          onUpdate={() => {}} // No-op for preview mode
+          onSaveDraft={async () => null} // No-op for preview mode
+          onPublish={handlePublish}
+          isSaving={false}
+          isPublishing={publishing}
         />
-      )}
+      </div>
 
       {/* Success Overlay */}
       <AnimatePresence>

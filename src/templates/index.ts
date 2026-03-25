@@ -7,6 +7,7 @@ const BlossomDateTemplate = () => import('./blossom-date/BlossomDateTemplate');
 const MidnightNawabTemplate = () => import('./midnight-nawab/MidnightNawabTemplate');
 const GoldenMemoTemplate = () => import('./golden-memo/GoldenMemoTemplate');
 const BlushAffairTemplate = () => import('./blush-affair/BlushAffairTemplate');
+const FincaOliveTemplate = () => import('./finca-olive/FincaOliveTemplate');
 
 // Registry mapping template slug/id to metadata
 const templateRegistry: Record<string, TemplateRegistryEntry & { loader: () => Promise<{ default: TemplateComponent }> }> = {
@@ -94,6 +95,20 @@ const templateRegistry: Record<string, TemplateRegistryEntry & { loader: () => P
     theme: 'blush',
     category: 'Engagement',
   },
+  'finca': {
+    loader: FincaOliveTemplate,
+    component: null as unknown as TemplateComponent,
+    name: 'Finca Olive',
+    theme: 'finca',
+    category: 'Wedding',
+  },
+  'finca-olive': {
+    loader: FincaOliveTemplate,
+    component: null as unknown as TemplateComponent,
+    name: 'Finca Olive',
+    theme: 'finca',
+    category: 'Wedding',
+  },
 };
 
 // Map numeric IDs to slugs (for API compatibility)
@@ -104,6 +119,7 @@ const idToSlugMap: Record<string, string> = {
   '4': 'midnight',
   '5': 'golden',
   '6': 'blush',
+  '7': 'finca',
 };
 
 /**

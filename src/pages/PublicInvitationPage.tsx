@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getTemplateComponent, getTemplateTheme } from '@/templates';
+import { getTemplateComponent } from '@/templates';
 import { InvitationData, TemplateComponent, PhotoData, EventData } from '@/templates/types';
 import { getInvitationBySlug } from '@/api/invitations';
 import { SAMPLE_INVITATION } from '@/mock/sampleInvitation';
 import api from '@/api/axios';
-import { Heart, Loader2 } from 'lucide-react';
+import { Heart } from 'lucide-react';
 
 const PublicInvitationPage = () => {
   const { code, slug } = useParams<{ code: string; slug: string }>();
@@ -19,12 +19,6 @@ const PublicInvitationPage = () => {
       try {
         setLoading(true);
 
-          // Fire and forget view recording
-          if (data.id) {
-            api.post(`/api/invitations/${data.id}/view`).catch(() => {});
-            api.get(`/api/invitations/${data.id}/view-count`)
-              .then(res => setViewCount(res.data?.count))
-              .catch(() => {});
         // 1. Fetch invitation data
         let invitation;
         if (code && slug) {

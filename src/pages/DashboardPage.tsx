@@ -234,11 +234,6 @@ const DashboardPage = () => {
                     </>
                   )}
                   {inv.status === "DRAFT" && (
-                    <button
-                      onClick={() => window.open(`/invitations/${inv.id}/preview`, "_blank")}
-                      className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg btn-gold font-body text-xs"
-                    >
-                      <Sparkles size={13} /> Publish
                     <button 
                       onClick={() => navigate(`/edit/${inv.id}`)}
                       className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg btn-gold font-body text-xs"

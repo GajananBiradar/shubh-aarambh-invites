@@ -30,7 +30,6 @@ const PublicInvitationPage = () => {
           // Fire and forget view recording
           if (data.id) {
             api.post(`/api/invitations/${data.id}/view`).catch(() => {});
-            // Fetch view count
             api.get(`/api/invitations/${data.id}/view-count`)
               .then(res => setViewCount(res.data?.count))
               .catch(() => {});

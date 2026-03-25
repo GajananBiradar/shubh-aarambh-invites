@@ -14,6 +14,7 @@ import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import DashboardPage from "./pages/DashboardPage";
 import CreateInvitationPage from "./pages/CreateInvitationPage";
 import EditInvitationPage from "./pages/EditInvitationPage";
+import InvitationPreviewPage from "./pages/InvitationPreviewPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

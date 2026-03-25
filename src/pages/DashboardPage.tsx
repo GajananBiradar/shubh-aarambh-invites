@@ -149,21 +149,23 @@ const DashboardPage = () => {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() =>
-                      window.open(`/${inv.code}/invite/${inv.slug}`, "_blank")
-                    }
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card font-body text-xs hover:bg-secondary transition-colors"
-                  >
-                    <Eye size={13} /> Preview
-                  </button>
+                  {inv.status === "PUBLISHED" && inv.code && inv.slug && (
+                    <button
+                      onClick={() =>
+                        window.open(`/${inv.code}/invite/${inv.slug}`, "_blank")
+                      }
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card font-body text-xs hover:bg-secondary transition-colors"
+                    >
+                      <Eye size={13} /> View
+                    </button>
+                  )}
                   <button
                     onClick={() => navigate(`/edit/${inv.id}`)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card font-body text-xs hover:bg-secondary transition-colors"
                   >
                     <Pencil size={13} /> Edit
                   </button>
-                  {inv.status === "PUBLISHED" && (
+                  {inv.status === "PUBLISHED" && inv.code && inv.slug && (
                     <>
                       <button
                         onClick={() => copyLink(inv.code || "", inv.slug)}
@@ -175,13 +177,16 @@ const DashboardPage = () => {
                         onClick={() => shareWhatsApp(inv)}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(142,70%,40%)] text-white font-body text-xs hover:opacity-90 transition-opacity"
                       >
-                        💚 WhatsApp
+                        Share
                       </button>
                     </>
                   )}
                   {inv.status === "DRAFT" && (
-                    <button className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg btn-gold font-body text-xs">
-                      <Sparkles size={13} /> Publish
+                    <button 
+                      onClick={() => navigate(`/edit/${inv.id}`)}
+                      className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg btn-gold font-body text-xs"
+                    >
+                      <Sparkles size={13} /> Continue Editing
                     </button>
                   )}
                 </div>

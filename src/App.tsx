@@ -14,6 +14,7 @@ import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import DashboardPage from "./pages/DashboardPage";
 import CreateInvitationPage from "./pages/CreateInvitationPage";
 import EditInvitationPage from "./pages/EditInvitationPage";
+import InvitationPreviewPage from "./pages/InvitationPreviewPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const AppInner = () => {
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/create/:templateId" element={<CreateInvitationPage />} />
       <Route path="/edit/:invitationId" element={<EditInvitationPage />} />
+      <Route path="/invitations/:id/preview" element={<InvitationPreviewPage />} />
       <Route path="/:code/invite/:slug" element={<PublicInvitationPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

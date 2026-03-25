@@ -1,9 +1,9 @@
 import api from './axios';
 import { Template } from '@/types';
 
-export const getTemplates = async (filters?: Record<string, string>): Promise<Template[]> => {
+export const getTemplates = async (): Promise<Template[]> => {
   try {
-    const { data } = await api.get('/api/templates', { params: filters });
+    const { data } = await api.get('/api/templates');
     return data;
   } catch (error) {
     console.error('Failed to fetch templates:', error);

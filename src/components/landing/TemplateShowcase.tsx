@@ -156,13 +156,13 @@ const TemplateCard = ({ template }: { template: Template }) => {
 const TemplateShowcase = () => {
   const navigate = useNavigate();
   const {
-    data: templates = [],
+    data: templates = [] as Template[],
     isLoading,
     isError,
     error,
-  } = useQuery({
+  } = useQuery<Template[]>({
     queryKey: ["templates"],
-    queryFn: getTemplates,
+    queryFn: () => getTemplates(),
   });
 
   const visibleTemplates = templates.slice(0, 6);

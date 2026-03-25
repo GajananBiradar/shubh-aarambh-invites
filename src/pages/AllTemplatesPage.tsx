@@ -140,13 +140,13 @@ const AllTemplatesPage = () => {
   }, []);
 
   const {
-    data: templates = [],
+    data: templates = [] as Template[],
     isLoading,
     isError,
     error,
-  } = useQuery({
+  } = useQuery<Template[]>({
     queryKey: ["templates"],
-    queryFn: getTemplates,
+    queryFn: () => getTemplates(),
   });
 
   // Extract unique tags from templates

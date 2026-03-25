@@ -59,12 +59,11 @@ export const recordView = async (code: string, slug: string): Promise<void> => {
   } catch { /* fire and forget */ }
 };
 
-// Legacy
-export const checkPayment = async (templateId: string): Promise<boolean> => {
-  try {
-    const { data } = await api.get(`/api/payments/check?templateId=${templateId}`);
-    return data.hasPaid;
-  } catch {
-    return import.meta.env.VITE_DEV_MODE === 'true';
-  }
+export const deleteInvitation = async (id: string): Promise<void> => {
+  await api.delete(`/api/invitations/${id}`);
+};
+
+export const getInvitationById = async (id: string): Promise<any> => {
+  const { data } = await api.get(`/api/invitations/${id}`);
+  return data;
 };

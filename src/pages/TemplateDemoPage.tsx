@@ -1,22 +1,20 @@
-import { useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { SAMPLE_INVITATION, SAMPLE_TEMPLATES } from '@/mock/sampleInvitation';
-import { getTemplateDemoData, getTemplateById } from '@/api/templates';
-import InvitationHero from '@/components/invitation/HeroSection';
-import CoupleSection from '@/components/invitation/CoupleSection';
-import CountdownTimer from '@/components/invitation/CountdownTimer';
-import EventsSection from '@/components/invitation/EventsSection';
-import GallerySection from '@/components/invitation/GallerySection';
-import RsvpSection from '@/components/invitation/RsvpSection';
-import InvitationFooter from '@/components/invitation/InvitationFooter';
-import FloatingMusicPlayer from '@/components/invitation/FloatingMusicPlayer';
-import { Sparkles } from 'lucide-react';
+import { getTemplateComponent, getTemplateTheme, getTemplateMetadata } from '@/templates';
+import { InvitationData, TemplateComponent } from '@/templates/types';
+import { getTemplateById, getTemplateDemoData } from '@/api/templates';
+import { SAMPLE_TEMPLATES } from '@/mock/sampleInvitation';
 import { usePayment } from '@/hooks/usePayment';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Loader2, Sparkles } from 'lucide-react';
 
 const TemplateDemoPage = () => {
   const { templateId } = useParams<{ templateId: string }>();
+  const navigate = useNavigate();
   const { triggerPaymentFlow } = usePayment();
+
+  const [TemplateComp, setTemplateComp] = useState<TemplateComponent | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Fetch real template data
   const { data: template, isLoading: templateLoading } = useQuery({
@@ -31,24 +29,77 @@ const TemplateDemoPage = () => {
     queryFn: () => getTemplateDemoData(templateId || '1'),
   });
 
-  const isLoading = templateLoading || demoLoading;
+  // Load template component
+  useEffect(() => {
+    const loadTemplate = async () => {
+      if (!templateId) return;
+      
+      setLoading(true);
+      const component = await getTemplateComponent(templateId);
+      if (component) {
+        setTemplateComp(() => component);
+      }
+      setLoading(false);
+    };
 
-  // Merge demo data with sample couple data
-  const events = demoData?.events?.map((e: any) => ({
-    id: e.eventName,
-    eventName: e.eventName,
-    date: e.eventDate,
-    time: e.eventTime,
-    venueName: '',
-    venueAddress: '',
-    mapsUrl: '',
-  })) || SAMPLE_INVITATION.events;
+    loadTemplate();
+  }, [templateId]);
 
-  const invitation = {
-    ...SAMPLE_INVITATION,
-    templateTheme: template?.theme || SAMPLE_TEMPLATES[0].theme,
-    events,
-    musicUrl: demoData?.musicUrl || SAMPLE_INVITATION.musicUrl,
+  const isLoading = loading || templateLoading || demoLoading;
+
+  // Build demo invitation data
+  const theme = getTemplateTheme(templateId || '1');
+  const metadata = getTemplateMetadata(templateId || '1');
+
+  const demoInvitationData: InvitationData = {
+    invitationId: null,
+    templateId: parseInt(templateId || '1'),
+    templateSlug: theme,
+    brideName: 'Ananya',
+    groomName: 'Vikram',
+    brideBio: 'Designer who paints sunsets & dreams',
+    groomBio: 'Architect who builds worlds & love',
+    couplePhotoUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800',
+    hashtag: '#AnanyaWedVikram',
+    welcomeMessage: 'Together with their families, Ananya & Vikram joyfully invite you to be part of their celebration of love and new beginnings.',
+    showCountdown: true,
+    weddingDate: '2026-02-14',
+    events: (demoData?.events || [
+      { eventName: 'Haldi', eventDate: '2026-02-11', eventTime: '10:00:00', venueName: 'Sharma Residence', venueAddress: 'Banjara Hills, Hyderabad', mapsUrl: 'https://maps.google.com' },
+      { eventName: 'Mehendi', eventDate: '2026-02-12', eventTime: '17:00:00', venueName: 'The Garden Club', venueAddress: 'Jubilee Hills, Hyderabad', mapsUrl: 'https://maps.google.com' },
+      { eventName: 'Sangeet', eventDate: '2026-02-13', eventTime: '19:00:00', venueName: 'Taj Deccan', venueAddress: 'Road No 1, Hyderabad', mapsUrl: 'https://maps.google.com' },
+      { eventName: 'Wedding', eventDate: '2026-02-14', eventTime: '08:00:00', venueName: 'Kalyana Mandapam', venueAddress: 'Secunderabad, Hyderabad', mapsUrl: 'https://maps.google.com' },
+    ]).map((e: any, i: number) => ({
+      id: i,
+      eventName: e.eventName,
+      eventDate: e.eventDate,
+      eventTime: e.eventTime,
+      venueName: e.venueName || '',
+      venueAddress: e.venueAddress || '',
+      mapsUrl: e.mapsUrl || null,
+    })),
+    galleryPhotos: [
+      'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600',
+      'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600',
+      'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=600',
+      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600',
+      'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600',
+      'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600',
+    ].map((url, i) => ({ photoUrl: url, sortOrder: i, isDefault: true })),
+    musicUrl: null,
+    musicName: null,
+    effectiveMusicUrl: demoData?.musicUrl || 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+    effectiveMusicName: metadata?.name ? `${metadata.name} BGM` : 'Wedding BGM',
+    locale: 'en',
+    slug: 'ananya-weds-vikram',
+    accessCode: 'DEMO',
+    status: 'PUBLISHED',
+    templateDefaults: {
+      defaultPhotos: [],
+      defaultMusicUrl: demoData?.musicUrl || '',
+      defaultMusicName: '',
+      defaultVideoUrl: null,
+    },
   };
 
   const showWatermark = demoData?.showWatermark !== false;
@@ -56,31 +107,29 @@ const TemplateDemoPage = () => {
   const priceInr = template?.priceInr ?? 0;
 
   const ctaText = isFree
-    ? '✨ Start Free — No Payment Needed'
-    : `✨ Use This Template — ₹${priceInr}`;
+    ? 'Start Free — No Payment Needed'
+    : `Use This Template — ₹${priceInr}`;
 
-  if (isLoading) {
+  if (isLoading || !TemplateComp) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Skeleton className="h-8 w-48 mx-auto" />
-          <Skeleton className="h-4 w-32 mx-auto" />
-        </div>
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
 
   return (
-    <div data-theme={template?.theme || 'crimson'} className="min-h-screen bg-background text-foreground">
+    <div data-theme={theme} className="min-h-screen bg-background text-foreground">
       {/* Top bar */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border h-12 flex items-center justify-between px-4">
         <span className="font-body text-sm text-foreground font-medium">
-          {demoData?.templateName || template?.name || 'Template'} · <span className="text-muted-foreground">DEMO PREVIEW</span>
+          {metadata?.name || 'Template'} · <span className="text-muted-foreground">DEMO PREVIEW</span>
         </span>
         <button
           onClick={() => triggerPaymentFlow(template?.id || '1')}
           className={`${isFree ? 'btn-emerald' : 'btn-gold'} px-4 py-1.5 rounded-lg text-xs flex items-center gap-1.5`}
         >
+          <Sparkles size={12} />
           {ctaText}
         </button>
       </div>
@@ -89,17 +138,15 @@ const TemplateDemoPage = () => {
       {showWatermark && <div className="demo-watermark" />}
 
       <div className="pt-12">
-        <InvitationHero invitation={invitation} />
-        <CoupleSection invitation={invitation} />
-        <CountdownTimer invitation={invitation} />
-        {invitation.events && invitation.events.length > 0 && (
-          <EventsSection invitation={invitation} />
-        )}
-        {invitation.galleryPhotos && invitation.galleryPhotos.length > 0 && (
-          <GallerySection invitation={invitation} />
-        )}
-        <RsvpSection invitation={invitation} isDemo />
-        <InvitationFooter invitation={invitation} />
+        <TemplateComp
+          mode="demo"
+          data={demoInvitationData}
+          onUpdate={() => {}}
+          onSaveDraft={() => {}}
+          onPublish={() => {}}
+          isSaving={false}
+          isPublishing={false}
+        />
       </div>
 
       {/* Bottom CTA bar */}
@@ -115,8 +162,6 @@ const TemplateDemoPage = () => {
           </button>
         </div>
       </div>
-
-      <FloatingMusicPlayer musicUrl={invitation.musicUrl} musicName={demoData?.templateName ? `${demoData.templateName} BGM` : '✨ Sample Wedding BGM'} />
     </div>
   );
 };

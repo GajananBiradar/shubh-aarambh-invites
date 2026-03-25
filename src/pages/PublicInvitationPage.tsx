@@ -19,6 +19,12 @@ const PublicInvitationPage = () => {
       try {
         setLoading(true);
 
+          // Fire and forget view recording
+          if (data.id) {
+            api.post(`/api/invitations/${data.id}/view`).catch(() => {});
+            api.get(`/api/invitations/${data.id}/view-count`)
+              .then(res => setViewCount(res.data?.count))
+              .catch(() => {});
         // 1. Fetch invitation data
         let invitation;
         if (code && slug) {

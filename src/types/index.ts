@@ -57,7 +57,7 @@ export interface Template {
   priceInr: number;
   isFree: boolean;
   isPremium?: boolean;
-  tags: string[];
+  tags: any[];
   previewImage: string;
 }
 

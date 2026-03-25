@@ -1,12 +1,37 @@
 import api from './axios';
 import { PaymentOrder, PaymentVerification } from '@/types';
 
+export interface PaymentCheckResponse {
+  hasPaid: boolean;
+  isFreeUser: boolean;
+  isFreeTemplate: boolean;
+  requiresPayment: boolean;
+}
+
 export const checkPayment = async (templateId: string): Promise<boolean> => {
   try {
     const { data } = await api.get(`/api/payments/check?templateId=${templateId}`);
     return data.hasPaid;
   } catch {
     return import.meta.env.VITE_DEV_MODE === 'true';
+  }
+};
+
+export const checkPaymentStatus = async (templateId: string): Promise<PaymentCheckResponse> => {
+  try {
+    const { data } = await api.get(`/api/payments/check?templateId=${templateId}`);
+    return data;
+  } catch {
+    // In dev mode, assume no payment required
+    if (import.meta.env.VITE_DEV_MODE === 'true') {
+      return {
+        hasPaid: true,
+        isFreeUser: true,
+        isFreeTemplate: true,
+        requiresPayment: false,
+      };
+    }
+    throw new Error('Failed to check payment status');
   }
 };
 

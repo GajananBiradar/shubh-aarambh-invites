@@ -27,7 +27,7 @@ interface UseInvitationEditorReturn {
   removeEvent: (index: number) => void;
   
   // Actions
-  saveDraft: () => Promise<boolean>;
+  saveDraft: () => Promise<string | null>;
   publish: () => Promise<boolean>;
   
   // Success state
@@ -56,7 +56,7 @@ export const useInvitationEditor = ({
 
   // Autosave effect
   useEffect(() => {
-    if (autosaveDelay > 0 && isDirty && data.invitationId) {
+    if (autosaveDelay > 0 && isDirty) {
       if (autosaveTimerRef.current) {
         clearTimeout(autosaveTimerRef.current);
       }
@@ -72,6 +72,13 @@ export const useInvitationEditor = ({
       }
     };
   }, [isDirty, data, autosaveDelay]);
+
+  // Persist to localStorage for page refresh recovery
+  useEffect(() => {
+    if (data) {
+      localStorage.setItem(`invitation-draft-${data.templateId}-${data.invitationId || 'new'}`, JSON.stringify(data));
+    }
+  }, [data]);
 
   // Update data
   const updateData = useCallback((updates: Partial<InvitationData>) => {
@@ -214,6 +221,10 @@ export const useInvitationEditor = ({
         const res = await api.post('/api/invitations', body);
         const newId = res.data.id;
         setData(prev => ({ ...prev, invitationId: newId }));
+        
+        // Clear localStorage draft after first save
+        localStorage.removeItem(`invitation-draft-${data.templateId}-new`);
+        
         if (showToast) toast.success('Draft saved!');
         setIsDirty(false);
         return String(newId);
@@ -225,7 +236,7 @@ export const useInvitationEditor = ({
   };
 
   // Save draft
-  const saveDraft = useCallback(async (): Promise<boolean> => {
+  const saveDraft = useCallback(async (): Promise<string | null> => {
     setIsSaving(true);
     setHasError(false);
     setErrorMessages([]);
@@ -233,7 +244,7 @@ export const useInvitationEditor = ({
     const savedId = await saveDraftInternal(true);
 
     setIsSaving(false);
-    return savedId !== null;
+    return savedId;
   }, [saveDraftInternal]);
 
   // Publish

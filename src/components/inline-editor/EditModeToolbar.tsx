@@ -1,44 +1,66 @@
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Save, Sparkles, Loader2, Check, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import {
+  ArrowLeft,
+  Save,
+  Sparkles,
+  Loader2,
+  Check,
+  AlertCircle,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface EditModeToolbarProps {
   onSaveDraft: () => void;
   onPublish: () => void;
+  onPreview?: () => void;
   isSaving: boolean;
   isPublishing: boolean;
   invitationId: number | null;
   hasUnsavedChanges: boolean;
   className?: string;
+  showPreviewMode?: boolean;
 }
 
 const EditModeToolbar = ({
   onSaveDraft,
   onPublish,
+  onPreview,
   isSaving,
   isPublishing,
   invitationId,
   hasUnsavedChanges,
-  className = '',
+  className = "",
+  showPreviewMode = false,
 }: EditModeToolbarProps) => {
   const isDisabled = isSaving || isPublishing;
 
+  // Handle back button - save draft first
+  const handleBack = async (e: React.MouseEvent) => {
+    if (hasUnsavedChanges) {
+      e.preventDefault();
+      await onSaveDraft();
+    }
+    // Navigate after save completes
+    window.location.href = "/templates";
+  };
+
   return (
-    <div className={cn(
-      'fixed bottom-0 left-0 right-0 z-50',
-      'bg-card/95 backdrop-blur-xl border-t border-border',
-      'px-4 py-3 safe-area-bottom',
-      className
-    )}>
+    <div
+      className={cn(
+        "fixed bottom-0 left-0 right-0 z-50",
+        "bg-card/95 backdrop-blur-xl border-t border-border",
+        "px-4 py-3 safe-area-bottom",
+        className,
+      )}
+    >
       <div className="container mx-auto max-w-4xl flex items-center justify-between gap-3">
-        {/* Left: Back link */}
-        <Link
-          to="/templates"
-          className="flex items-center gap-1.5 font-body text-sm text-muted-foreground hover:text-foreground transition-colors"
+        {/* Left: Back button with auto-save */}
+        <button
+          onClick={handleBack}
+          className="flex items-center gap-1.5 font-body text-sm text-muted-foreground hover:text-foreground transition-colors bg-transparent border-none cursor-pointer"
         >
           <ArrowLeft size={16} />
           <span className="hidden sm:inline">Back to Templates</span>
-        </Link>
+        </button>
 
         {/* Center: Action buttons */}
         <div className="flex items-center gap-2">
@@ -46,10 +68,10 @@ const EditModeToolbar = ({
             onClick={onSaveDraft}
             disabled={isDisabled}
             className={cn(
-              'flex items-center gap-1.5 px-4 py-2 rounded-xl',
-              'font-body text-sm font-medium',
-              'border border-border bg-card hover:bg-secondary transition-colors',
-              isDisabled && 'opacity-50 cursor-not-allowed'
+              "flex items-center gap-1.5 px-4 py-2 rounded-xl",
+              "font-body text-sm font-medium",
+              "border border-border bg-card hover:bg-secondary transition-colors",
+              isDisabled && "opacity-50 cursor-not-allowed",
             )}
           >
             {isSaving ? (
@@ -66,24 +88,26 @@ const EditModeToolbar = ({
           </button>
 
           <button
-            onClick={onPublish}
+            onClick={showPreviewMode && onPreview ? onPreview : onPublish}
             disabled={isDisabled}
             className={cn(
-              'flex items-center gap-1.5 px-5 py-2 rounded-xl',
-              'font-body text-sm font-medium',
-              'btn-gold',
-              isDisabled && 'opacity-50 cursor-not-allowed'
+              "flex items-center gap-1.5 px-5 py-2 rounded-xl",
+              "font-body text-sm font-medium",
+              showPreviewMode ? "btn-outline-accent" : "btn-gold",
+              isDisabled && "opacity-50 cursor-not-allowed",
             )}
           >
             {isPublishing ? (
               <>
                 <Loader2 size={14} className="animate-spin" />
-                <span>Publishing...</span>
+                <span>
+                  {showPreviewMode ? "Loading Preview..." : "Publishing..."}
+                </span>
               </>
             ) : (
               <>
                 <Sparkles size={14} />
-                <span>Publish</span>
+                <span>{showPreviewMode ? "Preview" : "Publish"}</span>
               </>
             )}
           </button>

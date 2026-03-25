@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Heart, MapPin, Check, X, Copy, Eye } from 'lucide-react';
-import { TemplateProps, EventData } from '@/templates/types';
+import { useMemo, useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown, Heart, MapPin, Check, X, Copy, Eye } from "lucide-react";
+import { TemplateProps, EventData } from "@/templates/types";
 import {
   EditableText,
   EditablePhoto,
@@ -10,19 +10,23 @@ import {
   EditablePhotoGallery,
   EditableMusicPlayer,
   EditModeToolbar,
-} from '@/components/inline-editor';
-import FloatingMusicPlayer from '@/components/invitation/FloatingMusicPlayer';
-import { formatWeddingDate, formatEventDate, formatTime } from '@/utils/formatDate';
-import { cn } from '@/lib/utils';
+} from "@/components/inline-editor";
+import FloatingMusicPlayer from "@/components/invitation/FloatingMusicPlayer";
+import {
+  formatWeddingDate,
+  formatEventDate,
+  formatTime,
+} from "@/utils/formatDate";
+import { cn } from "@/lib/utils";
 
 // Event icons mapping
 const eventIcons: Record<string, string> = {
-  Haldi: '🌼',
-  Mehendi: '🌿',
-  Sangeet: '🎵',
-  Wedding: '💒',
-  Reception: '🥂',
-  Engagement: '💍',
+  Haldi: "🌼",
+  Mehendi: "🌿",
+  Sangeet: "🎵",
+  Wedding: "💒",
+  Reception: "🥂",
+  Engagement: "💍",
 };
 
 const CrimsonShaadiTemplate = ({
@@ -37,19 +41,29 @@ const CrimsonShaadiTemplate = ({
   const [copiedLink, setCopiedLink] = useState(false);
 
   // Generate petals for hero animation
-  const petals = useMemo(() => Array.from({ length: 14 }, (_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    size: 8 + Math.random() * 12,
-    opacity: 0.3 + Math.random() * 0.5,
-    duration: 7 + Math.random() * 8,
-    delay: Math.random() * 10,
-    drift: -80 + Math.random() * 160,
-  })), []);
+  const petals = useMemo(
+    () =>
+      Array.from({ length: 14 }, (_, i) => ({
+        id: i,
+        left: `${Math.random() * 100}%`,
+        size: 8 + Math.random() * 12,
+        opacity: 0.3 + Math.random() * 0.5,
+        duration: 7 + Math.random() * 8,
+        delay: Math.random() * 10,
+        drift: -80 + Math.random() * 160,
+      })),
+    [],
+  );
 
   // Effective music URL
-  const effectiveMusicUrl = data.musicUrl || data.effectiveMusicUrl || data.templateDefaults.defaultMusicUrl;
-  const effectiveMusicName = data.musicName || data.effectiveMusicName || data.templateDefaults.defaultMusicName;
+  const effectiveMusicUrl =
+    data.musicUrl ||
+    data.effectiveMusicUrl ||
+    data.templateDefaults.defaultMusicUrl;
+  const effectiveMusicName =
+    data.musicName ||
+    data.effectiveMusicName ||
+    data.templateDefaults.defaultMusicName;
 
   // Calculate countdown
   const getCountdown = () => {
@@ -78,14 +92,17 @@ const CrimsonShaadiTemplate = ({
   };
 
   return (
-    <div data-theme="crimson" className="min-h-screen bg-background text-foreground">
+    <div
+      data-theme="crimson"
+      className="min-h-screen bg-background text-foreground"
+    >
       {/* ═══════════════════════════════════════
           HERO SECTION
           ═══════════════════════════════════════ */}
       <section className="relative min-h-[100dvh] flex flex-col items-center justify-center overflow-hidden">
         {/* Background Photo */}
         <div className="absolute inset-0">
-          {mode === 'edit' ? (
+          {mode === "edit" ? (
             <EditablePhoto
               photoUrl={data.couplePhotoUrl}
               onSave={(url) => onUpdate({ couplePhotoUrl: url })}
@@ -107,20 +124,22 @@ const CrimsonShaadiTemplate = ({
 
         {/* Floating Petals */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {petals.map(p => (
+          {petals.map((p) => (
             <div
               key={p.id}
               className="absolute rounded-full animate-petal"
-              style={{
-                left: p.left,
-                width: p.size,
-                height: p.size,
-                background: `radial-gradient(circle, hsl(var(--primary) / 0.6), hsl(var(--accent) / 0.4))`,
-                '--petal-opacity': p.opacity,
-                '--fall-duration': `${p.duration}s`,
-                '--fall-delay': `${p.delay}s`,
-                '--drift': `${p.drift}px`,
-              } as React.CSSProperties}
+              style={
+                {
+                  left: p.left,
+                  width: p.size,
+                  height: p.size,
+                  background: `radial-gradient(circle, hsl(var(--primary) / 0.6), hsl(var(--accent) / 0.4))`,
+                  "--petal-opacity": p.opacity,
+                  "--fall-duration": `${p.duration}s`,
+                  "--fall-delay": `${p.delay}s`,
+                  "--drift": `${p.drift}px`,
+                } as React.CSSProperties
+              }
             />
           ))}
         </div>
@@ -196,9 +215,11 @@ const CrimsonShaadiTemplate = ({
           />
 
           {/* Wedding Date */}
-          {mode === 'edit' ? (
+          {mode === "edit" ? (
             <div className="mt-4">
-              <label className="font-body text-xs text-card-foreground/70 block mb-1">Wedding Date</label>
+              <label className="font-body text-xs text-card-foreground/70 block mb-1">
+                Wedding Date
+              </label>
               <input
                 type="date"
                 value={data.weddingDate}
@@ -221,10 +242,12 @@ const CrimsonShaadiTemplate = ({
         {/* Scroll indicator */}
         <motion.div
           animate={{ y: [0, 10, 0] }}
-          transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
           className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 text-center"
         >
-          <p className="font-body text-xs text-card-foreground/70 mb-2">Open Invitation</p>
+          <p className="font-body text-xs text-card-foreground/70 mb-2">
+            Open Invitation
+          </p>
           <ChevronDown className="w-6 h-6 text-card-foreground/70 mx-auto" />
         </motion.div>
       </section>
@@ -235,8 +258,8 @@ const CrimsonShaadiTemplate = ({
       <motion.section
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-80px' }}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
         className="py-16 bg-background"
       >
         <div className="container mx-auto px-4 max-w-2xl">
@@ -260,7 +283,9 @@ const CrimsonShaadiTemplate = ({
                 shape="circle"
                 alt={data.brideName}
               />
-              <h3 className="font-heading text-lg font-semibold">{data.brideName || 'Bride'}</h3>
+              <h3 className="font-heading text-lg font-semibold">
+                {data.brideName || "Bride"}
+              </h3>
               <EditableText
                 value={data.brideBio}
                 onSave={(val) => onUpdate({ brideBio: val })}
@@ -275,7 +300,11 @@ const CrimsonShaadiTemplate = ({
             {/* Heart & Hashtag */}
             <motion.div
               animate={{ scale: [1, 1.15, 1] }}
-              transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+              transition={{
+                repeat: Infinity,
+                duration: 1.5,
+                ease: "easeInOut",
+              }}
               className="text-center"
             >
               <Heart className="w-8 h-8 text-primary fill-primary mx-auto" />
@@ -305,7 +334,9 @@ const CrimsonShaadiTemplate = ({
                 shape="circle"
                 alt={data.groomName}
               />
-              <h3 className="font-heading text-lg font-semibold">{data.groomName || 'Groom'}</h3>
+              <h3 className="font-heading text-lg font-semibold">
+                {data.groomName || "Groom"}
+              </h3>
               <EditableText
                 value={data.groomBio}
                 onSave={(val) => onUpdate({ groomBio: val })}
@@ -336,7 +367,7 @@ const CrimsonShaadiTemplate = ({
       {/* ═══════════════════════════════════════
           COUNTDOWN SECTION
           ═══════════════════════════════════════ */}
-      {(data.showCountdown || mode === 'edit') && (
+      {(data.showCountdown || mode === "edit") && (
         <motion.section
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -345,27 +376,33 @@ const CrimsonShaadiTemplate = ({
           className="py-16 bg-muted/30"
         >
           <div className="container mx-auto px-4 max-w-2xl text-center">
-            {mode === 'edit' && (
+            {mode === "edit" && (
               <div className="mb-4 flex items-center justify-center gap-2">
                 <label className="font-body text-sm">Show Countdown</label>
                 <button
-                  onClick={() => onUpdate({ showCountdown: !data.showCountdown })}
+                  onClick={() =>
+                    onUpdate({ showCountdown: !data.showCountdown })
+                  }
                   className={cn(
-                    'w-10 h-6 rounded-full transition-colors',
-                    data.showCountdown ? 'bg-primary' : 'bg-muted'
+                    "w-10 h-6 rounded-full transition-colors",
+                    data.showCountdown ? "bg-primary" : "bg-muted",
                   )}
                 >
-                  <div className={cn(
-                    'w-4 h-4 rounded-full bg-white transition-transform mx-1',
-                    data.showCountdown && 'translate-x-4'
-                  )} />
+                  <div
+                    className={cn(
+                      "w-4 h-4 rounded-full bg-white transition-transform mx-1",
+                      data.showCountdown && "translate-x-4",
+                    )}
+                  />
                 </button>
               </div>
             )}
 
             {data.showCountdown && (
               <>
-                <h2 className="font-heading text-2xl font-bold mb-8">Counting Down To Our Big Day</h2>
+                <h2 className="font-heading text-2xl font-bold mb-8">
+                  Counting Down To Our Big Day
+                </h2>
                 <CountdownDisplay weddingDate={data.weddingDate} />
               </>
             )}
@@ -379,14 +416,16 @@ const CrimsonShaadiTemplate = ({
       <motion.section
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-80px' }}
+        viewport={{ once: true, margin: "-80px" }}
         transition={{ duration: 0.8 }}
         className="py-16 bg-background"
       >
         <div className="container mx-auto px-4 max-w-3xl">
-          <h2 className="font-heading text-3xl font-bold text-center mb-10">Join Us For Our Celebrations</h2>
+          <h2 className="font-heading text-3xl font-bold text-center mb-10">
+            Join Us For Our Celebrations
+          </h2>
 
-          {mode === 'edit' ? (
+          {mode === "edit" ? (
             <div className="space-y-4">
               {data.events.map((event, i) => (
                 <EditableEventCard
@@ -409,11 +448,11 @@ const CrimsonShaadiTemplate = ({
                 onAdd={() => {
                   const newEvent: EventData = {
                     id: null,
-                    eventName: 'New Event',
-                    eventDate: '',
-                    eventTime: '',
-                    venueName: '',
-                    venueAddress: '',
+                    eventName: "New Event",
+                    eventDate: "",
+                    eventTime: "",
+                    venueName: "",
+                    venueAddress: "",
                     mapsUrl: null,
                   };
                   onUpdate({ events: [...data.events, newEvent] });
@@ -434,13 +473,22 @@ const CrimsonShaadiTemplate = ({
                   transition={{ delay: i * 0.15, duration: 0.6 }}
                   className="card-hover bg-card rounded-2xl p-6 border border-border"
                 >
-                  <div className="text-3xl mb-3">{eventIcons[event.eventName] || '✨'}</div>
-                  <h3 className="font-heading text-xl font-semibold mb-2">{event.eventName}</h3>
+                  <div className="text-3xl mb-3">
+                    {eventIcons[event.eventName] || "✨"}
+                  </div>
+                  <h3 className="font-heading text-xl font-semibold mb-2">
+                    {event.eventName}
+                  </h3>
                   <p className="font-body text-sm text-muted-foreground mb-1">
-                    {formatEventDate(event.eventDate)} · {formatTime(event.eventTime)}
+                    {formatEventDate(event.eventDate)} ·{" "}
+                    {formatTime(event.eventTime)}
                   </p>
-                  <p className="font-body text-sm font-medium mt-3">{event.venueName}</p>
-                  <p className="font-body text-xs text-muted-foreground">{event.venueAddress}</p>
+                  <p className="font-body text-sm font-medium mt-3">
+                    {event.venueName}
+                  </p>
+                  <p className="font-body text-xs text-muted-foreground">
+                    {event.venueAddress}
+                  </p>
                   {event.mapsUrl && (
                     <a
                       href={event.mapsUrl}
@@ -469,7 +517,9 @@ const CrimsonShaadiTemplate = ({
         className="py-16 bg-muted/30"
       >
         <div className="container mx-auto px-4 max-w-4xl">
-          <h2 className="font-heading text-3xl font-bold text-center mb-10">Our Gallery</h2>
+          <h2 className="font-heading text-3xl font-bold text-center mb-10">
+            Our Gallery
+          </h2>
           <EditablePhotoGallery
             photos={data.galleryPhotos}
             defaultPhotos={data.templateDefaults.defaultPhotos}
@@ -483,7 +533,7 @@ const CrimsonShaadiTemplate = ({
       {/* ═══════════════════════════════════════
           MUSIC SECTION (Edit mode only)
           ═══════════════════════════════════════ */}
-      {mode === 'edit' && (
+      {mode === "edit" && (
         <section className="py-16 bg-background">
           <div className="container mx-auto px-4 max-w-xl">
             <EditableMusicPlayer
@@ -491,7 +541,9 @@ const CrimsonShaadiTemplate = ({
               musicName={data.musicName}
               defaultMusicUrl={data.templateDefaults.defaultMusicUrl}
               defaultMusicName={data.templateDefaults.defaultMusicName}
-              onUpdate={(url, name) => onUpdate({ musicUrl: url, musicName: name })}
+              onUpdate={(url, name) =>
+                onUpdate({ musicUrl: url, musicName: name })
+              }
               mode={mode}
             />
           </div>
@@ -501,21 +553,27 @@ const CrimsonShaadiTemplate = ({
       {/* ═══════════════════════════════════════
           RSVP SECTION (View/Demo only)
           ═══════════════════════════════════════ */}
-      {mode !== 'edit' && (
-        <RsvpSection invitationId={data.invitationId} isDemo={mode === 'demo'} />
+      {mode !== "edit" && (
+        <RsvpSection
+          invitationId={data.invitationId}
+          isDemo={mode === "demo"}
+        />
       )}
 
       {/* ═══════════════════════════════════════
           FOOTER
           ═══════════════════════════════════════ */}
-      <footer className={cn(
-        'py-16 bg-background text-center',
-        mode === 'edit' && 'pb-32' // Extra padding for toolbar
-      )}>
+      <footer
+        className={cn(
+          "py-16 bg-background text-center",
+          mode === "edit" && "pb-32", // Extra padding for toolbar
+        )}
+      >
         <div className="container mx-auto px-4">
           <div className="text-accent text-3xl mb-4">✿</div>
           <p className="font-script text-3xl text-primary">
-            {data.brideName?.split(' ')[0] || 'Bride'} & {data.groomName?.split(' ')[0] || 'Groom'}
+            {data.brideName?.split(" ")[0] || "Bride"} &{" "}
+            {data.groomName?.split(" ")[0] || "Groom"}
           </p>
           <p className="font-body text-sm text-muted-foreground mt-2">
             {formatWeddingDate(data.weddingDate)}
@@ -532,7 +590,7 @@ const CrimsonShaadiTemplate = ({
       {/* ═══════════════════════════════════════
           EDIT MODE TOOLBAR
           ═══════════════════════════════════════ */}
-      {mode === 'edit' && (
+      {mode === "edit" && (
         <EditModeToolbar
           onSaveDraft={onSaveDraft}
           onPublish={onPublish}
@@ -546,7 +604,7 @@ const CrimsonShaadiTemplate = ({
       {/* ═══════════════════════════════════════
           FLOATING MUSIC PLAYER (View/Demo only)
           ═══════════════════════════════════════ */}
-      {mode !== 'edit' && effectiveMusicUrl && (
+      {mode !== "edit" && effectiveMusicUrl && (
         <FloatingMusicPlayer
           musicUrl={effectiveMusicUrl}
           musicName={effectiveMusicName}
@@ -558,9 +616,14 @@ const CrimsonShaadiTemplate = ({
 
 // Countdown display component
 const CountdownDisplay = ({ weddingDate }: { weddingDate: string }) => {
-  const [countdown, setCountdown] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
+  const [countdown, setCountdown] = useState<{
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+  } | null>(null);
 
-  useMemo(() => {
+  useEffect(() => {
     const update = () => {
       if (!weddingDate) {
         setCountdown(null);
@@ -587,23 +650,30 @@ const CountdownDisplay = ({ weddingDate }: { weddingDate: string }) => {
     return () => clearInterval(interval);
   }, [weddingDate]);
 
-  if (!countdown) return <p className="font-body text-muted-foreground">Set wedding date to see countdown</p>;
+  if (!countdown)
+    return (
+      <p className="font-body text-muted-foreground">
+        Set wedding date to see countdown
+      </p>
+    );
 
   return (
     <div className="flex justify-center gap-4 sm:gap-8">
       {[
-        { value: countdown.days, label: 'Days' },
-        { value: countdown.hours, label: 'Hours' },
-        { value: countdown.minutes, label: 'Minutes' },
-        { value: countdown.seconds, label: 'Seconds' },
+        { value: countdown.days, label: "Days" },
+        { value: countdown.hours, label: "Hours" },
+        { value: countdown.minutes, label: "Minutes" },
+        { value: countdown.seconds, label: "Seconds" },
       ].map((item, i) => (
         <div key={i} className="text-center">
           <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-card border border-border flex items-center justify-center mb-2">
             <span className="font-heading text-2xl sm:text-3xl font-bold text-primary">
-              {String(item.value).padStart(2, '0')}
+              {String(item.value).padStart(2, "0")}
             </span>
           </div>
-          <span className="font-body text-xs text-muted-foreground">{item.label}</span>
+          <span className="font-body text-xs text-muted-foreground">
+            {item.label}
+          </span>
         </div>
       ))}
     </div>
@@ -611,10 +681,18 @@ const CountdownDisplay = ({ weddingDate }: { weddingDate: string }) => {
 };
 
 // RSVP Section component
-const RsvpSection = ({ invitationId, isDemo }: { invitationId: number | null; isDemo: boolean }) => {
-  const [attending, setAttending] = useState<'yes' | 'maybe' | 'no' | null>(null);
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
+const RsvpSection = ({
+  invitationId,
+  isDemo,
+}: {
+  invitationId: number | null;
+  isDemo: boolean;
+}) => {
+  const [attending, setAttending] = useState<"yes" | "maybe" | "no" | null>(
+    null,
+  );
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [guestCount, setGuestCount] = useState(1);
   const [submitted, setSubmitted] = useState(false);
 
@@ -635,8 +713,12 @@ const RsvpSection = ({ invitationId, isDemo }: { invitationId: number | null; is
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
             <Heart className="w-8 h-8 text-primary fill-primary" />
           </div>
-          <h3 className="font-heading text-xl font-semibold mb-2">Thank You!</h3>
-          <p className="font-body text-sm text-muted-foreground">Your response has been recorded.</p>
+          <h3 className="font-heading text-xl font-semibold mb-2">
+            Thank You!
+          </h3>
+          <p className="font-body text-sm text-muted-foreground">
+            Your response has been recorded.
+          </p>
         </div>
       </section>
     );
@@ -645,25 +727,27 @@ const RsvpSection = ({ invitationId, isDemo }: { invitationId: number | null; is
   return (
     <section className="py-16 bg-muted/30">
       <div className="container mx-auto px-4 max-w-md">
-        <h2 className="font-heading text-3xl font-bold text-center mb-8">RSVP</h2>
+        <h2 className="font-heading text-3xl font-bold text-center mb-8">
+          RSVP
+        </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Attendance buttons */}
           <div className="flex justify-center gap-3">
             {[
-              { value: 'yes', label: 'Attending', icon: '🎉' },
-              { value: 'maybe', label: 'Maybe', icon: '🤔' },
-              { value: 'no', label: 'Cannot Attend', icon: '😢' },
+              { value: "yes", label: "Attending", icon: "🎉" },
+              { value: "maybe", label: "Maybe", icon: "🤔" },
+              { value: "no", label: "Cannot Attend", icon: "😢" },
             ].map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => setAttending(opt.value as any)}
                 className={cn(
-                  'px-4 py-3 rounded-xl font-body text-sm transition-all',
+                  "px-4 py-3 rounded-xl font-body text-sm transition-all",
                   attending === opt.value
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-card border border-border hover:border-primary/50'
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card border border-border hover:border-primary/50",
                 )}
               >
                 <span className="text-lg mb-1 block">{opt.icon}</span>
@@ -672,7 +756,7 @@ const RsvpSection = ({ invitationId, isDemo }: { invitationId: number | null; is
             ))}
           </div>
 
-          {attending && attending !== 'no' && (
+          {attending && attending !== "no" && (
             <>
               <input
                 type="text"
@@ -692,7 +776,9 @@ const RsvpSection = ({ invitationId, isDemo }: { invitationId: number | null; is
               />
 
               <div>
-                <label className="font-body text-sm text-muted-foreground block mb-2">Number of Guests</label>
+                <label className="font-body text-sm text-muted-foreground block mb-2">
+                  Number of Guests
+                </label>
                 <input
                   type="number"
                   min={1}
@@ -709,10 +795,10 @@ const RsvpSection = ({ invitationId, isDemo }: { invitationId: number | null; is
             type="submit"
             disabled={!attending}
             className={cn(
-              'w-full py-3 rounded-xl font-body font-medium text-sm transition-all',
+              "w-full py-3 rounded-xl font-body font-medium text-sm transition-all",
               attending
-                ? 'btn-gold'
-                : 'bg-muted text-muted-foreground cursor-not-allowed'
+                ? "btn-gold"
+                : "bg-muted text-muted-foreground cursor-not-allowed",
             )}
           >
             Confirm RSVP

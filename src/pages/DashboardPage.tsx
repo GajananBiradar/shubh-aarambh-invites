@@ -38,8 +38,14 @@ const DashboardPage = () => {
     if (invitations) setLocalInvitations(invitations);
   }, [invitations]);
 
-  const totalViews = localInvitations.reduce((sum, inv) => sum + (inv.viewCount || 0), 0);
-  const totalRsvps = localInvitations.reduce((sum, inv) => sum + (inv.rsvpCount || 0), 0);
+  const totalViews = localInvitations.reduce(
+    (sum, inv) => sum + (inv.viewCount || 0),
+    0,
+  );
+  const totalRsvps = localInvitations.reduce(
+    (sum, inv) => sum + (inv.rsvpCount || 0),
+    0,
+  );
 
   // CHANGE 5: Use accessCode instead of code
   const getPublicUrl = (inv: any) => {
@@ -55,7 +61,9 @@ const DashboardPage = () => {
 
   const shareWhatsApp = (inv: any) => {
     const url = `${window.location.origin}${getPublicUrl(inv)}`;
-    const msg = encodeURIComponent(`You're invited! Open your beautiful wedding invitation here: ${url} 💌`);
+    const msg = encodeURIComponent(
+      `You're invited! Open your beautiful wedding invitation here: ${url} 💌`,
+    );
     window.open(`https://wa.me/?text=${msg}`, "_blank");
   };
 
@@ -65,7 +73,9 @@ const DashboardPage = () => {
     setDeleting(true);
     try {
       await deleteInvitation(deleteTarget.id);
-      setLocalInvitations((prev) => prev.filter((inv) => inv.id !== deleteTarget.id));
+      setLocalInvitations((prev) =>
+        prev.filter((inv) => inv.id !== deleteTarget.id),
+      );
       toast.success("Invitation deleted.");
       setDeleteTarget(null);
     } catch (error: any) {
@@ -96,9 +106,13 @@ const DashboardPage = () => {
               exit={{ scale: 0.95, opacity: 0 }}
               className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full shadow-2xl"
             >
-              <h3 className="font-heading text-lg font-bold mb-2">Delete this invitation?</h3>
+              <h3 className="font-heading text-lg font-bold mb-2">
+                Delete this invitation?
+              </h3>
               <p className="font-body text-sm text-muted-foreground mb-6">
-                This will permanently delete {deleteTarget.brideName} & {deleteTarget.groomName}'s invitation. This action cannot be undone.
+                This will permanently delete {deleteTarget.brideName} &{" "}
+                {deleteTarget.groomName}'s invitation. This action cannot be
+                undone.
               </p>
               <div className="flex gap-3 justify-end">
                 <button
@@ -113,7 +127,13 @@ const DashboardPage = () => {
                   disabled={deleting}
                   className="bg-destructive text-destructive-foreground font-body font-medium px-4 py-2 rounded-xl text-sm flex items-center gap-2 disabled:opacity-50 hover:bg-destructive/90 transition-colors"
                 >
-                  {deleting ? <><Loader2 size={14} className="animate-spin" /> Deleting...</> : "Delete"}
+                  {deleting ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" /> Deleting...
+                    </>
+                  ) : (
+                    "Delete"
+                  )}
                 </button>
               </div>
             </motion.div>
@@ -124,14 +144,27 @@ const DashboardPage = () => {
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="font-display text-3xl font-semibold">Hello, {user?.name || "there"} 👋</h1>
-            <p className="font-body text-sm text-muted-foreground font-light mt-1">Manage your wedding invitations</p>
+            <h1 className="font-display text-3xl font-semibold">
+              Hello, {user?.name || "there"} 👋
+            </h1>
+            <p className="font-body text-sm text-muted-foreground font-light mt-1">
+              Manage your wedding invitations
+            </p>
           </div>
           <div className="flex gap-3">
-            <Link to="/templates" className="btn-gold px-5 py-2.5 rounded-xl text-sm flex items-center gap-2">
+            <Link
+              to="/templates"
+              className="btn-gold px-5 py-2.5 rounded-xl text-sm flex items-center gap-2"
+            >
               <Plus size={16} /> Create New
             </Link>
-            <button onClick={() => { logout(); navigate("/"); }} className="btn-outline-accent px-4 py-2.5 rounded-xl text-sm">
+            <button
+              onClick={() => {
+                logout();
+                navigate("/");
+              }}
+              className="btn-outline-accent px-4 py-2.5 rounded-xl text-sm"
+            >
               Logout
             </button>
           </div>
@@ -144,9 +177,16 @@ const DashboardPage = () => {
             { label: "Total Views", value: totalViews },
             { label: "Total RSVPs", value: totalRsvps },
           ].map((s) => (
-            <div key={s.label} className="bg-card rounded-2xl border border-border p-5 text-center">
-              <p className="font-display text-3xl font-bold text-gold">{s.value}</p>
-              <p className="font-body text-xs text-muted-foreground mt-1">{s.label}</p>
+            <div
+              key={s.label}
+              className="bg-card rounded-2xl border border-border p-5 text-center"
+            >
+              <p className="font-display text-3xl font-bold text-gold">
+                {s.value}
+              </p>
+              <p className="font-body text-xs text-muted-foreground mt-1">
+                {s.label}
+              </p>
             </div>
           ))}
         </div>
@@ -154,7 +194,10 @@ const DashboardPage = () => {
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2].map((i) => (
-              <div key={i} className="bg-card rounded-2xl border border-border p-6 animate-pulse">
+              <div
+                key={i}
+                className="bg-card rounded-2xl border border-border p-6 animate-pulse"
+              >
                 <div className="h-5 bg-muted rounded w-1/3 mb-3" />
                 <div className="h-4 bg-muted rounded w-1/2" />
               </div>
@@ -173,17 +216,21 @@ const DashboardPage = () => {
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h3 className="font-display text-xl font-semibold">
-                      {(inv.brideName || "").split(" ")[0]} & {(inv.groomName || "").split(" ")[0]}
+                      {(inv.brideName || "").split(" ")[0]} &{" "}
+                      {(inv.groomName || "").split(" ")[0]}
                     </h3>
                     <p className="font-body text-xs text-muted-foreground mt-1">
-                      {inv.templateTheme || inv.template?.name || "Template"} template
+                      {inv.templateTheme || inv.template?.name || "Template"}{" "}
+                      template
                     </p>
                   </div>
-                  <span className={`font-body text-[10px] font-semibold px-2.5 py-1 rounded-full ${
-                    inv.status === "PUBLISHED"
-                      ? "bg-emerald/10 text-emerald border border-emerald/20"
-                      : "bg-gold/10 text-gold border border-gold/20"
-                  }`}>
+                  <span
+                    className={`font-body text-[10px] font-semibold px-2.5 py-1 rounded-full ${
+                      inv.status === "PUBLISHED"
+                        ? "bg-emerald/10 text-emerald border border-emerald/20"
+                        : "bg-gold/10 text-gold border border-gold/20"
+                    }`}
+                  >
                     ● {inv.status === "PUBLISHED" ? "Live" : "Draft"}
                   </span>
                 </div>
@@ -195,16 +242,21 @@ const DashboardPage = () => {
 
                 <div className="flex flex-wrap gap-2">
                   {/* View published invitation */}
-                  {inv.status === "PUBLISHED" && (inv.accessCode || inv.code) && inv.slug && (
-                    <button
-                      onClick={() =>
-                        window.open(`/${inv.accessCode || inv.code}/invite/${inv.slug}`, "_blank")
-                      }
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card font-body text-xs hover:bg-secondary transition-colors"
-                    >
-                      <Eye size={13} /> View
-                    </button>
-                  )}
+                  {inv.status === "PUBLISHED" &&
+                    (inv.accessCode || inv.code) &&
+                    inv.slug && (
+                      <button
+                        onClick={() =>
+                          window.open(
+                            `/${inv.accessCode || inv.code}/invite/${inv.slug}`,
+                            "_blank",
+                          )
+                        }
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card font-body text-xs hover:bg-secondary transition-colors"
+                      >
+                        <Eye size={13} /> View
+                      </button>
+                    )}
                   <button
                     onClick={() => navigate(`/edit/${inv.id}`)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card font-body text-xs hover:bg-secondary transition-colors"
@@ -228,8 +280,8 @@ const DashboardPage = () => {
                     </>
                   )}
                   {inv.status === "DRAFT" && (
-                    <button 
-                      onClick={() => navigate(`/edit/${inv.id}`)}
+                    <button
+                      onClick={() => window.open(`/edit/${inv.id}`, "_blank")}
                       className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg btn-gold font-body text-xs"
                     >
                       <Sparkles size={13} /> Continue Editing
@@ -240,7 +292,8 @@ const DashboardPage = () => {
                     onClick={() => setDeleteTarget(inv)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-destructive/30 text-destructive font-body text-xs hover:bg-destructive/10 transition-colors"
                   >
-                    <Trash2 size={13} /> <span className="hidden sm:inline">Delete</span>
+                    <Trash2 size={13} />{" "}
+                    <span className="hidden sm:inline">Delete</span>
                   </button>
                 </div>
               </motion.div>
@@ -249,9 +302,16 @@ const DashboardPage = () => {
         ) : (
           <div className="text-center py-20">
             <Heart className="w-16 h-16 text-gold/20 mx-auto mb-4" />
-            <h3 className="font-display text-2xl font-semibold mb-2">Your first invitation is just a few clicks away</h3>
-            <p className="font-body text-sm text-muted-foreground mb-6 font-light">Choose a template and create something beautiful.</p>
-            <Link to="/templates" className="btn-gold px-8 py-3 rounded-xl text-sm inline-flex items-center gap-2">
+            <h3 className="font-display text-2xl font-semibold mb-2">
+              Your first invitation is just a few clicks away
+            </h3>
+            <p className="font-body text-sm text-muted-foreground mb-6 font-light">
+              Choose a template and create something beautiful.
+            </p>
+            <Link
+              to="/templates"
+              className="btn-gold px-8 py-3 rounded-xl text-sm inline-flex items-center gap-2"
+            >
               <Plus size={16} /> Browse Templates
             </Link>
           </div>
@@ -263,12 +323,18 @@ const DashboardPage = () => {
           <h3 className="font-display text-lg font-semibold mb-4">Account</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="font-body text-xs text-muted-foreground">Name</label>
+              <label className="font-body text-xs text-muted-foreground">
+                Name
+              </label>
               <p className="font-body text-sm">{user?.name || "Dev User"}</p>
             </div>
             <div>
-              <label className="font-body text-xs text-muted-foreground">Email</label>
-              <p className="font-body text-sm">{user?.email || "dev@example.com"}</p>
+              <label className="font-body text-xs text-muted-foreground">
+                Email
+              </label>
+              <p className="font-body text-sm">
+                {user?.email || "dev@example.com"}
+              </p>
             </div>
           </div>
         </div>

@@ -1,16 +1,24 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { useAuthStore } from '@/store/authStore';
-import { getTemplateComponent, getTemplateTheme, getTemplateMetadata } from '@/templates';
-import { InvitationData, TemplateComponent, createEmptyInvitationData } from '@/templates/types';
-import { getTemplateById } from '@/api/templates';
-import { useInvitationEditor } from '@/hooks/useInvitationEditor';
-import { usePayment } from '@/hooks/usePayment';
-import { EditModeToolbar } from '@/components/inline-editor';
-import { Loader2, X, Copy, Check, Eye, Heart } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import toast from 'react-hot-toast';
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { useAuthStore } from "@/store/authStore";
+import {
+  getTemplateComponent,
+  getTemplateTheme,
+  getTemplateMetadata,
+} from "@/templates";
+import {
+  InvitationData,
+  TemplateComponent,
+  createEmptyInvitationData,
+} from "@/templates/types";
+import { getTemplateById, getTemplateDemoData } from "@/api/templates";
+import { useInvitationEditor } from "@/hooks/useInvitationEditor";
+import { usePayment } from "@/hooks/usePayment";
+import { EditModeToolbar } from "@/components/inline-editor";
+import { Loader2, X, Copy, Check, Eye, Heart } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import toast from "react-hot-toast";
 
 interface CreateInvitationPageProps {
   editMode?: boolean;
@@ -28,28 +36,39 @@ const CreateInvitationPage = ({
   const { isAuthenticated } = useAuthStore();
   const { checkPayment } = usePayment();
 
-  const [TemplateComp, setTemplateComp] = useState<TemplateComponent | null>(null);
+  const [TemplateComp, setTemplateComp] = useState<TemplateComponent | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  const isDevMode = import.meta.env.VITE_DEV_MODE === 'true';
+  const isDevMode = import.meta.env.VITE_DEV_MODE === "true";
 
   // Determine effective template ID
   const effectiveTemplateId = editMode
-    ? editData?.template?.id?.toString() || editData?.templateId?.toString() || '1'
-    : templateId || '1';
+    ? editData?.template?.id?.toString() ||
+      editData?.templateId?.toString() ||
+      "1"
+    : templateId || "1";
 
   // Fetch template data
   const { data: template, isLoading: templateLoading } = useQuery({
-    queryKey: ['template', effectiveTemplateId],
+    queryKey: ["template", effectiveTemplateId],
     queryFn: () => getTemplateById(effectiveTemplateId),
+    enabled: !editMode, // Only fetch if not in edit mode
+  });
+
+  // Fetch template demo data (with defaults, photos, events)
+  const { data: demoData, isLoading: demoDataLoading } = useQuery({
+    queryKey: ["templateDemoData", effectiveTemplateId],
+    queryFn: () => getTemplateDemoData(effectiveTemplateId),
     enabled: !editMode, // Only fetch if not in edit mode
   });
 
   // Redirect if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login');
+      navigate("/login");
     }
   }, [isAuthenticated, navigate]);
 
@@ -61,8 +80,8 @@ const CreateInvitationPage = ({
       if (component) {
         setTemplateComp(() => component);
       } else {
-        toast.error('Template not found');
-        navigate('/templates');
+        toast.error("Template not found");
+        navigate("/templates");
       }
       setLoading(false);
     };
@@ -75,62 +94,121 @@ const CreateInvitationPage = ({
     const theme = getTemplateTheme(effectiveTemplateId);
     const metadata = getTemplateMetadata(effectiveTemplateId);
 
+    // Check localStorage for unsaved draft (for new invitations only)
+    if (!editMode) {
+      const cacheKey = `invitation-draft-${effectiveTemplateId}-new`;
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          const cachedData = JSON.parse(cached) as InvitationData;
+          // Only restore if it's from the same template
+          if (cachedData.templateId === parseInt(effectiveTemplateId)) {
+            return cachedData;
+          }
+        } catch (e) {
+          // Invalid cache, ignore
+        }
+      }
+    }
+
     if (editMode && editData) {
       // Map existing invitation data
       return {
-        invitationId: parseInt(editInvitationId || '0') || null,
+        invitationId: parseInt(editInvitationId || "0") || null,
         templateId: parseInt(effectiveTemplateId),
         templateSlug: theme,
-        brideName: editData.brideName || '',
-        groomName: editData.groomName || '',
-        brideBio: editData.invitationData?.bride_bio || '',
-        groomBio: editData.invitationData?.groom_bio || '',
+        brideName: editData.brideName || "",
+        groomName: editData.groomName || "",
+        brideBio: editData.invitationData?.bride_bio || "",
+        groomBio: editData.invitationData?.groom_bio || "",
         couplePhotoUrl: editData.couplePhotoUrl || null,
-        hashtag: editData.invitationData?.hashtag || '',
-        welcomeMessage: editData.invitationData?.welcome_message || '',
+        hashtag: editData.invitationData?.hashtag || "",
+        welcomeMessage: editData.invitationData?.welcome_message || "",
         showCountdown: editData.invitationData?.show_countdown !== false,
-        weddingDate: editData.invitationData?.wedding_date || '',
+        weddingDate: editData.invitationData?.wedding_date || "",
         events: (editData.events || []).map((e: any, i: number) => ({
           id: e.id || i,
-          eventName: e.eventName || '',
-          eventDate: e.eventDate || '',
-          eventTime: e.eventTime || '',
-          venueName: e.venueName || '',
-          venueAddress: e.venueAddress || '',
+          eventName: e.eventName || "",
+          eventDate: e.eventDate || "",
+          eventTime: e.eventTime || "",
+          venueName: e.venueName || "",
+          venueAddress: e.venueAddress || "",
           mapsUrl: e.mapsUrl || null,
         })),
-        galleryPhotos: (editData.galleryPhotos || []).map((p: any, i: number) => ({
-          photoUrl: typeof p === 'string' ? p : p.photoUrl,
-          sortOrder: i,
-          isDefault: false,
-        })),
+        galleryPhotos: (editData.galleryPhotos || []).map(
+          (p: any, i: number) => ({
+            photoUrl: typeof p === "string" ? p : p.photoUrl,
+            sortOrder: i,
+            isDefault: false,
+          }),
+        ),
         musicUrl: editData.musicUrl || null,
         musicName: editData.musicName || null,
-        effectiveMusicUrl: editData.musicUrl || template?.defaultMusicUrl || '',
-        effectiveMusicName: editData.musicName || template?.defaultMusicName || '',
-        locale: 'en',
-        slug: editData.slug || '',
+        effectiveMusicUrl: editData.musicUrl || template?.defaultMusicUrl || "",
+        effectiveMusicName:
+          editData.musicName || template?.defaultMusicName || "",
+        locale: "en",
+        slug: editData.slug || "",
         accessCode: editData.accessCode || editData.code || null,
-        status: editData.status || 'DRAFT',
+        status: editData.status || "DRAFT",
         templateDefaults: {
           defaultPhotos: template?.defaultPhotos || [],
-          defaultMusicUrl: template?.defaultMusicUrl || '',
-          defaultMusicName: template?.defaultMusicName || '',
+          defaultMusicUrl: template?.defaultMusicUrl || "",
+          defaultMusicName: template?.defaultMusicName || "",
           defaultVideoUrl: null,
         },
       };
     }
 
-    // New invitation - use empty data with template defaults
-    return createEmptyInvitationData(
+    // New invitation - use empty data with template defaults from demo data
+    const demoEvents = demoData?.events || [];
+    const demoPhotos = demoData?.defaultPhotos || [];
+    const defaultMusicUrl =
+      demoData?.musicUrl || template?.defaultMusicUrl || "";
+    const defaultMusicName =
+      demoData?.musicName || template?.defaultMusicName || "";
+    const defaultVideoUrl = demoData?.defaultVideoUrl || null;
+
+    const initialData = createEmptyInvitationData(
       parseInt(effectiveTemplateId),
       theme,
       {
-        defaultPhotos: template?.defaultPhotos || [],
-        defaultMusicUrl: template?.defaultMusicUrl || '',
-        defaultMusicName: template?.defaultMusicName || '',
-      }
+        defaultPhotos: demoPhotos,
+        defaultMusicUrl: defaultMusicUrl,
+        defaultMusicName: defaultMusicName,
+      },
     );
+
+    // If we have demo events, populate them in the initial data
+    if (demoEvents.length > 0) {
+      initialData.events = demoEvents.map((e: any, i: number) => ({
+        id: i,
+        eventName: e.eventName || "",
+        eventDate: e.eventDate || "",
+        eventTime: e.eventTime || "",
+        venueName: e.venueName || "",
+        venueAddress: e.venueAddress || "",
+        mapsUrl: e.mapsUrl || null,
+      }));
+    }
+
+    // Add demo photos as gallery photos
+    if (demoPhotos.length > 0) {
+      initialData.galleryPhotos = demoPhotos.map((p: any, i: number) => ({
+        photoUrl: p.photoUrl || "",
+        sortOrder: i,
+        caption: p.caption || "",
+        isDefault: true,
+      }));
+    }
+
+    // Set music from demo data
+    if (defaultMusicUrl) {
+      initialData.effectiveMusicUrl = defaultMusicUrl;
+      initialData.effectiveMusicName = defaultMusicName;
+    }
+
+    return initialData;
   };
 
   // Initialize the editor hook
@@ -150,6 +228,61 @@ const CreateInvitationPage = ({
     autosaveDelay: 30000, // Autosave every 30 seconds
   });
 
+  // Populate form with demo data once it's available (for new invitations only)
+  useEffect(() => {
+    if (!editMode && demoData && !data.invitationId) {
+      const demoPhotos = demoData?.defaultPhotos || [];
+      const demoEvents = demoData?.events || [];
+      const defaultMusicUrl =
+        demoData?.musicUrl || template?.defaultMusicUrl || "";
+      const defaultMusicName =
+        demoData?.musicName || template?.defaultMusicName || "";
+      const defaultVideoUrl = demoData?.defaultVideoUrl || null;
+
+      const updates: Partial<InvitationData> = {};
+
+      // Update events from demo data
+      if (demoEvents.length > 0) {
+        updates.events = demoEvents.map((e: any, i: number) => ({
+          id: i,
+          eventName: e.eventName || "",
+          eventDate: e.eventDate || "",
+          eventTime: e.eventTime || "",
+          venueName: e.venueName || "",
+          venueAddress: e.venueAddress || "",
+          mapsUrl: e.mapsUrl || null,
+        }));
+      }
+
+      // Add demo photos as gallery photos
+      if (demoPhotos.length > 0) {
+        updates.galleryPhotos = demoPhotos.map((p: any, i: number) => ({
+          photoUrl: p.photoUrl || "",
+          sortOrder: i,
+          caption: p.caption || "",
+          isDefault: true,
+        }));
+      }
+
+      // Set music from demo data
+      if (defaultMusicUrl) {
+        updates.effectiveMusicUrl = defaultMusicUrl;
+        updates.effectiveMusicName = defaultMusicName;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        updateData(updates);
+      }
+    }
+  }, [
+    demoData,
+    editMode,
+    data.invitationId,
+    template?.defaultMusicUrl,
+    template?.defaultMusicName,
+    updateData,
+  ]);
+
   // Handle copy link
   const handleCopyLink = () => {
     if (publishedUrl) {
@@ -159,11 +292,20 @@ const CreateInvitationPage = ({
     }
   };
 
+  // Handle preview - saves draft and opens preview page
+  const handlePreview = async () => {
+    const savedId = await saveDraft();
+    if (savedId) {
+      navigate(`/invitations/${savedId}/preview`);
+    }
+  };
+
   // Get template theme for styling
   const theme = getTemplateTheme(effectiveTemplateId);
   const metadata = getTemplateMetadata(effectiveTemplateId);
 
-  const isLoading = loading || (!editMode && templateLoading);
+  const isLoading =
+    loading || (!editMode && (templateLoading || demoDataLoading));
 
   // Loading state
   if (isLoading || !TemplateComp) {
@@ -171,14 +313,17 @@ const CreateInvitationPage = ({
       <div className="min-h-screen bg-background flex flex-col items-center justify-center">
         <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
         <p className="font-body text-sm text-muted-foreground">
-          {editMode ? 'Loading your invitation...' : 'Loading template...'}
+          {editMode ? "Loading your invitation..." : "Loading template..."}
         </p>
       </div>
     );
   }
 
   return (
-    <div data-theme={theme} className="min-h-screen bg-background text-foreground">
+    <div
+      data-theme={theme}
+      className="min-h-screen bg-background text-foreground"
+    >
       {/* Dev mode indicator */}
       {isDevMode && (
         <div className="fixed top-0 left-0 right-0 z-[100] bg-amber-500/90 text-amber-950 text-center font-body text-xs py-1">
@@ -248,7 +393,7 @@ const CreateInvitationPage = ({
                 </a>
 
                 <button
-                  onClick={() => window.open(publishedUrl, '_blank')}
+                  onClick={() => window.open(publishedUrl, "_blank")}
                   className="btn-outline-accent px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"
                 >
                   <Eye size={16} /> View My Invitation
@@ -267,7 +412,7 @@ const CreateInvitationPage = ({
       </AnimatePresence>
 
       {/* Template in Edit Mode */}
-      <div className={isDevMode ? 'pt-6' : ''}>
+      <div className={isDevMode ? "pt-6" : ""}>
         <TemplateComp
           mode="edit"
           data={data}
@@ -283,10 +428,12 @@ const CreateInvitationPage = ({
       <EditModeToolbar
         onSaveDraft={saveDraft}
         onPublish={publish}
+        onPreview={handlePreview}
         isSaving={isSaving}
         isPublishing={isPublishing}
         invitationId={data.invitationId}
         hasUnsavedChanges={isDirty}
+        showPreviewMode={!publishedUrl}
       />
     </div>
   );

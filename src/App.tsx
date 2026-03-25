@@ -41,6 +41,7 @@ const AppInner = () => {
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/create/:templateId" element={<CreateInvitationPage />} />
       <Route path="/edit/:invitationId" element={<EditInvitationPage />} />
+      <Route path="/invitations/:id/preview" element={<InvitationPreviewPage />} />
       <Route path="/:code/invite/:slug" element={<PublicInvitationPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

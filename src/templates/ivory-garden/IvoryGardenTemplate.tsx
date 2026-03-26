@@ -388,8 +388,8 @@ const IvoryGardenTemplate = ({
                     className="relative grid md:grid-cols-2 gap-8 items-center"
                   >
                     {/* Timeline dot */}
-                    <div className="absolute left-1/2 top-1/2 w-3 h-3 rounded-full -translate-x-1/2 -translate-y-1/2 hidden md:block ring-4"
-                      style={{ background: 'hsl(45, 100%, 50%)', ringColor: 'hsl(225, 40%, 10%)' }}
+                    <div className="absolute left-1/2 top-1/2 w-3 h-3 rounded-full -translate-x-1/2 -translate-y-1/2 hidden md:block ring-4 ring-[hsl(225,40%,10%)]"
+                      style={{ background: 'hsl(45, 100%, 50%)' }}
                     />
 
                     {/* Left side: date/time (even) or content (odd) */}

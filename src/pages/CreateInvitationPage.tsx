@@ -34,7 +34,7 @@ const CreateInvitationPage = ({
   const { templateId } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
-  const { checkPayment } = usePayment();
+  const { triggerPaymentFlow } = usePayment();
 
   const [TemplateComp, setTemplateComp] = useState<TemplateComponent | null>(
     null,

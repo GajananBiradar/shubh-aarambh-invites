@@ -1,50 +1,126 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Invitation } from '@/types';
-import { getInvitationBySlug, recordView } from '@/api/invitations';
-import api from '@/api/axios';
+import { getTemplateComponent } from '@/templates';
+import { InvitationData, TemplateComponent, PhotoData, EventData } from '@/templates/types';
+import { getInvitationBySlug } from '@/api/invitations';
 import { SAMPLE_INVITATION } from '@/mock/sampleInvitation';
-import InvitationHero from '@/components/invitation/HeroSection';
-import CoupleSection from '@/components/invitation/CoupleSection';
-import CountdownTimer from '@/components/invitation/CountdownTimer';
-import EventsSection from '@/components/invitation/EventsSection';
-import GallerySection from '@/components/invitation/GallerySection';
-import RsvpSection from '@/components/invitation/RsvpSection';
-import InvitationFooter from '@/components/invitation/InvitationFooter';
-import FloatingMusicPlayer from '@/components/invitation/FloatingMusicPlayer';
+import api from '@/api/axios';
 import { Heart } from 'lucide-react';
 
 const PublicInvitationPage = () => {
   const { code, slug } = useParams<{ code: string; slug: string }>();
-  const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [loading, setLoading] = useState(true);
-  const [viewCount, setViewCount] = useState<number | undefined>(undefined);
+  const [error, setError] = useState<string | null>(null);
+  const [TemplateComp, setTemplateComp] = useState<TemplateComponent | null>(null);
+  const [invitationData, setInvitationData] = useState<InvitationData | null>(null);
 
   useEffect(() => {
-    const load = async () => {
-      if (code && slug) {
-        try {
-          const data = await getInvitationBySlug(code, slug);
-          setInvitation(data);
+    const loadInvitation = async () => {
+      try {
+        setLoading(true);
 
-          // Fire and forget view recording
-          if (data.id) {
-            api.post(`/api/invitations/${data.id}/view`).catch(() => {});
-            api.get(`/api/invitations/${data.id}/view-count`)
-              .then(res => setViewCount(res.data?.count))
-              .catch(() => {});
+        // 1. Fetch invitation data
+        let invitation;
+        if (code && slug) {
+          try {
+            invitation = await getInvitationBySlug(code, slug);
+          } catch (e) {
+            // Use sample if not found
+            invitation = SAMPLE_INVITATION;
           }
-        } catch {
-          setInvitation(SAMPLE_INVITATION);
+        } else {
+          invitation = SAMPLE_INVITATION;
         }
-      } else {
-        setInvitation(SAMPLE_INVITATION);
+
+        // 2. Record view (fire and forget)
+        if (invitation.id) {
+          api.post(`/api/invitations/${invitation.id}/view`).catch(() => {});
+        }
+
+        // 3. Determine template
+        const templateSlug = invitation.templateTheme || 'crimson';
+        const component = await getTemplateComponent(templateSlug);
+        
+        if (!component) {
+          // Fallback to crimson
+          const fallback = await getTemplateComponent('crimson');
+          if (fallback) {
+            setTemplateComp(() => fallback);
+          } else {
+            setError('Template not found');
+            setLoading(false);
+            return;
+          }
+        } else {
+          setTemplateComp(() => component);
+        }
+
+        // 4. Map to InvitationData format
+        const events: EventData[] = (invitation.events || []).map((e: any, i: number) => ({
+          id: e.id || i,
+          eventName: e.eventName || '',
+          eventDate: e.date || e.eventDate || '',
+          eventTime: e.time || e.eventTime || '',
+          venueName: e.venueName || '',
+          venueAddress: e.venueAddress || '',
+          mapsUrl: e.mapsUrl || null,
+        }));
+
+        const galleryPhotos: PhotoData[] = (invitation.galleryPhotos || []).map((p: any, i: number) => {
+          if (typeof p === 'string') {
+            return { photoUrl: p, sortOrder: i, isDefault: false };
+          }
+          return {
+            photoUrl: p.photoUrl || p,
+            sortOrder: p.sortOrder ?? i,
+            isDefault: false,
+          };
+        });
+
+        const data: InvitationData = {
+          invitationId: invitation.id ? Number(invitation.id) : null,
+          templateId: invitation.templateId ? Number(invitation.templateId) : 1,
+          templateSlug,
+          brideName: invitation.brideName || '',
+          groomName: invitation.groomName || '',
+          brideBio: invitation.brideBio || '',
+          groomBio: invitation.groomBio || '',
+          couplePhotoUrl: invitation.couplePhotoUrl || null,
+          hashtag: invitation.hashtag || '',
+          welcomeMessage: invitation.welcomeMessage || '',
+          showCountdown: invitation.showCountdown ?? true,
+          weddingDate: invitation.weddingDate || '',
+          events,
+          galleryPhotos,
+          musicUrl: invitation.musicUrl || null,
+          musicName: invitation.musicName || null,
+          effectiveMusicUrl: (invitation as any).effectiveMusicUrl || invitation.musicUrl || '',
+          effectiveMusicName: (invitation as any).effectiveMusicName || invitation.musicName || 'Wedding BGM',
+          locale: 'en',
+          slug: invitation.slug || '',
+          accessCode: invitation.code || code || null,
+          status: invitation.status || 'PUBLISHED',
+          templateDefaults: {
+            defaultPhotos: [],
+            defaultMusicUrl: '',
+            defaultMusicName: '',
+            defaultVideoUrl: null,
+          },
+        };
+
+        setInvitationData(data);
+        setLoading(false);
+      } catch (e) {
+        console.error('Failed to load invitation:', e);
+        setError('Failed to load invitation');
+        setLoading(false);
       }
-      setLoading(false);
     };
-    load();
+
+    loadInvitation();
   }, [code, slug]);
 
+  // Loading state with petals
   if (loading) {
     return (
       <div className="fixed inset-0 bg-background flex flex-col items-center justify-center overflow-hidden">
@@ -70,30 +146,28 @@ const PublicInvitationPage = () => {
     );
   }
 
-  if (!invitation) return null;
+  // Error state
+  if (error || !TemplateComp || !invitationData) {
+    return (
+      <div className="fixed inset-0 bg-background flex flex-col items-center justify-center">
+        <Heart className="w-12 h-12 text-primary/30 mb-4" />
+        <h1 className="font-heading text-xl font-semibold mb-2">Oops!</h1>
+        <p className="font-body text-sm text-muted-foreground">{error || 'Invitation not found'}</p>
+      </div>
+    );
+  }
 
-  // Determine effective music URL
-  const effectiveMusicUrl = (invitation as any).effectiveMusicUrl || invitation.musicUrl;
-  // Override viewCount with fetched value
-  const displayInvitation = { ...invitation, viewCount: viewCount ?? invitation.viewCount };
-
+  // Render the template in view mode
   return (
-    <div data-theme={invitation.templateTheme} className="min-h-screen bg-background text-foreground">
-      <InvitationHero invitation={displayInvitation} />
-      <CoupleSection invitation={displayInvitation} />
-      <CountdownTimer invitation={displayInvitation} />
-      {displayInvitation.events && displayInvitation.events.length > 0 && (
-        <EventsSection invitation={displayInvitation} />
-      )}
-      {displayInvitation.galleryPhotos && displayInvitation.galleryPhotos.length > 0 && (
-        <GallerySection invitation={displayInvitation} />
-      )}
-      <RsvpSection invitation={displayInvitation} />
-      <InvitationFooter invitation={displayInvitation} />
-      {effectiveMusicUrl && (
-        <FloatingMusicPlayer musicUrl={effectiveMusicUrl} musicName={invitation.musicName} />
-      )}
-    </div>
+    <TemplateComp
+      mode="view"
+      data={invitationData}
+      onUpdate={() => {}}
+      onSaveDraft={() => {}}
+      onPublish={() => {}}
+      isSaving={false}
+      isPublishing={false}
+    />
   );
 };
 

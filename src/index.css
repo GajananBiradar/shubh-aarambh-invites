@@ -142,6 +142,23 @@
   --accent-rgb: 199, 100, 130;
 }
 
+[data-theme="finca"] {
+  /* Olive green inspired Spanish wedding theme */
+  --background: 60 15% 97%;
+  --foreground: 90 10% 20%;
+  --primary: 82 40% 35%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 82 40% 35%;
+  --accent-foreground: 0 0% 100%;
+  --card: 0 0% 100%;
+  --card-foreground: 90 10% 20%;
+  --muted: 60 10% 93%;
+  --muted-foreground: 60 5% 45%;
+  --border: 60 10% 88%;
+  --gold: 45 60% 50%;
+  --accent-rgb: 102, 128, 68;
+}
+
 /* Keep legacy themes for backward compat */
 [data-theme="floral"] {
   --background: 350 40% 96%;

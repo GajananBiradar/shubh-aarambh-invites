@@ -1,15 +1,119 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense, lazy } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { SAMPLE_INVITATION } from "@/mock/sampleInvitation";
-import { Eye, Sparkles, Crown, Search, AlertCircle } from "lucide-react";
+import { Eye, Sparkles, Crown, Search, AlertCircle, Loader2 } from "lucide-react";
 import { usePayment } from "@/hooks/usePayment";
 import { Template } from "@/types";
 import PageWrapper from "@/components/layout/PageWrapper";
 import { getTemplates } from "@/api/templates";
 import { SkeletonGrid } from "@/components/ui/SkeletonLoading";
+import { getTemplateComponent, getTemplateTheme } from "@/templates";
+import { TemplateComponent, InvitationData, createEmptyInvitationData } from "@/templates/types";
 
-const MiniInvitePreview = ({ theme }: { theme: string }) => {
+/**
+ * Dynamic Template Preview Component
+ * Loads and renders the actual template component in a mini preview mode
+ */
+const DynamicTemplatePreview = ({ 
+  templateId, 
+  theme 
+}: { 
+  templateId: string | number;
+  theme: string;
+}) => {
+  const [TemplateComp, setTemplateComp] = useState<TemplateComponent | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  // Create sample data for preview
+  const sampleData: InvitationData = useMemo(() => {
+    const base = createEmptyInvitationData(
+      typeof templateId === 'string' ? parseInt(templateId) : templateId,
+      theme,
+      { defaultPhotos: [], defaultMusicUrl: '', defaultMusicName: '' }
+    );
+    
+    // Add sample data to make preview look nice
+    return {
+      ...base,
+      brideName: 'Ananya',
+      groomName: 'Vikram',
+      brideBio: 'Designer who paints sunsets & dreams',
+      groomBio: 'Architect who builds worlds & love',
+      couplePhotoUrl: null,
+      hashtag: '#AnanyaWedVikram',
+      welcomeMessage: 'Together with their families, we invite you to celebrate our wedding.',
+      showCountdown: true,
+      weddingDate: '2026-02-14',
+      events: [
+        { id: 1, eventName: 'Haldi', eventDate: '2026-02-11', eventTime: '10:00:00', venueName: 'Sharma Residence', venueAddress: 'Banjara Hills', mapsUrl: null },
+        { id: 2, eventName: 'Mehendi', eventDate: '2026-02-12', eventTime: '17:00:00', venueName: 'The Garden Club', venueAddress: 'Jubilee Hills', mapsUrl: null },
+      ],
+      galleryPhotos: [],
+      status: 'PUBLISHED',
+    };
+  }, [templateId, theme]);
+
+  useEffect(() => {
+    const loadTemplate = async () => {
+      setLoading(true);
+      setError(false);
+      try {
+        const id = typeof templateId === 'number' ? templateId.toString() : templateId;
+        const component = await getTemplateComponent(id);
+        if (component) {
+          setTemplateComp(() => component);
+        } else {
+          setError(true);
+        }
+      } catch (e) {
+        console.error('[v0] Failed to load template:', e);
+        setError(true);
+      }
+      setLoading(false);
+    };
+    loadTemplate();
+  }, [templateId]);
+
+  if (loading) {
+    return (
+      <div className="w-full h-full bg-muted/30 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  if (error || !TemplateComp) {
+    // Fallback to simple preview
+    return <FallbackPreview theme={theme} />;
+  }
+
+  return (
+    <div 
+      data-theme={theme} 
+      className="w-full h-full overflow-hidden transform origin-top scale-[0.35] -mt-[32.5%]"
+      style={{ width: '285%', height: '285%' }}
+    >
+      <div className="pointer-events-none">
+        <TemplateComp
+          mode="view"
+          data={sampleData}
+          onUpdate={() => {}}
+          onSaveDraft={() => Promise.resolve(null)}
+          onPublish={() => Promise.resolve()}
+          isSaving={false}
+          isPublishing={false}
+        />
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Fallback simple preview when template component fails to load
+ */
+const FallbackPreview = ({ theme }: { theme: string }) => {
   const inv = SAMPLE_INVITATION;
   return (
     <div data-theme={theme} className="w-full bg-background text-foreground">
@@ -57,6 +161,8 @@ const MiniInvitePreview = ({ theme }: { theme: string }) => {
 
 const TemplateCard = ({ template }: { template: Template }) => {
   const { triggerPaymentFlow } = usePayment();
+  const templateTheme = template.themeKey || template.theme || 'crimson';
+  
   return (
     <motion.div
       layout
@@ -72,18 +178,27 @@ const TemplateCard = ({ template }: { template: Template }) => {
       )}
       {template.isFree ? (
         <div className="absolute top-3 right-3 z-10 bg-emerald text-white font-body text-xs font-semibold px-3 py-1.5 rounded-full">
-          ✨ FREE
+          FREE
         </div>
       ) : (
         <div className="absolute top-3 right-3 z-10 btn-gold text-xs px-3 py-1.5 rounded-full">
           ₹{template.priceInr}
         </div>
       )}
-      <div className="h-72 overflow-hidden relative">
-        <div style={{ animation: "autoScroll 25s linear infinite" }}>
-          <MiniInvitePreview theme={template.theme} />
+      
+      {/* Template Preview - Uses actual template component */}
+      <div className="h-72 overflow-hidden relative bg-background">
+        <div className="w-full h-full" style={{ animation: "autoScroll 25s linear infinite" }}>
+          <DynamicTemplatePreview 
+            templateId={template.id} 
+            theme={templateTheme}
+          />
         </div>
+        
+        {/* Hover overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
       </div>
+      
       <div className="p-5">
         <div className="flex items-center justify-between mb-1">
           <h3 className="font-display text-lg font-semibold">

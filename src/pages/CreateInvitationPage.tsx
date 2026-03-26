@@ -152,7 +152,7 @@ const CreateInvitationPage = ({
         accessCode: editData.accessCode || editData.code || null,
         status: editData.status || "DRAFT",
         templateDefaults: {
-          defaultPhotos: template?.defaultPhotos || [],
+          defaultPhotos: [],
           defaultMusicUrl: template?.defaultMusicUrl || "",
           defaultMusicName: template?.defaultMusicName || "",
           defaultVideoUrl: null,

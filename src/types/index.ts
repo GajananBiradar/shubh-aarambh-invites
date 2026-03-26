@@ -51,14 +51,25 @@ export interface Template {
   id: string;
   name: string;
   theme: string;
+  themeKey?: string; // Backend sends this for template component lookup
+  slug?: string;
   category: string;
   description: string;
+  shortDescription?: string;
   price: number;
   priceInr: number;
+  priceUsd?: number;
+  priceEur?: number;
   isFree: boolean;
   isPremium?: boolean;
+  isActive?: boolean;
   tags: any[];
   previewImage: string;
+  previewImageUrl?: string;
+  thumbnailUrl?: string;
+  defaultMusicUrl?: string;
+  defaultMusicName?: string;
+  sortOrder?: number;
 }
 
 export interface RsvpSubmission {

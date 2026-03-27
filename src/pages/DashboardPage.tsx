@@ -263,7 +263,7 @@ const DashboardPage = () => {
                   >
                     <Pencil size={13} /> Edit
                   </button>
-                  {inv.status === "PUBLISHED" && inv.code && inv.slug && (
+                  {inv.status === "PUBLISHED" && (inv.accessCode || inv.code) && inv.slug && (
                     <>
                       <button
                         onClick={() => copyLink(inv)}

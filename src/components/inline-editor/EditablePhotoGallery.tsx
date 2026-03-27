@@ -113,11 +113,11 @@ const EditablePhotoGallery = ({
           isDefault: false,
         };
 
-        onUpdate(prev => {
-          const current = [...(prev || displayPhotos), newPhoto];
-          current.forEach((p, idx) => p.sortOrder = idx);
-          return current;
-        });
+        // We need to build the updated array; since uploads are sequential,
+        // we read displayPhotos at time of completion
+        const updated = [...displayPhotos, newPhoto];
+        updated.forEach((p, idx) => p.sortOrder = idx);
+        onUpdate(updated);
       } catch (err) {
         toast.error(`Failed to upload ${file.name}`);
       } finally {

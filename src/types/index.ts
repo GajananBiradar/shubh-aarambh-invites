@@ -20,6 +20,18 @@ export interface WeddingEvent {
   mapsUrl: string;
 }
 
+export interface GalleryPhoto {
+  photoUrl: string;
+  sortOrder: number;
+}
+
+export interface DefaultPhoto {
+  id: number;
+  photoUrl: string;
+  sortOrder: number;
+  caption: string | null;
+}
+
 export interface Invitation {
   id?: string;
   userId?: string;
@@ -27,31 +39,49 @@ export interface Invitation {
   groomName: string;
   brideBio: string;
   groomBio: string;
-  couplePhotoUrl: string;
+  couplePhotoUrl: string | null;
   hashtag: string;
   slug: string;
   code?: string;
+  accessCode?: string;
   welcomeMessage: string;
-  musicUrl: string;
-  musicName: string;
+  musicUrl: string | null;
+  musicName: string | null;
+  effectiveMusicUrl?: string | null;
+  effectiveMusicName?: string | null;
   showCountdown: boolean;
   weddingDate: string;
   templateId?: string;
   templateTheme: string;
   events: WeddingEvent[];
-  galleryPhotos: string[];
+  galleryPhotos: GalleryPhoto[] | string[];
+  templateDefaultPhotos?: DefaultPhoto[];
+  templateDefaultMusicUrl?: string | null;
+  templateDefaultMusicName?: string | null;
+  templateDefaultVideoUrl?: string | null;
   viewCount?: number;
   rsvpCount?: number;
   status?: 'DRAFT' | 'PUBLISHED';
   createdAt?: string;
   updatedAt?: string;
+  invitationData?: Record<string, any>;
+  template?: {
+    id: number;
+    name: string;
+    themeKey: string;
+    slug?: string;
+    defaultPhotos?: DefaultPhoto[];
+    defaultMusicUrl?: string | null;
+    defaultMusicName?: string | null;
+    defaultVideoUrl?: string | null;
+  };
 }
 
 export interface Template {
   id: string;
   name: string;
   theme: string;
-  themeKey?: string; // Backend sends this for template component lookup
+  themeKey?: string;
   slug?: string;
   category: string;
   description: string;
@@ -67,8 +97,10 @@ export interface Template {
   previewImage: string;
   previewImageUrl?: string;
   thumbnailUrl?: string;
-  defaultMusicUrl?: string;
-  defaultMusicName?: string;
+  defaultMusicUrl?: string | null;
+  defaultMusicName?: string | null;
+  defaultVideoUrl?: string | null;
+  defaultPhotos?: DefaultPhoto[];
   sortOrder?: number;
 }
 

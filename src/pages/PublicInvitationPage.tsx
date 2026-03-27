@@ -38,8 +38,9 @@ const PublicInvitationPage = () => {
         }
 
         // 3. Determine template
-        const templateSlug = invitation.templateTheme || 'crimson';
-        const component = await getTemplateComponent(templateSlug);
+        const templateSlug = invitation.template?.themeKey || invitation.templateTheme || 'crimson';
+        const templateIdStr = invitation.template?.id?.toString() || invitation.templateId?.toString();
+        const component = await getTemplateComponent(templateIdStr || templateSlug);
         
         if (!component) {
           // Fallback to crimson

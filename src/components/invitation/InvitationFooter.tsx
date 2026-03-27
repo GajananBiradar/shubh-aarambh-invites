@@ -2,7 +2,7 @@ import { Invitation } from '@/types';
 import { Heart } from 'lucide-react';
 
 const InvitationFooter = ({ invitation }: { invitation: Invitation }) => {
-  const shareUrl = `${window.location.origin}/${invitation.code}/invite/${invitation.slug}`;
+  const shareUrl = `${window.location.origin}/${invitation.accessCode || invitation.code}/invite/${invitation.slug}`;
   const whatsappMsg = encodeURIComponent(
     `You're invited to ${invitation.groomName.split(' ')[0]} & ${invitation.brideName.split(' ')[0]}'s wedding celebrations! 💌 Open your beautiful invitation here: ${shareUrl} 🌸`
   );

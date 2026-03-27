@@ -38,8 +38,9 @@ const PublicInvitationPage = () => {
         }
 
         // 3. Determine template
-        const templateSlug = invitation.templateTheme || 'crimson';
-        const component = await getTemplateComponent(templateSlug);
+        const templateSlug = invitation.template?.themeKey || invitation.templateTheme || 'crimson';
+        const templateIdStr = invitation.template?.id?.toString() || invitation.templateId?.toString();
+        const component = await getTemplateComponent(templateIdStr || templateSlug);
         
         if (!component) {
           // Fallback to crimson
@@ -66,30 +67,29 @@ const PublicInvitationPage = () => {
           mapsUrl: e.mapsUrl || null,
         }));
 
-        const galleryPhotos: PhotoData[] = (invitation.galleryPhotos || []).map((p: any, i: number) => {
-          if (typeof p === 'string') {
-            return { photoUrl: p, sortOrder: i, isDefault: false };
-          }
-          return {
-            photoUrl: p.photoUrl || p,
-            sortOrder: p.sortOrder ?? i,
-            isDefault: false,
-          };
+        // Gallery: use user photos, fallback to template defaults
+        const userPhotos = (invitation.galleryPhotos || []).map((p: any, i: number) => {
+          if (typeof p === 'string') return { photoUrl: p, sortOrder: i, isDefault: false };
+          return { photoUrl: p.photoUrl || p, sortOrder: p.sortOrder ?? i, isDefault: false };
         });
+        const templateDefaultPhotos = (invitation.templateDefaultPhotos || invitation.template?.defaultPhotos || []).map((p: any, i: number) => ({
+          photoUrl: p.photoUrl, sortOrder: p.sortOrder ?? i, isDefault: true,
+        }));
+        const galleryPhotos: PhotoData[] = userPhotos.length > 0 ? userPhotos : templateDefaultPhotos;
 
         const data: InvitationData = {
           invitationId: invitation.id ? Number(invitation.id) : null,
-          templateId: invitation.templateId ? Number(invitation.templateId) : 1,
+          templateId: invitation.templateId ? Number(invitation.templateId) : (invitation.template?.id || 1),
           templateSlug,
           brideName: invitation.brideName || '',
           groomName: invitation.groomName || '',
-          brideBio: invitation.brideBio || '',
-          groomBio: invitation.groomBio || '',
+          brideBio: invitation.brideBio || invitation.invitationData?.bride_bio || '',
+          groomBio: invitation.groomBio || invitation.invitationData?.groom_bio || '',
           couplePhotoUrl: invitation.couplePhotoUrl || null,
-          hashtag: invitation.hashtag || '',
-          welcomeMessage: invitation.welcomeMessage || '',
-          showCountdown: invitation.showCountdown ?? true,
-          weddingDate: invitation.weddingDate || '',
+          hashtag: invitation.hashtag || invitation.invitationData?.hashtag || '',
+          welcomeMessage: invitation.welcomeMessage || invitation.invitationData?.welcome_message || '',
+          showCountdown: invitation.showCountdown ?? invitation.invitationData?.show_countdown ?? true,
+          weddingDate: invitation.weddingDate || invitation.invitationData?.wedding_date || '',
           events,
           galleryPhotos,
           musicUrl: invitation.musicUrl || null,
@@ -98,13 +98,13 @@ const PublicInvitationPage = () => {
           effectiveMusicName: (invitation as any).effectiveMusicName || invitation.musicName || 'Wedding BGM',
           locale: 'en',
           slug: invitation.slug || '',
-          accessCode: invitation.code || code || null,
+          accessCode: invitation.accessCode || invitation.code || code || null,
           status: invitation.status || 'PUBLISHED',
           templateDefaults: {
-            defaultPhotos: [],
-            defaultMusicUrl: '',
-            defaultMusicName: '',
-            defaultVideoUrl: null,
+            defaultPhotos: (invitation.templateDefaultPhotos || invitation.template?.defaultPhotos || []),
+            defaultMusicUrl: (invitation as any).templateDefaultMusicUrl || invitation.template?.defaultMusicUrl || '',
+            defaultMusicName: (invitation as any).templateDefaultMusicName || invitation.template?.defaultMusicName || '',
+            defaultVideoUrl: (invitation as any).templateDefaultVideoUrl || invitation.template?.defaultVideoUrl || null,
           },
         };
 

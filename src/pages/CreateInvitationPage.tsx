@@ -13,7 +13,6 @@ import {
   createEmptyInvitationData,
 } from "@/templates/types";
 import { getTemplateById, getTemplateDemoData } from "@/api/templates";
-import { checkDraft } from "@/api/invitations";
 import { useInvitationEditor } from "@/hooks/useInvitationEditor";
 import { usePayment } from "@/hooks/usePayment";
 import { EditModeToolbar } from "@/components/inline-editor";
@@ -41,7 +40,6 @@ const CreateInvitationPage = ({
     null,
   );
   const [loading, setLoading] = useState(true);
-  const [checkingDraft, setCheckingDraft] = useState(true);
   const [copiedLink, setCopiedLink] = useState(false);
 
   const isDevMode = import.meta.env.VITE_DEV_MODE === "true";
@@ -73,34 +71,6 @@ const CreateInvitationPage = ({
       navigate("/login");
     }
   }, [isAuthenticated, navigate]);
-
-  // Check for existing draft (for new invitations only)
-  useEffect(() => {
-    if (editMode || !isAuthenticated) {
-      setCheckingDraft(false);
-      return;
-    }
-
-    const checkForDraft = async () => {
-      try {
-        const templateNum = parseInt(effectiveTemplateId);
-        const result = await checkDraft(templateNum);
-
-        if (result.hasDraft && result.invitationId) {
-          toast.success("Resuming your saved draft");
-          navigate(`/edit/${result.invitationId}`, { replace: true });
-        } else {
-          setCheckingDraft(false);
-        }
-      } catch (error) {
-        console.error("Draft check failed:", error);
-        // Fail open - continue with new invitation
-        setCheckingDraft(false);
-      }
-    };
-
-    checkForDraft();
-  }, [effectiveTemplateId, isAuthenticated, editMode, navigate]);
 
   // Load template component
   useEffect(() => {
@@ -443,36 +413,18 @@ const CreateInvitationPage = ({
         )}
       </AnimatePresence>
 
-      {/* Draft Check Loading State */}
-      {checkingDraft && (
-        <div className="min-h-screen bg-background flex flex-col items-center justify-center">
-          <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
-          <p className="font-body text-sm text-muted-foreground">
-            Checking for saved draft...
-          </p>
-        </div>
-      )}
-
       {/* Template in Edit Mode */}
-      {!checkingDraft && (
-        <div className={isDevMode ? "pt-6" : ""}>
-          <TemplateComp
-            mode="edit"
-            data={{
-              ...data,
-              // Don't pass invitationId to EditablePhoto during DRAFT
-              // This ensures photos upload to temp/ folder, not invitationId folder
-              invitationId:
-                data.status !== "DRAFT" ? data.invitationId : undefined,
-            }}
-            onUpdate={updateData}
-            onSaveDraft={saveDraft}
-            onPublish={publish}
-            isSaving={isSaving}
-            isPublishing={isPublishing}
-          />
-        </div>
-      )}
+      <div className={isDevMode ? "pt-6" : ""}>
+        <TemplateComp
+          mode="edit"
+          data={data}
+          onUpdate={updateData}
+          onSaveDraft={saveDraft}
+          onPublish={publish}
+          isSaving={isSaving}
+          isPublishing={isPublishing}
+        />
+      </div>
 
       {/* Edit Mode Toolbar */}
       <EditModeToolbar

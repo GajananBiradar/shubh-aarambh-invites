@@ -41,8 +41,8 @@ const PublicInvitationPage = () => {
           invitation = SAMPLE_INVITATION;
         }
 
-        // 2. Record view (fire and forget)
-        if (invitation.id) {
+        // 2. Record view (fire and forget) - only for numeric IDs (not demo mode)
+        if (invitation.id && !isNaN(Number(invitation.id))) {
           api.post(`/api/invitations/${invitation.id}/view`).catch(() => {});
         }
 

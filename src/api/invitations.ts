@@ -35,6 +35,15 @@ export const checkDraft = async (templateId: number): Promise<{ hasDraft: boolea
   }
 };
 
+export const getMyDrafts = async (): Promise<Array<{ invitationId: number; templateId: number; brideName: string; groomName: string; updatedAt: string }>> => {
+  try {
+    const { data } = await api.get('/api/invitations/my-drafts');
+    return data;
+  } catch {
+    return [];
+  }
+};
+
 export const getInvitationBySlug = async (code: string, slug: string): Promise<Invitation> => {
   try {
     const { data } = await api.get(`/api/invitations/${code}/${slug}`);

@@ -1,57 +1,102 @@
 import { useState, useMemo, useEffect, Suspense, lazy } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { SAMPLE_INVITATION } from "@/mock/sampleInvitation";
-import { Eye, Sparkles, Crown, Search, AlertCircle, Loader2 } from "lucide-react";
+import {
+  Eye,
+  Sparkles,
+  Crown,
+  Search,
+  AlertCircle,
+  Loader2,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { usePayment } from "@/hooks/usePayment";
+import { useAuthStore } from "@/store/authStore";
 import { Template } from "@/types";
 import PageWrapper from "@/components/layout/PageWrapper";
 import { getTemplates } from "@/api/templates";
+import { getMyDrafts } from "@/api/invitations";
+import { deleteInvitation } from "@/api/invitations";
 import { SkeletonGrid } from "@/components/ui/SkeletonLoading";
 import { getTemplateComponent, getTemplateTheme } from "@/templates";
-import { TemplateComponent, InvitationData, createEmptyInvitationData } from "@/templates/types";
+import {
+  TemplateComponent,
+  InvitationData,
+  createEmptyInvitationData,
+} from "@/templates/types";
+import toast from "react-hot-toast";
+
+interface DraftInfo {
+  invitationId: number;
+  templateId: number;
+  brideName: string;
+  groomName: string;
+  updatedAt: string;
+}
 
 /**
  * Dynamic Template Preview Component
  * Loads and renders the actual template component in a mini preview mode
  */
-const DynamicTemplatePreview = ({ 
-  templateId, 
-  theme 
-}: { 
+const DynamicTemplatePreview = ({
+  templateId,
+  theme,
+}: {
   templateId: string | number;
   theme: string;
 }) => {
-  const [TemplateComp, setTemplateComp] = useState<TemplateComponent | null>(null);
+  const [TemplateComp, setTemplateComp] = useState<TemplateComponent | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   // Create sample data for preview
   const sampleData: InvitationData = useMemo(() => {
     const base = createEmptyInvitationData(
-      typeof templateId === 'string' ? parseInt(templateId) : templateId,
+      typeof templateId === "string" ? parseInt(templateId) : templateId,
       theme,
-      { defaultPhotos: [], defaultMusicUrl: '', defaultMusicName: '' }
+      { defaultPhotos: [], defaultMusicUrl: "", defaultMusicName: "" },
     );
-    
+
     // Add sample data to make preview look nice
     return {
       ...base,
-      brideName: 'Ananya',
-      groomName: 'Vikram',
-      brideBio: 'Designer who paints sunsets & dreams',
-      groomBio: 'Architect who builds worlds & love',
+      brideName: "Ananya",
+      groomName: "Vikram",
+      brideBio: "Designer who paints sunsets & dreams",
+      groomBio: "Architect who builds worlds & love",
       couplePhotoUrl: null,
-      hashtag: '#AnanyaWedVikram',
-      welcomeMessage: 'Together with their families, we invite you to celebrate our wedding.',
+      hashtag: "#AnanyaWedVikram",
+      welcomeMessage:
+        "Together with their families, we invite you to celebrate our wedding.",
       showCountdown: true,
-      weddingDate: '2026-02-14',
+      weddingDate: "2026-02-14",
       events: [
-        { id: 1, eventName: 'Haldi', eventDate: '2026-02-11', eventTime: '10:00:00', venueName: 'Sharma Residence', venueAddress: 'Banjara Hills', mapsUrl: null },
-        { id: 2, eventName: 'Mehendi', eventDate: '2026-02-12', eventTime: '17:00:00', venueName: 'The Garden Club', venueAddress: 'Jubilee Hills', mapsUrl: null },
+        {
+          id: 1,
+          eventName: "Haldi",
+          eventDate: "2026-02-11",
+          eventTime: "10:00:00",
+          venueName: "Sharma Residence",
+          venueAddress: "Banjara Hills",
+          mapsUrl: null,
+        },
+        {
+          id: 2,
+          eventName: "Mehendi",
+          eventDate: "2026-02-12",
+          eventTime: "17:00:00",
+          venueName: "The Garden Club",
+          venueAddress: "Jubilee Hills",
+          mapsUrl: null,
+        },
       ],
       galleryPhotos: [],
-      status: 'PUBLISHED',
+      status: "PUBLISHED",
     };
   }, [templateId, theme]);
 
@@ -60,7 +105,8 @@ const DynamicTemplatePreview = ({
       setLoading(true);
       setError(false);
       try {
-        const id = typeof templateId === 'number' ? templateId.toString() : templateId;
+        const id =
+          typeof templateId === "number" ? templateId.toString() : templateId;
         const component = await getTemplateComponent(id);
         if (component) {
           setTemplateComp(() => component);
@@ -68,7 +114,7 @@ const DynamicTemplatePreview = ({
           setError(true);
         }
       } catch (e) {
-        console.error('[v0] Failed to load template:', e);
+        console.error("[v0] Failed to load template:", e);
         setError(true);
       }
       setLoading(false);
@@ -90,10 +136,10 @@ const DynamicTemplatePreview = ({
   }
 
   return (
-    <div 
-      data-theme={theme} 
+    <div
+      data-theme={theme}
       className="w-full h-full overflow-hidden transform origin-top scale-[0.35] -mt-[32.5%]"
-      style={{ width: '285%', height: '285%' }}
+      style={{ width: "285%", height: "285%" }}
     >
       <div className="pointer-events-none">
         <TemplateComp
@@ -159,10 +205,36 @@ const FallbackPreview = ({ theme }: { theme: string }) => {
   );
 };
 
-const TemplateCard = ({ template }: { template: Template }) => {
+const TemplateCard = ({
+  template,
+  draftInfo,
+  onDraftDelete,
+}: {
+  template: Template;
+  draftInfo?: DraftInfo;
+  onDraftDelete?: () => void;
+}) => {
   const { triggerPaymentFlow } = usePayment();
-  const templateTheme = template.themeKey || template.theme || 'crimson';
-  
+  const navigate = useNavigate();
+  const templateTheme = template.themeKey || template.theme || "crimson";
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteDraft = async () => {
+    if (!draftInfo) return;
+    setIsDeleting(true);
+    try {
+      await deleteInvitation(String(draftInfo.invitationId));
+      toast.success("Draft deleted");
+      onDraftDelete?.();
+      setShowDeleteConfirm(false);
+    } catch (error) {
+      toast.error("Failed to delete draft");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <motion.div
       layout
@@ -171,7 +243,12 @@ const TemplateCard = ({ template }: { template: Template }) => {
       exit={{ opacity: 0, scale: 0.95 }}
       className="card-hover bg-card rounded-2xl overflow-hidden border border-border relative group"
     >
-      {template.isPremium && (
+      {draftInfo && (
+        <div className="absolute top-3 left-3 z-10 bg-amber-500/90 text-amber-950 font-body text-[10px] font-bold px-2.5 py-1.5 rounded-full flex items-center gap-1">
+          ✏️ Draft saved
+        </div>
+      )}
+      {template.isPremium && !draftInfo && (
         <div className="absolute top-3 left-3 z-10 bg-gold/90 text-background font-body text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
           <Crown size={10} /> PREMIUM
         </div>
@@ -185,20 +262,23 @@ const TemplateCard = ({ template }: { template: Template }) => {
           ₹{template.priceInr}
         </div>
       )}
-      
+
       {/* Template Preview - Uses actual template component */}
       <div className="h-72 overflow-hidden relative bg-background">
-        <div className="w-full h-full" style={{ animation: "autoScroll 25s linear infinite" }}>
-          <DynamicTemplatePreview 
-            templateId={template.id} 
+        <div
+          className="w-full h-full"
+          style={{ animation: "autoScroll 25s linear infinite" }}
+        >
+          <DynamicTemplatePreview
+            templateId={template.id}
             theme={templateTheme}
           />
         </div>
-        
+
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
       </div>
-      
+
       <div className="p-5">
         <div className="flex items-center justify-between mb-1">
           <h3 className="font-display text-lg font-semibold">
@@ -224,23 +304,91 @@ const TemplateCard = ({ template }: { template: Template }) => {
             );
           })}
         </div>
-        <div className="flex gap-3 mt-4">
-          <button
-            onClick={() =>
-              window.open(`/templates/${template.id}/demo`, "_blank")
-            }
-            className="flex-1 btn-outline-accent px-3 py-2 rounded-lg text-sm font-body font-semibold flex items-center justify-center gap-1.5"
+
+        {draftInfo ? (
+          <>
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2.5 my-3">
+              <p className="font-body text-xs text-amber-900/80">
+                Draft:{" "}
+                {draftInfo.brideName && draftInfo.groomName
+                  ? `${draftInfo.brideName} & ${draftInfo.groomName}`
+                  : "Draft in progress"}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => navigate(`/edit/${draftInfo.invitationId}`)}
+                className="w-full btn-outline-accent px-3 py-2 rounded-lg text-sm font-body font-semibold flex items-center justify-center gap-1.5"
+              >
+                <Pencil size={16} /> Continue Editing
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="w-full btn-outline-accent px-3 py-2 rounded-lg text-sm font-body font-semibold flex items-center justify-center gap-1.5 text-muted-foreground hover:text-destructive"
+              >
+                <Trash2 size={16} /> Start Fresh
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="flex gap-3 mt-4">
+            <button
+              onClick={() =>
+                window.open(`/templates/${template.id}/demo`, "_blank")
+              }
+              className="flex-1 btn-outline-accent px-3 py-2 rounded-lg text-sm font-body font-semibold flex items-center justify-center gap-1.5"
+            >
+              <Eye size={16} /> Demo
+            </button>
+            <button
+              onClick={() => triggerPaymentFlow(template.id)}
+              className={`flex-1 ${template.isFree ? "btn-emerald" : "btn-gold"} px-3 py-2 rounded-lg text-sm font-body font-semibold flex items-center justify-center gap-1.5`}
+            >
+              <Sparkles size={16} />{" "}
+              {template.isFree ? "Start Free" : "Use This Template"}
+            </button>
+          </div>
+        )}
+
+        {/* Delete confirmation dialog */}
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setShowDeleteConfirm(false)}
           >
-            <Eye size={16} /> Demo
-          </button>
-          <button
-            onClick={() => triggerPaymentFlow(template.id)}
-            className={`flex-1 ${template.isFree ? "btn-emerald" : "btn-gold"} px-3 py-2 rounded-lg text-sm font-body font-semibold flex items-center justify-center gap-1.5`}
-          >
-            <Sparkles size={16} />{" "}
-            {template.isFree ? "Start Free" : "Use This Template"}
-          </button>
-        </div>
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              className="bg-card border border-border rounded-2xl p-6 max-w-sm"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="font-heading text-lg font-semibold mb-2">
+                Start Fresh?
+              </h3>
+              <p className="font-body text-sm text-muted-foreground mb-6">
+                You already have a draft for this template. Starting fresh will
+                delete your current draft and all uploaded photos. Are you sure?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 btn-outline-accent px-4 py-2 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteDraft}
+                  disabled={isDeleting}
+                  className="flex-1 bg-destructive text-destructive-foreground px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+                >
+                  {isDeleting ? "Deleting..." : "Yes, Start Fresh"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </div>
     </motion.div>
   );
@@ -248,11 +396,36 @@ const TemplateCard = ({ template }: { template: Template }) => {
 
 const AllTemplatesPage = () => {
   const [activeFilter, setActiveFilter] = useState("All");
+  const [drafts, setDrafts] = useState<Map<number, DraftInfo>>(new Map());
+  const [loadingDrafts, setLoadingDrafts] = useState(true);
+  const { isAuthenticated } = useAuthStore();
 
   // Scroll to top when page loads
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // Load drafts if logged in
+  useEffect(() => {
+    if (isAuthenticated) {
+      getMyDrafts()
+        .then((draftList) => {
+          const draftMap = new Map();
+          draftList.forEach((draft) => {
+            draftMap.set(draft.templateId, draft);
+          });
+          setDrafts(draftMap);
+        })
+        .catch(() => {
+          // Silently ignore errors
+        })
+        .finally(() => {
+          setLoadingDrafts(false);
+        });
+    } else {
+      setLoadingDrafts(false);
+    }
+  }, [isAuthenticated]);
 
   const {
     data: templates = [] as Template[],
@@ -356,7 +529,16 @@ const AllTemplatesPage = () => {
             {filtered.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
                 {filtered.map((t) => (
-                  <TemplateCard key={t.id} template={t} />
+                  <TemplateCard
+                    key={t.id}
+                    template={t}
+                    draftInfo={drafts.get(t.id)}
+                    onDraftDelete={() => {
+                      const newDrafts = new Map(drafts);
+                      newDrafts.delete(t.id);
+                      setDrafts(newDrafts);
+                    }}
+                  />
                 ))}
               </div>
             ) : (

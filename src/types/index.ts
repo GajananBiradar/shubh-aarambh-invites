@@ -40,6 +40,8 @@ export interface Invitation {
   brideBio: string;
   groomBio: string;
   couplePhotoUrl: string | null;
+  bridePhotoUrl?: string | null;
+  groomPhotoUrl?: string | null;
   hashtag: string;
   slug: string;
   code?: string;

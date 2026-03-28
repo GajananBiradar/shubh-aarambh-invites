@@ -43,6 +43,8 @@ export interface InvitationData {
   brideBio: string;
   groomBio: string;
   couplePhotoUrl: string | null;
+  bridePhotoUrl: string | null;
+  groomPhotoUrl: string | null;
   hashtag: string;
   welcomeMessage: string;
   showCountdown: boolean;
@@ -96,6 +98,8 @@ export const createEmptyInvitationData = (
   brideBio: '',
   groomBio: '',
   couplePhotoUrl: null,
+  bridePhotoUrl: null,
+  groomPhotoUrl: null,
   hashtag: '#BrideWedGroom',
   welcomeMessage: 'Together with their families, we joyfully invite you to be part of our celebration of love and new beginnings.',
   showCountdown: true,

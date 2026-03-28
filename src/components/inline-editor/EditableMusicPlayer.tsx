@@ -1,9 +1,9 @@
-import { useState, useRef } from 'react';
-import { TemplateMode } from '@/templates/types';
-import { Music, Upload, Link, X, Loader2, Play, Pause } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { uploadFile, validateMusic } from '@/lib/upload';
-import toast from 'react-hot-toast';
+import { useState, useRef } from "react";
+import { TemplateMode } from "@/templates/types";
+import { Music, Upload, Link, X, Loader2, Play, Pause } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { uploadFile, validateMusic, deleteOldFile } from "@/lib/upload";
+import toast from "react-hot-toast";
 
 interface EditableMusicPlayerProps {
   musicUrl: string | null;
@@ -13,6 +13,7 @@ interface EditableMusicPlayerProps {
   onUpdate: (url: string | null, name: string | null) => void;
   mode: TemplateMode;
   className?: string;
+  invitationId?: number;
 }
 
 const EditableMusicPlayer = ({
@@ -22,11 +23,12 @@ const EditableMusicPlayer = ({
   defaultMusicName,
   onUpdate,
   mode,
-  className = '',
+  className = "",
+  invitationId,
 }: EditableMusicPlayerProps) => {
   const [isChanging, setIsChanging] = useState(false);
-  const [activeTab, setActiveTab] = useState<'upload' | 'url'>('upload');
-  const [urlInput, setUrlInput] = useState('');
+  const [activeTab, setActiveTab] = useState<"upload" | "url">("upload");
+  const [urlInput, setUrlInput] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -63,27 +65,31 @@ const EditableMusicPlayer = ({
     setUploadProgress(0);
 
     try {
-      const publicUrl = await uploadFile(file, 'music', (progress) => {
-        setUploadProgress(progress);
+      const publicUrl = await uploadFile({
+        file,
+        uploadType: "music",
+        onProgress: (progress) => setUploadProgress(progress),
+        invitationId,
+        oldPublicUrl: musicUrl ?? undefined,
       });
-      onUpdate(publicUrl, file.name.replace(/\.[^/.]+$/, ''));
+      onUpdate(publicUrl, file.name.replace(/\.[^/.]+$/, ""));
       setIsChanging(false);
-      toast.success('Music uploaded!');
+      toast.success("Music uploaded!");
     } catch (err) {
-      console.error('Upload failed:', err);
-      toast.error('Failed to upload music');
+      console.error("Upload failed:", err);
+      toast.error("Failed to upload music");
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
       if (inputRef.current) {
-        inputRef.current.value = '';
+        inputRef.current.value = "";
       }
     }
   };
 
   const handleUrlSubmit = () => {
     if (!urlInput.trim()) {
-      toast.error('Please enter a URL');
+      toast.error("Please enter a URL");
       return;
     }
 
@@ -91,29 +97,34 @@ const EditableMusicPlayer = ({
     try {
       new URL(urlInput);
     } catch {
-      toast.error('Please enter a valid URL');
+      toast.error("Please enter a valid URL");
       return;
     }
 
-    onUpdate(urlInput.trim(), 'Custom Music');
-    setUrlInput('');
+    onUpdate(urlInput.trim(), "Custom Music");
+    setUrlInput("");
     setIsChanging(false);
-    toast.success('Music URL saved!');
+    toast.success("Music URL saved!");
   };
 
   const handleRemoveCustom = () => {
+    if (musicUrl) {
+      deleteOldFile(musicUrl);
+    }
     onUpdate(null, null);
-    toast.success('Reverted to default music');
+    toast.success("Reverted to default music");
   };
 
   // View mode: just show floating player (handled by parent)
-  if (mode !== 'edit') {
+  if (mode !== "edit") {
     return null; // FloatingMusicPlayer is used separately
   }
 
   // Edit mode: music editor panel
   return (
-    <div className={cn('bg-card rounded-2xl border border-border p-6', className)}>
+    <div
+      className={cn("bg-card rounded-2xl border border-border p-6", className)}
+    >
       <div className="flex items-center gap-3 mb-4">
         <Music className="w-5 h-5 text-primary" />
         <h3 className="font-heading text-lg font-semibold">Background Music</h3>
@@ -125,12 +136,18 @@ const EditableMusicPlayer = ({
           onClick={togglePlay}
           className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center"
         >
-          {isPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
+          {isPlaying ? (
+            <Pause size={18} />
+          ) : (
+            <Play size={18} className="ml-0.5" />
+          )}
         </button>
         <div className="flex-1 min-w-0">
-          <p className="font-body text-sm font-medium truncate">{effectiveName}</p>
+          <p className="font-body text-sm font-medium truncate">
+            {effectiveName}
+          </p>
           <p className="font-body text-xs text-muted-foreground">
-            {isUsingDefault ? 'Default template music' : 'Custom music'}
+            {isUsingDefault ? "Default template music" : "Custom music"}
           </p>
         </div>
         <audio
@@ -163,24 +180,24 @@ const EditableMusicPlayer = ({
           {/* Tabs */}
           <div className="flex gap-2">
             <button
-              onClick={() => setActiveTab('upload')}
+              onClick={() => setActiveTab("upload")}
               className={cn(
-                'flex-1 py-2 rounded-lg text-sm font-body font-medium transition-colors',
-                activeTab === 'upload'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground hover:text-foreground'
+                "flex-1 py-2 rounded-lg text-sm font-body font-medium transition-colors",
+                activeTab === "upload"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:text-foreground",
               )}
             >
               <Upload size={14} className="inline mr-1.5" />
               Upload MP3
             </button>
             <button
-              onClick={() => setActiveTab('url')}
+              onClick={() => setActiveTab("url")}
               className={cn(
-                'flex-1 py-2 rounded-lg text-sm font-body font-medium transition-colors',
-                activeTab === 'url'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground hover:text-foreground'
+                "flex-1 py-2 rounded-lg text-sm font-body font-medium transition-colors",
+                activeTab === "url"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:text-foreground",
               )}
             >
               <Link size={14} className="inline mr-1.5" />
@@ -189,7 +206,7 @@ const EditableMusicPlayer = ({
           </div>
 
           {/* Tab content */}
-          {activeTab === 'upload' ? (
+          {activeTab === "upload" ? (
             <div>
               <input
                 ref={inputRef}
@@ -202,10 +219,10 @@ const EditableMusicPlayer = ({
                 onClick={() => inputRef.current?.click()}
                 disabled={isUploading}
                 className={cn(
-                  'w-full py-8 rounded-xl border-2 border-dashed border-border',
-                  'flex flex-col items-center justify-center gap-2',
-                  'hover:border-primary/50 hover:bg-primary/5 transition-all',
-                  isUploading && 'opacity-50 cursor-not-allowed'
+                  "w-full py-8 rounded-xl border-2 border-dashed border-border",
+                  "flex flex-col items-center justify-center gap-2",
+                  "hover:border-primary/50 hover:bg-primary/5 transition-all",
+                  isUploading && "opacity-50 cursor-not-allowed",
                 )}
               >
                 {isUploading ? (
@@ -247,7 +264,7 @@ const EditableMusicPlayer = ({
           <button
             onClick={() => {
               setIsChanging(false);
-              setUrlInput('');
+              setUrlInput("");
             }}
             className="w-full py-2 text-sm font-body text-muted-foreground hover:text-foreground transition-colors"
           >

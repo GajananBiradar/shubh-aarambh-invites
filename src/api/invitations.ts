@@ -26,6 +26,15 @@ export const getMyInvitations = async (): Promise<Invitation[]> => {
   }
 };
 
+export const checkDraft = async (templateId: number): Promise<{ hasDraft: boolean; invitationId: number | null }> => {
+  try {
+    const { data } = await api.get(`/api/invitations/draft-check?templateId=${templateId}`);
+    return data;
+  } catch {
+    return { hasDraft: false, invitationId: null };
+  }
+};
+
 export const getInvitationBySlug = async (code: string, slug: string): Promise<Invitation> => {
   try {
     const { data } = await api.get(`/api/invitations/${code}/${slug}`);

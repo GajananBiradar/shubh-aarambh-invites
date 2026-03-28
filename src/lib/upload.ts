@@ -1,11 +1,27 @@
 import api from '@/api/axios';
 
-export type UploadType = 'photo' | 'gallery' | 'music' | 'template-preview' | 'default-photo' | 'default-music' | 'default-video';
+export type UploadType = 'photo' | 'music' | 'template-preview' | 'default-photo' | 'default-music' | 'default-video';
 
 interface PresignedUrlResponse {
   uploadUrl: string;
   publicUrl: string;
   key: string;
+}
+
+interface UploadFileParams {
+  file: File;
+  uploadType: UploadType;
+  onProgress?: (pct: number) => void;
+  invitationId?: number;
+  templateId?: number;
+  oldPublicUrl?: string;
+}
+
+interface PresignedUrlParams {
+  file: File;
+  uploadType: UploadType;
+  invitationId?: number | null;
+  templateId?: number;
 }
 
 /**
@@ -42,27 +58,7 @@ export const validateMusic = (file: File): string | null => {
 
   if (file.size > maxSize) {
     const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
-    return `Music file must be under 10MB (this file is ${sizeMB}MB)`;
-  }
-
-  return null;
-};
-
-/**
- * Validate a video file.
- * Returns error message string if invalid, null if valid.
- */
-export const validateVideo = (file: File): string | null => {
-  const validTypes = ['video/mp4', 'video/webm'];
-  const maxSize = 50 * 1024 * 1024; // 50MB
-
-  if (!validTypes.includes(file.type)) {
-    return 'Only MP4 and WebM videos are allowed';
-  }
-
-  if (file.size > maxSize) {
-    const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
-    return `Video must be under 50MB (this file is ${sizeMB}MB)`;
+    return `Music must be under 10MB (this file is ${sizeMB}MB)`;
   }
 
   return null;
@@ -71,17 +67,24 @@ export const validateVideo = (file: File): string | null => {
 /**
  * Get a presigned URL from the backend for direct R2 upload.
  */
-export const getPresignedUrl = async (
-  file: File,
-  uploadType: string,
-  templateId?: number
-): Promise<PresignedUrlResponse> => {
-  const { data } = await api.post('/api/upload/presign', {
-    fileName: file.name,
-    fileType: file.type,
-    uploadType,
-    ...(templateId != null && { templateId }),
-  });
+export const getPresignedUrl = async (params: PresignedUrlParams): Promise<PresignedUrlResponse> => {
+  const { file, uploadType, invitationId, templateId } = params;
+  const jwt = localStorage.getItem('jwt');
+
+  const { data } = await api.post('/api/upload/presign',
+    {
+      fileName: file.name,
+      fileType: file.type,
+      uploadType,
+      invitationId: invitationId ?? null,
+      templateId: templateId ?? null,
+    },
+    {
+      headers: {
+        'Authorization': `Bearer ${jwt}`,
+      },
+    }
+  );
   return data;
 };
 
@@ -108,12 +111,12 @@ export const uploadToR2 = (
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve();
       } else {
-        reject(new Error(`Upload failed with status ${xhr.status}`));
+        reject(new Error(`R2 upload failed: ${xhr.status}`));
       }
     });
 
     xhr.addEventListener('error', () => {
-      reject(new Error('Network error during upload'));
+      reject(new Error('Network error'));
     });
 
     xhr.open('PUT', uploadUrl);
@@ -123,16 +126,63 @@ export const uploadToR2 = (
 };
 
 /**
- * Complete upload flow: get presigned URL → upload to R2 → return publicUrl.
- * This is the main function components should call.
+ * Delete an old file from R2 (fire-and-forget, non-blocking).
+ * Never throws or shows errors to user.
  */
-export const uploadFile = async (
-  file: File,
-  uploadType: string,
-  onProgress?: (pct: number) => void,
-  templateId?: number
-): Promise<string> => {
-  const { uploadUrl, publicUrl } = await getPresignedUrl(file, uploadType, templateId);
+export const deleteOldFile = (publicUrl: string): void => {
+  const jwt = localStorage.getItem('jwt');
+  
+  // Fire and forget - no await, no error handling
+  fetch('/api/upload/file', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${jwt}`,
+    },
+    body: JSON.stringify({ fileUrl: publicUrl }),
+  }).catch(() => {
+    // Silent fail - cleanup errors have zero UX impact
+    console.warn('Failed to delete old file, but this is non-critical');
+  });
+};
+
+/**
+ * Complete upload flow: get presigned URL → upload to R2 → return publicUrl.
+ * Optionally deletes old file after successful upload (fire-and-forget).
+ */
+export const uploadFile = async (params: UploadFileParams): Promise<string> => {
+  const { file, uploadType, onProgress, invitationId, templateId, oldPublicUrl } = params;
+
+  // Get presigned URL
+  const { uploadUrl, publicUrl } = await getPresignedUrl({
+    file,
+    uploadType,
+    invitationId,
+    templateId,
+  });
+
+  // Upload to R2
   await uploadToR2(file, uploadUrl, onProgress);
+
+  // Delete old file in background (fire and forget)
+  if (oldPublicUrl) {
+    deleteOldFile(oldPublicUrl);
+  }
+
   return publicUrl;
+};
+
+/**
+ * Format bytes to human-readable file size string.
+ * Examples: 1536 → "1.5 KB", 5242880 → "5 MB"
+ */
+export const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const value = parseFloat((bytes / Math.pow(k, i)).toFixed(1));
+
+  return `${value} ${sizes[i]}`;
 };

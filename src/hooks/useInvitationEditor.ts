@@ -132,6 +132,8 @@ export const useInvitationEditor = ({
       brideName: data.brideName || '',
       groomName: data.groomName || '',
       couplePhotoUrl: data.couplePhotoUrl || null,
+      bridePhotoUrl: data.bridePhotoUrl || null,
+      groomPhotoUrl: data.groomPhotoUrl || null,
       musicUrl: data.musicUrl || null,
       musicName: data.musicName || null,
       invitationData: {

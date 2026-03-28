@@ -1,13 +1,13 @@
-import { motion } from 'framer-motion';
-import { Invitation } from '@/types';
-import { Heart } from 'lucide-react';
+import { motion } from "framer-motion";
+import { Invitation } from "@/types";
+import { Heart } from "lucide-react";
 
 const CoupleSection = ({ invitation }: { invitation: Invitation }) => (
   <motion.section
     initial={{ opacity: 0, y: 40 }}
     whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: '-80px' }}
-    transition={{ duration: 0.8, ease: 'easeOut' }}
+    viewport={{ once: true, margin: "-80px" }}
+    transition={{ duration: 0.8, ease: "easeOut" }}
     className="py-16 bg-background"
   >
     <div className="container mx-auto px-4 max-w-2xl">
@@ -24,24 +24,34 @@ const CoupleSection = ({ invitation }: { invitation: Invitation }) => (
           className="text-center group"
         >
           <div className="w-32 h-32 rounded-full mx-auto mb-3 ring-4 ring-accent/30 group-hover:ring-accent/60 transition-all overflow-hidden">
-            <img
-              src={invitation.couplePhotoUrl}
-              alt={invitation.brideName}
-              className="w-full h-full object-cover"
-            />
+            {invitation.bridePhotoUrl || invitation.couplePhotoUrl ? (
+              <img
+                src={invitation.bridePhotoUrl || invitation.couplePhotoUrl}
+                alt={invitation.brideName}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-muted flex items-center justify-center" />
+            )}
           </div>
-          <h3 className="font-heading text-lg font-semibold">{invitation.brideName}</h3>
-          <p className="font-body text-sm text-muted-foreground italic mt-1">{invitation.brideBio}</p>
+          <h3 className="font-heading text-lg font-semibold">
+            {invitation.brideName}
+          </h3>
+          <p className="font-body text-sm text-muted-foreground italic mt-1">
+            {invitation.brideBio}
+          </p>
         </motion.div>
 
         {/* Heart */}
         <motion.div
           animate={{ scale: [1, 1.15, 1] }}
-          transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+          transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
           className="text-center"
         >
           <Heart className="w-8 h-8 text-primary fill-primary mx-auto" />
-          <p className="font-script text-lg text-accent mt-2">{invitation.hashtag}</p>
+          <p className="font-script text-lg text-accent mt-2">
+            {invitation.hashtag}
+          </p>
         </motion.div>
 
         {/* Groom */}
@@ -53,15 +63,23 @@ const CoupleSection = ({ invitation }: { invitation: Invitation }) => (
           className="text-center group"
         >
           <div className="w-32 h-32 rounded-full mx-auto mb-3 ring-4 ring-accent/30 group-hover:ring-accent/60 transition-all overflow-hidden">
-            <img
-              src={invitation.couplePhotoUrl}
-              alt={invitation.groomName}
-              className="w-full h-full object-cover"
-              style={{ objectPosition: 'right center' }}
-            />
+            {invitation.groomPhotoUrl || invitation.couplePhotoUrl ? (
+              <img
+                src={invitation.groomPhotoUrl || invitation.couplePhotoUrl}
+                alt={invitation.groomName}
+                className="w-full h-full object-cover"
+                style={{ objectPosition: "right center" }}
+              />
+            ) : (
+              <div className="w-full h-full bg-muted flex items-center justify-center" />
+            )}
           </div>
-          <h3 className="font-heading text-lg font-semibold">{invitation.groomName}</h3>
-          <p className="font-body text-sm text-muted-foreground italic mt-1">{invitation.groomBio}</p>
+          <h3 className="font-heading text-lg font-semibold">
+            {invitation.groomName}
+          </h3>
+          <p className="font-body text-sm text-muted-foreground italic mt-1">
+            {invitation.groomBio}
+          </p>
         </motion.div>
       </div>
     </div>

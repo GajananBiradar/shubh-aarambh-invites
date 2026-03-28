@@ -276,12 +276,14 @@ const CrimsonShaadiTemplate = ({
               className="text-center"
             >
               <EditablePhoto
-                photoUrl={data.couplePhotoUrl}
-                onSave={(url) => onUpdate({ couplePhotoUrl: url })}
+                photoUrl={data.bridePhotoUrl || data.couplePhotoUrl}
+                onSave={(url) => onUpdate({ bridePhotoUrl: url })}
                 mode={mode}
                 className="w-32 h-32 mx-auto mb-3 ring-4 ring-accent/30 hover:ring-accent/60 transition-all"
                 shape="circle"
                 alt={data.brideName}
+                invitationId={data.invitationId ?? undefined}
+                oldPublicUrl={data.bridePhotoUrl || undefined}
               />
               <h3 className="font-heading text-lg font-semibold">
                 {data.brideName || "Bride"}
@@ -327,12 +329,14 @@ const CrimsonShaadiTemplate = ({
               className="text-center"
             >
               <EditablePhoto
-                photoUrl={data.couplePhotoUrl}
-                onSave={(url) => onUpdate({ couplePhotoUrl: url })}
+                photoUrl={data.groomPhotoUrl || data.couplePhotoUrl}
+                onSave={(url) => onUpdate({ groomPhotoUrl: url })}
                 mode={mode}
                 className="w-32 h-32 mx-auto mb-3 ring-4 ring-accent/30 hover:ring-accent/60 transition-all"
                 shape="circle"
                 alt={data.groomName}
+                invitationId={data.invitationId ?? undefined}
+                oldPublicUrl={data.groomPhotoUrl || undefined}
               />
               <h3 className="font-heading text-lg font-semibold">
                 {data.groomName || "Groom"}
@@ -526,6 +530,7 @@ const CrimsonShaadiTemplate = ({
             onUpdate={(photos) => onUpdate({ galleryPhotos: photos })}
             mode={mode}
             maxPhotos={10}
+            invitationId={data.invitationId ?? undefined}
           />
         </div>
       </motion.section>

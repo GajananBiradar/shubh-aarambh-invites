@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
-import { TemplateMode, PhotoData, DefaultPhoto } from '@/templates/types';
-import { X, Plus, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { uploadFile, validatePhoto } from '@/lib/upload';
-import toast from 'react-hot-toast';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useRef } from "react";
+import { TemplateMode, PhotoData, DefaultPhoto } from "@/templates/types";
+import { X, Plus, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { uploadFile, validatePhoto } from "@/lib/upload";
+import toast from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface EditablePhotoGalleryProps {
   photos: PhotoData[];
@@ -13,6 +13,7 @@ interface EditablePhotoGalleryProps {
   mode: TemplateMode;
   maxPhotos?: number;
   className?: string;
+  invitationId?: number;
 }
 
 const EditablePhotoGallery = ({
@@ -21,22 +22,33 @@ const EditablePhotoGallery = ({
   onUpdate,
   mode,
   maxPhotos = 10,
-  className = '',
+  className = "",
+  invitationId,
 }: EditablePhotoGalleryProps) => {
-  const [uploadingSlots, setUploadingSlots] = useState<Record<number, number>>({});
+  const [uploadingSlots, setUploadingSlots] = useState<Record<number, number>>(
+    {},
+  );
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const multiInputRef = useRef<HTMLInputElement | null>(null);
 
   // Use photos or default to defaultPhotos
-  const displayPhotos: PhotoData[] = photos.length > 0
-    ? photos
-    : defaultPhotos.map((p, i) => ({ photoUrl: p.photoUrl, sortOrder: i, isDefault: true }));
+  const displayPhotos: PhotoData[] =
+    photos.length > 0
+      ? photos
+      : defaultPhotos.map((p, i) => ({
+          photoUrl: p.photoUrl,
+          sortOrder: i,
+          isDefault: true,
+        }));
 
   const photoCount = displayPhotos.length;
   const isAtCapacity = photoCount >= maxPhotos;
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, slotIndex: number) => {
+  const handleFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    slotIndex: number,
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -46,11 +58,16 @@ const EditablePhotoGallery = ({
       return;
     }
 
-    setUploadingSlots(prev => ({ ...prev, [slotIndex]: 0 }));
+    setUploadingSlots((prev) => ({ ...prev, [slotIndex]: 0 }));
 
     try {
-      const publicUrl = await uploadFile(file, 'photo', (progress) => {
-        setUploadingSlots(prev => ({ ...prev, [slotIndex]: progress }));
+      const publicUrl = await uploadFile({
+        file,
+        uploadType: "photo",
+        onProgress: (progress) => {
+          setUploadingSlots((prev) => ({ ...prev, [slotIndex]: progress }));
+        },
+        invitationId,
       });
 
       const newPhoto: PhotoData = {
@@ -66,25 +83,27 @@ const EditablePhotoGallery = ({
         newPhotos.push(newPhoto);
       }
 
-      newPhotos.forEach((p, i) => p.sortOrder = i);
+      newPhotos.forEach((p, i) => (p.sortOrder = i));
       onUpdate(newPhotos);
-      toast.success('Photo added!');
+      toast.success("Photo added!");
     } catch (err) {
-      console.error('Upload failed:', err);
-      toast.error('Failed to upload photo');
+      console.error("Upload failed:", err);
+      toast.error("Failed to upload photo");
     } finally {
-      setUploadingSlots(prev => {
+      setUploadingSlots((prev) => {
         const next = { ...prev };
         delete next[slotIndex];
         return next;
       });
       if (inputRefs.current[slotIndex]) {
-        inputRefs.current[slotIndex]!.value = '';
+        inputRefs.current[slotIndex]!.value = "";
       }
     }
   };
 
-  const handleMultiFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMultiFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
@@ -100,11 +119,16 @@ const EditablePhotoGallery = ({
       }
 
       const slotIdx = photoCount + i;
-      setUploadingSlots(prev => ({ ...prev, [slotIdx]: 0 }));
+      setUploadingSlots((prev) => ({ ...prev, [slotIdx]: 0 }));
 
       try {
-        const publicUrl = await uploadFile(file, 'photo', (progress) => {
-          setUploadingSlots(prev => ({ ...prev, [slotIdx]: progress }));
+        const publicUrl = await uploadFile({
+          file,
+          uploadType: "photo",
+          onProgress: (progress) => {
+            setUploadingSlots((prev) => ({ ...prev, [slotIdx]: progress }));
+          },
+          invitationId,
         });
 
         const newPhoto: PhotoData = {
@@ -116,12 +140,12 @@ const EditablePhotoGallery = ({
         // We need to build the updated array; since uploads are sequential,
         // we read displayPhotos at time of completion
         const updated = [...displayPhotos, newPhoto];
-        updated.forEach((p, idx) => p.sortOrder = idx);
+        updated.forEach((p, idx) => (p.sortOrder = idx));
         onUpdate(updated);
       } catch (err) {
         toast.error(`Failed to upload ${file.name}`);
       } finally {
-        setUploadingSlots(prev => {
+        setUploadingSlots((prev) => {
           const next = { ...prev };
           delete next[slotIdx];
           return next;
@@ -129,23 +153,23 @@ const EditablePhotoGallery = ({
       }
     }
 
-    if (multiInputRef.current) multiInputRef.current.value = '';
+    if (multiInputRef.current) multiInputRef.current.value = "";
   };
 
   const handleRemove = (index: number) => {
     const newPhotos = displayPhotos.filter((_, i) => i !== index);
-    newPhotos.forEach((p, i) => p.sortOrder = i);
+    newPhotos.forEach((p, i) => (p.sortOrder = i));
     onUpdate(newPhotos);
-    toast.success('Photo removed');
+    toast.success("Photo removed");
   };
 
   // View/Demo mode: masonry grid with lightbox
-  if (mode !== 'edit') {
+  if (mode !== "edit") {
     if (displayPhotos.length === 0) return null;
 
     return (
       <>
-        <div className={cn('grid grid-cols-2 md:grid-cols-3 gap-3', className)}>
+        <div className={cn("grid grid-cols-2 md:grid-cols-3 gap-3", className)}>
           {displayPhotos.map((photo, i) => (
             <motion.div
               key={`${photo.photoUrl}-${i}`}
@@ -196,7 +220,10 @@ const EditablePhotoGallery = ({
   }
 
   // Edit mode: 10-slot grid
-  const slots = Array.from({ length: maxPhotos }, (_, i) => displayPhotos[i] || null);
+  const slots = Array.from(
+    { length: maxPhotos },
+    (_, i) => displayPhotos[i] || null,
+  );
 
   return (
     <div className="space-y-4">
@@ -208,12 +235,14 @@ const EditablePhotoGallery = ({
             JPG, PNG, WebP · Max 5MB each
           </p>
         </div>
-        <span className={cn(
-          'font-body text-sm font-medium px-3 py-1 rounded-full',
-          isAtCapacity
-            ? 'bg-destructive/10 text-destructive'
-            : 'bg-primary/10 text-primary'
-        )}>
+        <span
+          className={cn(
+            "font-body text-sm font-medium px-3 py-1 rounded-full",
+            isAtCapacity
+              ? "bg-destructive/10 text-destructive"
+              : "bg-primary/10 text-primary",
+          )}
+        >
           {photoCount} of {maxPhotos} photos
         </span>
       </div>
@@ -225,19 +254,26 @@ const EditablePhotoGallery = ({
       )}
 
       {/* Grid */}
-      <div className={cn('grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3', className)}>
+      <div
+        className={cn(
+          "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3",
+          className,
+        )}
+      >
         {slots.map((photo, i) => (
           <div
             key={i}
             className={cn(
-              'aspect-square rounded-xl overflow-hidden relative',
-              'border-2',
-              photo ? 'border-transparent' : 'border-dashed border-border',
-              isAtCapacity && !photo && 'opacity-40 pointer-events-none'
+              "aspect-square rounded-xl overflow-hidden relative",
+              "border-2",
+              photo ? "border-transparent" : "border-dashed border-border",
+              isAtCapacity && !photo && "opacity-40 pointer-events-none",
             )}
           >
             <input
-              ref={(el) => { inputRefs.current[i] = el; }}
+              ref={(el) => {
+                inputRefs.current[i] = el;
+              }}
               type="file"
               accept="image/jpeg,image/jpg,image/png,image/webp"
               onChange={(e) => handleFileChange(e, i)}
@@ -269,13 +305,17 @@ const EditablePhotoGallery = ({
                   onClick={() => inputRefs.current[i]?.click()}
                   className="absolute inset-0 bg-background/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
                 >
-                  <span className="font-body text-xs text-foreground">Replace</span>
+                  <span className="font-body text-xs text-foreground">
+                    Replace
+                  </span>
                 </div>
               </div>
             ) : uploadingSlots[i] !== undefined ? (
               <div className="w-full h-full flex flex-col items-center justify-center bg-muted">
                 <Loader2 className="w-6 h-6 text-primary animate-spin mb-1" />
-                <span className="font-body text-xs text-muted-foreground">{uploadingSlots[i]}%</span>
+                <span className="font-body text-xs text-muted-foreground">
+                  {uploadingSlots[i]}%
+                </span>
               </div>
             ) : (
               <button
@@ -283,7 +323,9 @@ const EditablePhotoGallery = ({
                 className="w-full h-full flex flex-col items-center justify-center bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
               >
                 <Plus className="w-6 h-6 text-muted-foreground mb-1" />
-                <span className="font-body text-[10px] text-muted-foreground">Add</span>
+                <span className="font-body text-[10px] text-muted-foreground">
+                  Add
+                </span>
               </button>
             )}
           </div>

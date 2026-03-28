@@ -1,6 +1,13 @@
 import { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Heart, MapPin, Calendar, Clock, Leaf } from "lucide-react";
+import {
+  ChevronDown,
+  Heart,
+  MapPin,
+  Calendar,
+  Clock,
+  Leaf,
+} from "lucide-react";
 import { TemplateProps, EventData } from "@/templates/types";
 import {
   EditableText,
@@ -48,7 +55,7 @@ const FincaOliveTemplate = ({
         drift: -60 + Math.random() * 120,
         rotate: Math.random() * 360,
       })),
-    []
+    [],
   );
 
   // Effective music URL
@@ -109,18 +116,20 @@ const FincaOliveTemplate = ({
             <div
               key={leaf.id}
               className="absolute animate-petal"
-              style={{
-                left: leaf.left,
-                width: leaf.size,
-                height: leaf.size * 1.8,
-                opacity: leaf.opacity,
-                "--fall-duration": `${leaf.duration}s`,
-                "--fall-delay": `${leaf.delay}s`,
-                "--drift": `${leaf.drift}px`,
-              } as React.CSSProperties}
+              style={
+                {
+                  left: leaf.left,
+                  width: leaf.size,
+                  height: leaf.size * 1.8,
+                  opacity: leaf.opacity,
+                  "--fall-duration": `${leaf.duration}s`,
+                  "--fall-delay": `${leaf.delay}s`,
+                  "--drift": `${leaf.drift}px`,
+                } as React.CSSProperties
+              }
             >
-              <Leaf 
-                className="w-full h-full text-primary" 
+              <Leaf
+                className="w-full h-full text-primary"
                 style={{ transform: `rotate(${leaf.rotate}deg)` }}
               />
             </div>
@@ -263,12 +272,14 @@ const FincaOliveTemplate = ({
               <div className="relative inline-block mb-6">
                 <div className="absolute -inset-3 border border-primary/30 rounded-full" />
                 <EditablePhoto
-                  photoUrl={data.couplePhotoUrl}
-                  onSave={(url) => onUpdate({ couplePhotoUrl: url })}
+                  photoUrl={data.bridePhotoUrl || data.couplePhotoUrl}
+                  onSave={(url) => onUpdate({ bridePhotoUrl: url })}
                   mode={mode}
                   className="w-40 h-40 rounded-full object-cover"
                   shape="circle"
                   alt={data.brideName}
+                  invitationId={data.invitationId ?? undefined}
+                  oldPublicUrl={data.bridePhotoUrl || undefined}
                 />
               </div>
               <h3 className="font-heading text-2xl text-foreground mb-2">
@@ -296,12 +307,14 @@ const FincaOliveTemplate = ({
               <div className="relative inline-block mb-6">
                 <div className="absolute -inset-3 border border-primary/30 rounded-full" />
                 <EditablePhoto
-                  photoUrl={data.couplePhotoUrl}
-                  onSave={(url) => onUpdate({ couplePhotoUrl: url })}
+                  photoUrl={data.groomPhotoUrl || data.couplePhotoUrl}
+                  onSave={(url) => onUpdate({ groomPhotoUrl: url })}
                   mode={mode}
                   className="w-40 h-40 rounded-full object-cover"
                   shape="circle"
                   alt={data.groomName}
+                  invitationId={data.invitationId ?? undefined}
+                  oldPublicUrl={data.groomPhotoUrl || undefined}
                 />
               </div>
               <h3 className="font-heading text-2xl text-foreground mb-2">
@@ -355,16 +368,18 @@ const FincaOliveTemplate = ({
               <div className="mb-6 flex items-center justify-center gap-3">
                 <label className="font-body text-sm">Show Countdown</label>
                 <button
-                  onClick={() => onUpdate({ showCountdown: !data.showCountdown })}
+                  onClick={() =>
+                    onUpdate({ showCountdown: !data.showCountdown })
+                  }
                   className={cn(
                     "w-12 h-7 rounded-full transition-colors relative",
-                    data.showCountdown ? "bg-primary" : "bg-muted"
+                    data.showCountdown ? "bg-primary" : "bg-muted",
                   )}
                 >
                   <div
                     className={cn(
                       "absolute top-1 w-5 h-5 rounded-full bg-white transition-transform",
-                      data.showCountdown ? "left-6" : "left-1"
+                      data.showCountdown ? "left-6" : "left-1",
                     )}
                   />
                 </button>
@@ -456,17 +471,19 @@ const FincaOliveTemplate = ({
                     transition={{ delay: i * 0.15, duration: 0.6 }}
                     className={cn(
                       "relative grid md:grid-cols-2 gap-8 items-center",
-                      i % 2 === 0 ? "md:text-right" : "md:flex-row-reverse"
+                      i % 2 === 0 ? "md:text-right" : "md:flex-row-reverse",
                     )}
                   >
                     {/* Timeline dot */}
                     <div className="absolute left-1/2 top-1/2 w-4 h-4 bg-primary rounded-full -translate-x-1/2 -translate-y-1/2 hidden md:block ring-4 ring-background" />
 
                     {/* Content - alternating sides */}
-                    <div className={cn(
-                      "bg-card rounded-2xl p-8 border border-border",
-                      i % 2 === 0 ? "md:col-start-1" : "md:col-start-2"
-                    )}>
+                    <div
+                      className={cn(
+                        "bg-card rounded-2xl p-8 border border-border",
+                        i % 2 === 0 ? "md:col-start-1" : "md:col-start-2",
+                      )}
+                    >
                       <div className="flex items-center gap-3 mb-4 justify-center md:justify-start">
                         <Calendar className="w-4 h-4 text-primary" />
                         <span className="font-body text-sm text-muted-foreground">
@@ -501,10 +518,12 @@ const FincaOliveTemplate = ({
                     </div>
 
                     {/* Empty cell for alternating layout */}
-                    <div className={cn(
-                      "hidden md:block",
-                      i % 2 === 0 ? "md:col-start-2" : "md:col-start-1"
-                    )} />
+                    <div
+                      className={cn(
+                        "hidden md:block",
+                        i % 2 === 0 ? "md:col-start-2" : "md:col-start-1",
+                      )}
+                    />
                   </motion.div>
                 ))}
               </div>
@@ -539,6 +558,7 @@ const FincaOliveTemplate = ({
             onUpdate={(photos) => onUpdate({ galleryPhotos: photos })}
             mode={mode}
             maxPhotos={12}
+            invitationId={data.invitationId ?? undefined}
           />
         </div>
       </motion.section>
@@ -579,7 +599,7 @@ const FincaOliveTemplate = ({
       <footer
         className={cn(
           "py-20 bg-background text-center",
-          mode === "edit" && "pb-32"
+          mode === "edit" && "pb-32",
         )}
       >
         <div className="container mx-auto px-6">
@@ -592,7 +612,9 @@ const FincaOliveTemplate = ({
             {formatWeddingDate(data.weddingDate)}
           </p>
           {data.hashtag && (
-            <p className="font-body text-sm text-primary mt-4">{data.hashtag}</p>
+            <p className="font-body text-sm text-primary mt-4">
+              {data.hashtag}
+            </p>
           )}
           <p className="font-body text-[10px] text-muted-foreground/50 mt-10">
             Made with love on ShubhAarambh
@@ -701,7 +723,9 @@ const RsvpSection = ({
   invitationId: number | null;
   isDemo: boolean;
 }) => {
-  const [attending, setAttending] = useState<"yes" | "maybe" | "no" | null>(null);
+  const [attending, setAttending] = useState<"yes" | "maybe" | "no" | null>(
+    null,
+  );
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [guestCount, setGuestCount] = useState(1);
@@ -728,7 +752,8 @@ const RsvpSection = ({
             Thank You
           </h3>
           <p className="font-body text-sm text-muted-foreground">
-            Your response has been recorded. We look forward to celebrating with you.
+            Your response has been recorded. We look forward to celebrating with
+            you.
           </p>
         </div>
       </section>
@@ -742,9 +767,7 @@ const RsvpSection = ({
           <p className="font-body text-xs tracking-[0.3em] uppercase text-primary mb-4">
             Respond
           </p>
-          <h2 className="font-heading text-4xl text-foreground">
-            RSVP
-          </h2>
+          <h2 className="font-heading text-4xl text-foreground">RSVP</h2>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -763,7 +786,7 @@ const RsvpSection = ({
                   "px-6 py-3 rounded-lg font-body text-sm transition-all border",
                   attending === opt.value
                     ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-card border-border hover:border-primary/50"
+                    : "bg-card border-border hover:border-primary/50",
                 )}
               >
                 {opt.label}
@@ -813,7 +836,7 @@ const RsvpSection = ({
               "w-full py-3 rounded-lg font-body font-medium text-sm tracking-wider uppercase transition-all",
               attending
                 ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                : "bg-muted text-muted-foreground cursor-not-allowed"
+                : "bg-muted text-muted-foreground cursor-not-allowed",
             )}
           >
             Confirm Response

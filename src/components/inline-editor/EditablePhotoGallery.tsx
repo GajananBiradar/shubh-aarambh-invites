@@ -14,6 +14,9 @@ interface EditablePhotoGalleryProps {
   maxPhotos?: number;
   className?: string;
   invitationId?: number;
+  templateId?: number;
+  sessionUUID?: string;
+  uploadStage?: "temp" | "draft" | "published";
 }
 
 const EditablePhotoGallery = ({
@@ -24,6 +27,9 @@ const EditablePhotoGallery = ({
   maxPhotos = 10,
   className = "",
   invitationId,
+  templateId,
+  sessionUUID,
+  uploadStage = "temp",
 }: EditablePhotoGalleryProps) => {
   const [uploadingSlots, setUploadingSlots] = useState<Record<number, number>>(
     {},
@@ -67,7 +73,11 @@ const EditablePhotoGallery = ({
         onProgress: (progress) => {
           setUploadingSlots((prev) => ({ ...prev, [slotIndex]: progress }));
         },
-        invitationId,
+        invitationId: invitationId ?? null,
+        templateId,
+        sessionUUID,
+        uploadStage,
+        oldPublicUrl: displayPhotos[slotIndex]?.photoUrl,
       });
 
       const newPhoto: PhotoData = {
@@ -128,7 +138,10 @@ const EditablePhotoGallery = ({
           onProgress: (progress) => {
             setUploadingSlots((prev) => ({ ...prev, [slotIdx]: progress }));
           },
-          invitationId,
+          invitationId: invitationId ?? null,
+          templateId,
+          sessionUUID,
+          uploadStage,
         });
 
         const newPhoto: PhotoData = {

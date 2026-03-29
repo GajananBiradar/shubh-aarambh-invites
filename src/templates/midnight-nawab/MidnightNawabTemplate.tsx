@@ -32,6 +32,9 @@ const MidnightNawabTemplate = ({
   onPublish,
   isSaving,
   isPublishing,
+  templateId,
+  sessionUUID,
+  uploadStage = "temp",
 }: TemplateProps) => {
   const [copiedLink, setCopiedLink] = useState(false);
 
@@ -254,6 +257,9 @@ const MidnightNawabTemplate = ({
                   alt={data.brideName}
                   invitationId={data.invitationId ?? undefined}
                   oldPublicUrl={data.bridePhotoUrl || undefined}
+                  templateId={templateId}
+                  sessionUUID={sessionUUID}
+                  uploadStage={uploadStage}
                 />
               </div>
               <h3 className="font-heading text-xl text-primary">
@@ -287,6 +293,9 @@ const MidnightNawabTemplate = ({
                   alt={data.groomName}
                   invitationId={data.invitationId ?? undefined}
                   oldPublicUrl={data.groomPhotoUrl || undefined}
+                  templateId={templateId}
+                  sessionUUID={sessionUUID}
+                  uploadStage={uploadStage}
                 />
               </div>
               <h3 className="font-heading text-xl text-primary">
@@ -484,6 +493,9 @@ const MidnightNawabTemplate = ({
             mode={mode}
             maxPhotos={10}
             invitationId={data.invitationId ?? undefined}
+            templateId={templateId}
+            sessionUUID={sessionUUID}
+            uploadStage={uploadStage}
           />
         </div>
       </motion.section>
@@ -502,6 +514,9 @@ const MidnightNawabTemplate = ({
               }
               mode={mode}
               invitationId={data.invitationId ?? undefined}
+              templateId={templateId}
+              sessionUUID={sessionUUID}
+              uploadStage={uploadStage}
             />
           </div>
         </section>

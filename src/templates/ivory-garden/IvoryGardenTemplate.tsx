@@ -40,6 +40,9 @@ const IvoryGardenTemplate = ({
   onPublish,
   isSaving,
   isPublishing,
+  templateId,
+  sessionUUID,
+  uploadStage = "temp",
 }: TemplateProps) => {
   const [copiedLink, setCopiedLink] = useState(false);
 
@@ -257,6 +260,9 @@ const IvoryGardenTemplate = ({
                   alt={data.brideName}
                   invitationId={data.invitationId ?? undefined}
                   oldPublicUrl={data.bridePhotoUrl || undefined}
+                  templateId={templateId}
+                  sessionUUID={sessionUUID}
+                  uploadStage={uploadStage}
                 />
               </div>
               <h3
@@ -294,6 +300,9 @@ const IvoryGardenTemplate = ({
                   alt={data.groomName}
                   invitationId={data.invitationId ?? undefined}
                   oldPublicUrl={data.groomPhotoUrl || undefined}
+                  templateId={templateId}
+                  sessionUUID={sessionUUID}
+                  uploadStage={uploadStage}
                 />
               </div>
               <h3
@@ -590,6 +599,9 @@ const IvoryGardenTemplate = ({
                 mode={mode}
                 maxPhotos={10}
                 invitationId={data.invitationId ?? undefined}
+                templateId={templateId}
+                sessionUUID={sessionUUID}
+                uploadStage={uploadStage}
               />
             </div>
           ) : (
@@ -632,6 +644,10 @@ const IvoryGardenTemplate = ({
                 onUpdate({ musicUrl: url, musicName: name })
               }
               mode={mode}
+              templateId={templateId}
+              sessionUUID={sessionUUID}
+              uploadStage={uploadStage}
+              invitationId={data.invitationId ?? undefined}
             />
           </div>
         </section>

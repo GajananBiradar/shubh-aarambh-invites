@@ -39,6 +39,9 @@ const FincaOliveTemplate = ({
   onPublish,
   isSaving,
   isPublishing,
+  templateId,
+  sessionUUID,
+  uploadStage = "temp",
 }: TemplateProps) => {
   const [copiedLink, setCopiedLink] = useState(false);
 
@@ -96,6 +99,9 @@ const FincaOliveTemplate = ({
               mode={mode}
               className="w-full h-full"
               placeholderText="Add Cover Photo"
+              templateId={templateId}
+              sessionUUID={sessionUUID}
+              uploadStage={uploadStage}
             />
           ) : (
             data.couplePhotoUrl && (
@@ -280,6 +286,9 @@ const FincaOliveTemplate = ({
                   alt={data.brideName}
                   invitationId={data.invitationId ?? undefined}
                   oldPublicUrl={data.bridePhotoUrl || undefined}
+                  templateId={templateId}
+                  sessionUUID={sessionUUID}
+                  uploadStage={uploadStage}
                 />
               </div>
               <h3 className="font-heading text-2xl text-foreground mb-2">
@@ -315,6 +324,9 @@ const FincaOliveTemplate = ({
                   alt={data.groomName}
                   invitationId={data.invitationId ?? undefined}
                   oldPublicUrl={data.groomPhotoUrl || undefined}
+                  templateId={templateId}
+                  sessionUUID={sessionUUID}
+                  uploadStage={uploadStage}
                 />
               </div>
               <h3 className="font-heading text-2xl text-foreground mb-2">
@@ -559,6 +571,9 @@ const FincaOliveTemplate = ({
             mode={mode}
             maxPhotos={12}
             invitationId={data.invitationId ?? undefined}
+            templateId={templateId}
+            sessionUUID={sessionUUID}
+            uploadStage={uploadStage}
           />
         </div>
       </motion.section>
@@ -578,6 +593,10 @@ const FincaOliveTemplate = ({
                 onUpdate({ musicUrl: url, musicName: name })
               }
               mode={mode}
+              templateId={templateId}
+              sessionUUID={sessionUUID}
+              uploadStage={uploadStage}
+              invitationId={data.invitationId ?? undefined}
             />
           </div>
         </section>

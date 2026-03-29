@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { TemplateMode } from "@/templates/types";
 import { Camera, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { uploadFile, validatePhoto } from "@/lib/upload";
+import { uploadFile, validatePhoto, UploadStage } from "@/lib/upload";
 import toast from "react-hot-toast";
 
 interface EditablePhotoProps {
@@ -13,7 +13,10 @@ interface EditablePhotoProps {
   shape?: "circle" | "square" | "rectangle";
   alt?: string;
   placeholderText?: string;
-  invitationId?: number;
+  invitationId?: number | null;
+  templateId?: number;
+  sessionUUID?: string;
+  uploadStage: UploadStage;
   oldPublicUrl?: string;
 }
 
@@ -26,6 +29,9 @@ const EditablePhoto = ({
   alt = "Photo",
   placeholderText = "Add Photo",
   invitationId,
+  templateId,
+  sessionUUID,
+  uploadStage,
   oldPublicUrl,
 }: EditablePhotoProps) => {
   const [isUploading, setIsUploading] = useState(false);
@@ -57,7 +63,10 @@ const EditablePhoto = ({
         file,
         uploadType: "photo",
         onProgress: (progress) => setUploadProgress(progress),
-        invitationId,
+        uploadStage,
+        invitationId: invitationId ?? null,
+        templateId: templateId,
+        sessionUUID: sessionUUID,
         oldPublicUrl: oldPublicUrl || undefined,
       });
       onSave(publicUrl);

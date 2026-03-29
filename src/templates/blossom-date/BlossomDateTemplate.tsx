@@ -48,6 +48,9 @@ const BlossomDateTemplate = ({
   onPublish,
   isSaving,
   isPublishing,
+  templateId,
+  sessionUUID,
+  uploadStage = "temp",
 }: TemplateProps) => {
   const [copiedLink, setCopiedLink] = useState(false);
   const [expandedEvent, setExpandedEvent] = useState<number | null>(null);
@@ -248,6 +251,9 @@ const BlossomDateTemplate = ({
               alt={`${data.brideName} & ${data.groomName}`}
               placeholderText="Add Couple Photo"
               invitationId={data.invitationId ?? undefined}
+              templateId={templateId}
+              sessionUUID={sessionUUID}
+              uploadStage={uploadStage}
               oldPublicUrl={data.couplePhotoUrl || undefined}
             />
           </motion.div>
@@ -523,6 +529,9 @@ const BlossomDateTemplate = ({
               mode={mode}
               maxPhotos={10}
               invitationId={data.invitationId ?? undefined}
+              templateId={templateId}
+              sessionUUID={sessionUUID}
+              uploadStage={uploadStage}
             />
           ) : (
             /* Polaroid grid */
@@ -569,6 +578,10 @@ const BlossomDateTemplate = ({
                 onUpdate({ musicUrl: url, musicName: name })
               }
               mode={mode}
+              templateId={templateId}
+              sessionUUID={sessionUUID}
+              uploadStage={uploadStage}
+              invitationId={data.invitationId ?? undefined}
             />
           </div>
         </section>

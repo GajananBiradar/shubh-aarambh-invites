@@ -33,13 +33,14 @@ const EditModeToolbar = ({
 }: EditModeToolbarProps) => {
   const isDisabled = isSaving || isPublishing;
 
-  // Handle back button - save draft first
+  // Handle back button - only auto-save if we have an invitationId (edit mode)
   const handleBack = async (e: React.MouseEvent) => {
-    if (hasUnsavedChanges) {
+    if (invitationId && hasUnsavedChanges) {
+      // Edit mode: save draft before navigating back
       e.preventDefault();
       await onSaveDraft();
     }
-    // Navigate after save completes
+    // Create mode or no changes: just navigate
     window.location.href = "/templates";
   };
 
@@ -64,29 +65,33 @@ const EditModeToolbar = ({
 
         {/* Center: Action buttons */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={onSaveDraft}
-            disabled={isDisabled}
-            className={cn(
-              "flex items-center gap-1.5 px-4 py-2 rounded-xl",
-              "font-body text-sm font-medium",
-              "border border-border bg-card hover:bg-secondary transition-colors",
-              isDisabled && "opacity-50 cursor-not-allowed",
-            )}
-          >
-            {isSaving ? (
-              <>
-                <Loader2 size={14} className="animate-spin" />
-                <span>Saving...</span>
-              </>
-            ) : (
-              <>
-                <Save size={14} />
-                <span>Save Draft</span>
-              </>
-            )}
-          </button>
+          {/* Save Draft - only show in edit mode (when invitationId exists) */}
+          {invitationId && (
+            <button
+              onClick={onSaveDraft}
+              disabled={isDisabled}
+              className={cn(
+                "flex items-center gap-1.5 px-4 py-2 rounded-xl",
+                "font-body text-sm font-medium",
+                "border border-border bg-card hover:bg-secondary transition-colors",
+                isDisabled && "opacity-50 cursor-not-allowed",
+              )}
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <Save size={14} />
+                  <span>Save Draft</span>
+                </>
+              )}
+            </button>
+          )}
 
+          {/* Preview/Publish button */}
           <button
             onClick={showPreviewMode && onPreview ? onPreview : onPublish}
             disabled={isDisabled}

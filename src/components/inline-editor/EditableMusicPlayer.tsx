@@ -14,6 +14,9 @@ interface EditableMusicPlayerProps {
   mode: TemplateMode;
   className?: string;
   invitationId?: number;
+  templateId?: number;
+  sessionUUID?: string;
+  uploadStage?: "temp" | "draft" | "published";
 }
 
 const EditableMusicPlayer = ({
@@ -25,6 +28,9 @@ const EditableMusicPlayer = ({
   mode,
   className = "",
   invitationId,
+  templateId,
+  sessionUUID,
+  uploadStage = "temp",
 }: EditableMusicPlayerProps) => {
   const [isChanging, setIsChanging] = useState(false);
   const [activeTab, setActiveTab] = useState<"upload" | "url">("upload");
@@ -69,7 +75,10 @@ const EditableMusicPlayer = ({
         file,
         uploadType: "music",
         onProgress: (progress) => setUploadProgress(progress),
-        invitationId,
+        invitationId: invitationId ?? null,
+        templateId,
+        sessionUUID,
+        uploadStage,
         oldPublicUrl: musicUrl ?? undefined,
       });
       onUpdate(publicUrl, file.name.replace(/\.[^/.]+$/, ""));

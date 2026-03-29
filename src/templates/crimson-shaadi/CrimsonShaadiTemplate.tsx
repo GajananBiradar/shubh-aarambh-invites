@@ -37,6 +37,9 @@ const CrimsonShaadiTemplate = ({
   onPublish,
   isSaving,
   isPublishing,
+  templateId,
+  sessionUUID,
+  uploadStage = "temp",
 }: TemplateProps) => {
   const [copiedLink, setCopiedLink] = useState(false);
 
@@ -109,6 +112,11 @@ const CrimsonShaadiTemplate = ({
               mode={mode}
               className="w-full h-full"
               placeholderText="Add Couple Photo"
+              templateId={templateId}
+              sessionUUID={sessionUUID}
+              uploadStage={uploadStage}
+              invitationId={data.invitationId ?? undefined}
+              oldPublicUrl={data.couplePhotoUrl || undefined}
             />
           ) : (
             data.couplePhotoUrl && (
@@ -283,6 +291,9 @@ const CrimsonShaadiTemplate = ({
                 shape="circle"
                 alt={data.brideName}
                 invitationId={data.invitationId ?? undefined}
+                templateId={templateId}
+                sessionUUID={sessionUUID}
+                uploadStage={uploadStage}
                 oldPublicUrl={data.bridePhotoUrl || undefined}
               />
               <h3 className="font-heading text-lg font-semibold">
@@ -336,6 +347,9 @@ const CrimsonShaadiTemplate = ({
                 shape="circle"
                 alt={data.groomName}
                 invitationId={data.invitationId ?? undefined}
+                templateId={templateId}
+                sessionUUID={sessionUUID}
+                uploadStage={uploadStage}
                 oldPublicUrl={data.groomPhotoUrl || undefined}
               />
               <h3 className="font-heading text-lg font-semibold">
@@ -531,6 +545,9 @@ const CrimsonShaadiTemplate = ({
             mode={mode}
             maxPhotos={10}
             invitationId={data.invitationId ?? undefined}
+            templateId={templateId}
+            sessionUUID={sessionUUID}
+            uploadStage={uploadStage}
           />
         </div>
       </motion.section>
@@ -550,6 +567,10 @@ const CrimsonShaadiTemplate = ({
                 onUpdate({ musicUrl: url, musicName: name })
               }
               mode={mode}
+              templateId={templateId}
+              sessionUUID={sessionUUID}
+              uploadStage={uploadStage}
+              invitationId={data.invitationId ?? undefined}
             />
           </div>
         </section>

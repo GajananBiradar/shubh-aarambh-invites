@@ -13,6 +13,7 @@ import RegisterPage from "./pages/RegisterPage";
 import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import DashboardPage from "./pages/DashboardPage";
 import CreateInvitationPage from "./pages/CreateInvitationPage";
+import CreatePreviewPage from "./pages/CreatePreviewPage";
 import EditInvitationPage from "./pages/EditInvitationPage";
 import InvitationPreviewPage from "./pages/InvitationPreviewPage";
 import NotFound from "./pages/NotFound";
@@ -40,8 +41,15 @@ const AppInner = () => {
       <Route path="/oauth2/callback" element={<OAuthCallbackPage />} />
       <Route path="/dashboard" element={<DashboardPage />} />
       <Route path="/create/:templateId" element={<CreateInvitationPage />} />
+      <Route
+        path="/create/:templateId/preview"
+        element={<CreatePreviewPage />}
+      />
       <Route path="/edit/:invitationId" element={<EditInvitationPage />} />
-      <Route path="/invitations/:id/preview" element={<InvitationPreviewPage />} />
+      <Route
+        path="/invitations/:id/preview"
+        element={<InvitationPreviewPage />}
+      />
       <Route path="/:code/invite/:slug" element={<PublicInvitationPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

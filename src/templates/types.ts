@@ -71,6 +71,10 @@ export interface TemplateProps {
   onPublish: () => void;
   isSaving: boolean;
   isPublishing: boolean;
+  // Upload metadata for three-stage uploads
+  templateId?: number;
+  sessionUUID?: string;
+  uploadStage?: 'temp' | 'draft' | 'published';
 }
 
 // Template component type

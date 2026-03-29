@@ -14,6 +14,7 @@ import {
 } from "@/templates/types";
 import { getTemplateById, getTemplateDemoData } from "@/api/templates";
 import { useInvitationEditor } from "@/hooks/useInvitationEditor";
+import { useSessionManager } from "@/hooks/useSessionManager";
 import { usePayment } from "@/hooks/usePayment";
 import { EditModeToolbar } from "@/components/inline-editor";
 import { Loader2, X, Copy, Check, Eye, Heart } from "lucide-react";
@@ -43,6 +44,16 @@ const CreateInvitationPage = ({
   const [copiedLink, setCopiedLink] = useState(false);
 
   const isDevMode = import.meta.env.VITE_DEV_MODE === "true";
+
+  // Session management for three-stage upload flow
+  const numTemplateId = parseInt(templateId || "1");
+  const {
+    sessionUUID,
+    isInitialized: sessionInitialized,
+    saveSessionData,
+    getSessionData,
+    clearSession,
+  } = useSessionManager(numTemplateId);
 
   // Determine effective template ID
   const effectiveTemplateId = editMode
@@ -285,6 +296,20 @@ const CreateInvitationPage = ({
     updateData,
   ]);
 
+  // Add beforeunload listener for unsaved changes (fresh create flow only)
+  useEffect(() => {
+    if (!editMode && isDirty && !data.invitationId) {
+      const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+        e.preventDefault();
+        e.returnValue = "";
+        return "";
+      };
+
+      window.addEventListener("beforeunload", handleBeforeUnload);
+      return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    }
+  }, [isDirty, data.invitationId, editMode]);
+
   // Handle copy link
   const handleCopyLink = () => {
     if (publishedUrl) {
@@ -294,12 +319,30 @@ const CreateInvitationPage = ({
     }
   };
 
-  // Handle preview - saves draft and opens preview page
-  const handlePreview = async () => {
-    const savedId = await saveDraft();
-    if (savedId) {
-      navigate(`/invitations/${savedId}/preview`);
+  // Handle preview - opens preview in new tab WITHOUT saving to draft
+  const handlePreview = () => {
+    // Save current form data to sessionStorage so preview can read it
+    if (sessionUUID) {
+      saveSessionData({
+        sessionUUID,
+        templateId: numTemplateId,
+        brideName: data.brideName,
+        groomName: data.groomName,
+        weddingDate: data.weddingDate,
+        bridePhotoUrl: data.bridePhotoUrl,
+        groomPhotoUrl: data.groomPhotoUrl,
+        couplePhotoUrl: data.couplePhotoUrl,
+        events: data.events,
+        galleryPhotos: data.galleryPhotos,
+        musicUrl: data.musicUrl,
+        musicName: data.musicName,
+        hashtag: data.hashtag,
+        welcomeMessage: data.welcomeMessage,
+        invitationId: data.invitationId || null,
+      });
     }
+    // Open preview in new tab - NO API CALL
+    window.open(`/create/${numTemplateId}/preview`, "_blank");
   };
 
   // Get template theme for styling
@@ -423,6 +466,9 @@ const CreateInvitationPage = ({
           onPublish={publish}
           isSaving={isSaving}
           isPublishing={isPublishing}
+          templateId={numTemplateId}
+          sessionUUID={sessionUUID}
+          uploadStage={data.invitationId ? "draft" : "temp"}
         />
       </div>
 

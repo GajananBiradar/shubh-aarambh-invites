@@ -1,6 +1,7 @@
 import api from '@/api/axios';
 
 export type UploadType = 'photo' | 'music' | 'template-preview' | 'default-photo' | 'default-music' | 'default-video';
+export type UploadStage = 'temp' | 'draft' | 'published';
 
 interface PresignedUrlResponse {
   uploadUrl: string;
@@ -12,16 +13,20 @@ interface UploadFileParams {
   file: File;
   uploadType: UploadType;
   onProgress?: (pct: number) => void;
-  invitationId?: number;
+  uploadStage: UploadStage;
+  invitationId?: number | null;
   templateId?: number;
+  sessionUUID?: string;
   oldPublicUrl?: string;
 }
 
 interface PresignedUrlParams {
   file: File;
   uploadType: UploadType;
+  uploadStage: UploadStage;
   invitationId?: number | null;
   templateId?: number;
+  sessionUUID?: string;
 }
 
 /**
@@ -66,9 +71,10 @@ export const validateMusic = (file: File): string | null => {
 
 /**
  * Get a presigned URL from the backend for direct R2 upload.
+ * Supports three-stage uploads: temp (sessionStorage-based), draft (after save), published (after publish).
  */
 export const getPresignedUrl = async (params: PresignedUrlParams): Promise<PresignedUrlResponse> => {
-  const { file, uploadType, invitationId, templateId } = params;
+  const { file, uploadType, uploadStage, invitationId, templateId, sessionUUID } = params;
   const jwt = localStorage.getItem('jwt');
 
   const { data } = await api.post('/api/upload/presign',
@@ -76,8 +82,10 @@ export const getPresignedUrl = async (params: PresignedUrlParams): Promise<Presi
       fileName: file.name,
       fileType: file.type,
       uploadType,
+      uploadStage,
       invitationId: invitationId ?? null,
       templateId: templateId ?? null,
+      sessionUUID: sessionUUID ?? null,
     },
     {
       headers: {
@@ -148,25 +156,33 @@ export const deleteOldFile = (publicUrl: string): void => {
 
 /**
  * Complete upload flow: get presigned URL → upload to R2 → return publicUrl.
+ * Uses uploadStage to determine folder (temp, draft, or published).
  * Optionally deletes old file after successful upload (fire-and-forget).
+ * Does NOT delete temp files — they auto-expire via R2 lifecycle rule (7 days).
  */
 export const uploadFile = async (params: UploadFileParams): Promise<string> => {
-  const { file, uploadType, onProgress, invitationId, templateId, oldPublicUrl } = params;
+  const { file, uploadType, onProgress, uploadStage, invitationId, templateId, sessionUUID, oldPublicUrl } = params;
 
-  // Get presigned URL
+  // Get presigned URL with stage
   const { uploadUrl, publicUrl } = await getPresignedUrl({
     file,
     uploadType,
+    uploadStage,
     invitationId,
     templateId,
+    sessionUUID,
   });
 
   // Upload to R2
   await uploadToR2(file, uploadUrl, onProgress);
 
   // Delete old file in background (fire and forget)
+  // BUT: Do NOT delete temp files — they auto-expire via R2 lifecycle
   if (oldPublicUrl) {
-    deleteOldFile(oldPublicUrl);
+    const isOldFileTemp = oldPublicUrl.includes('/temp/');
+    if (!isOldFileTemp) {
+      deleteOldFile(oldPublicUrl);
+    }
   }
 
   return publicUrl;

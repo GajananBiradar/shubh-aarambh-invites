@@ -53,44 +53,18 @@ export const useInvitationEditor = ({
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   
   const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const isCreatingInvitationRef = useRef(false);
 
-  // Create invitation immediately on mount if it doesn't exist
-  // This ensures we have an invitationId before any file uploads
+  // Autosave effect — ONLY for edit mode (when invitationId exists)
+  // In create mode, we only save to sessionStorage/localStorage, not to API
   useEffect(() => {
-    if (!data.invitationId && !isCreatingInvitationRef.current && data.templateId) {
-      isCreatingInvitationRef.current = true;
-      
-      const createInvitation = async () => {
-        try {
-          // Create minimal invitation with just required fields
-          const res = await api.post('/api/invitations', {
-            templateId: data.templateId,
-            locale: data.locale || 'en',
-          });
-          const newId = res.data.id;
-          setData(prev => ({ ...prev, invitationId: newId }));
-          console.log('[useInvitationEditor] Created invitation with ID:', newId);
-        } catch (error) {
-          console.error('[useInvitationEditor] Failed to create automatic invitation:', error);
-          isCreatingInvitationRef.current = false;
-          // Don't throw - let user proceed, will try again on save
-        }
-      };
-      
-      createInvitation();
-    }
-  }, [data.templateId, data.locale]);
-
-  // Autosave effect
-  useEffect(() => {
-    if (autosaveDelay > 0 && isDirty) {
+    if (autosaveDelay > 0 && isDirty && data.invitationId) {
+      // Only autosave to API in edit mode
       if (autosaveTimerRef.current) {
         clearTimeout(autosaveTimerRef.current);
       }
       
       autosaveTimerRef.current = setTimeout(() => {
-        saveDraftInternal(false); // Silent save
+        saveDraftInternal(false); // Silent save to API
       }, autosaveDelay);
     }
     
@@ -99,7 +73,7 @@ export const useInvitationEditor = ({
         clearTimeout(autosaveTimerRef.current);
       }
     };
-  }, [isDirty, data, autosaveDelay]);
+  }, [isDirty, data, autosaveDelay, data.invitationId]);
 
   // Persist to localStorage for page refresh recovery
   useEffect(() => {

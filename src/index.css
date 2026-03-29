@@ -159,6 +159,23 @@
   --accent-rgb: 102, 128, 68;
 }
 
+[data-theme="premium"] {
+  /* Elegant beige and gold premium aesthetic */
+  --background: 30 25% 96%;
+  --foreground: 30 15% 25%;
+  --primary: 35 45% 50%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 35 45% 50%;
+  --accent-foreground: 0 0% 100%;
+  --card: 0 0% 100%;
+  --card-foreground: 30 15% 25%;
+  --muted: 30 15% 93%;
+  --muted-foreground: 30 10% 50%;
+  --border: 30 15% 88%;
+  --gold: 35 45% 50%;
+  --accent-rgb: 180, 140, 90;
+}
+
 /* Keep legacy themes for backward compat */
 [data-theme="floral"] {
   --background: 350 40% 96%;

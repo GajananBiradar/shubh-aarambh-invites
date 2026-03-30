@@ -1,11 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, MapPin } from "lucide-react";
+import {
+  ChevronDown,
+  MapPin,
+  Heart,
+  Calendar,
+  Clock,
+  Trash2,
+} from "lucide-react";
 import { TemplateProps, EventData } from "@/templates/types";
 import {
   EditableText,
-  EditablePhoto,
-  EditableEventCard,
   AddEventButton,
   EditablePhotoGallery,
   EditableMusicPlayer,
@@ -29,13 +34,13 @@ import { cn } from "@/lib/utils";
 
 // ─── Color Palette (matching reference: premiumelegante.thedigitalyes.com) ───
 const C = {
-  bg: "#f3ede3",       // hsl(40, 24%, 92%) – warm ivory
-  text: "#5c4a32",     // hsl(33, 47%, 35%) – sage-dark
+  bg: "#f3ede3", // hsl(40, 24%, 92%) – warm ivory
+  text: "#5c4a32", // hsl(33, 47%, 35%) – sage-dark
   textMuted: "#7a6545", // sage-dark with opacity
   textLight: "#9a8a6e",
-  gold: "#c5a46d",     // exact reference gold
+  gold: "#c5a46d", // exact reference gold
   goldLight: "#c4b08a",
-  cream: "#f9f7f2",    // ivory card bg
+  cream: "#f9f7f2", // ivory card bg
   white: "#ffffff",
   whiteWarm: "#f9f7f2",
   ornament: "#8b7040",
@@ -82,7 +87,7 @@ const PremiumEleganteTemplate = ({
         backgroundSize: "200px",
       }}
     >
-      {/* ═══════════ HERO SECTION ═══════════ */}
+      {/* ═══════════ HERO SECTION (Video background with names) ═══════════ */}
       <HeroSection
         mode={mode}
         data={data}
@@ -128,33 +133,15 @@ const PremiumEleganteTemplate = ({
       )}
 
       {/* ═══════════ DAY PROGRAMME ═══════════ */}
-      <DayProgrammeSection
-        mode={mode}
-        data={data}
-        onUpdate={onUpdate}
-      />
-
-      {/* ═══════════ DRESS CODE ═══════════ */}
-      <DressCodeSection
-        mode={mode}
-        data={data}
-        onUpdate={onUpdate}
-      />
+      <DayProgrammeSection mode={mode} data={data} onUpdate={onUpdate} />
 
       {/* ═══════════ RIBBON BOW ═══════════ */}
       <RibbonBowOrnament />
 
       {/* ═══════════ PRE-WEDDING EVENTS ═══════════ */}
-      {data.events.length > 1 && (
-        <PreWeddingEventsSection events={data.events} />
+      {(data.events.length > 1 || mode === "edit") && (
+        <PreWeddingEventsSection mode={mode} data={data} onUpdate={onUpdate} />
       )}
-
-      {/* ═══════════ ACCOMMODATION ═══════════ */}
-      <AccommodationSection
-        mode={mode}
-        hashtag={data.hashtag}
-        onUpdate={onUpdate}
-      />
 
       {/* ═══════════ MUSIC (Edit only) ═══════════ */}
       {mode === "edit" && (
@@ -180,22 +167,167 @@ const PremiumEleganteTemplate = ({
 
       {/* ═══════════ FOOTER ═══════════ */}
       <footer
-        className={cn("py-16 text-center", mode === "edit" && "pb-32")}
+        className={cn(
+          "relative py-20 text-center overflow-hidden",
+          mode === "edit" && "pb-32",
+        )}
         style={{ backgroundColor: C.bg }}
       >
-        <div className="max-w-md mx-auto px-6">
-          <RibbonBowOrnament />
-          <p className="font-script text-3xl mt-6 mb-2" style={{ color: C.text }}>
+        {/* Decorative floral top border */}
+        <div className="absolute top-0 left-0 right-0 flex justify-center">
+          <svg
+            width="400"
+            height="80"
+            viewBox="0 0 400 80"
+            fill="none"
+            style={{ color: C.gold, opacity: 0.4 }}
+          >
+            <path
+              d="M0 80 Q50 30 100 50 Q150 70 200 40 Q250 10 300 50 Q350 70 400 30"
+              stroke="currentColor"
+              strokeWidth="1"
+              fill="none"
+            />
+            <path
+              d="M0 80 Q50 50 100 65 Q150 80 200 55 Q250 30 300 65 Q350 80 400 50"
+              stroke="currentColor"
+              strokeWidth="0.5"
+              fill="none"
+            />
+          </svg>
+        </div>
+
+        <div className="max-w-md mx-auto px-6 relative z-10">
+          {/* Ending flowers illustration */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="flex justify-center mb-6"
+          >
+            <svg
+              width="180"
+              height="120"
+              viewBox="0 0 180 120"
+              fill="none"
+              style={{ color: C.ornament }}
+            >
+              <g stroke="currentColor" strokeWidth="0.8" fill="none">
+                {/* Left branch with flowers */}
+                <path d="M90 100 Q60 80 30 90 Q20 70 35 55 Q25 40 40 30" />
+                <circle cx="35" cy="55" r="8" strokeWidth="0.6" />
+                <circle cx="35" cy="55" r="4" strokeWidth="0.4" />
+                <circle cx="40" cy="30" r="6" strokeWidth="0.6" />
+                <circle cx="40" cy="30" r="3" strokeWidth="0.4" />
+                {/* Left leaves */}
+                <path d="M55 85 Q45 75 55 70" />
+                <path d="M42 70 Q32 65 42 58" />
+                {/* Right branch with flowers */}
+                <path d="M90 100 Q120 80 150 90 Q160 70 145 55 Q155 40 140 30" />
+                <circle cx="145" cy="55" r="8" strokeWidth="0.6" />
+                <circle cx="145" cy="55" r="4" strokeWidth="0.4" />
+                <circle cx="140" cy="30" r="6" strokeWidth="0.6" />
+                <circle cx="140" cy="30" r="3" strokeWidth="0.4" />
+                {/* Right leaves */}
+                <path d="M125 85 Q135 75 125 70" />
+                <path d="M138 70 Q148 65 138 58" />
+                {/* Center top flower */}
+                <path d="M90 100 Q90 60 90 25" />
+                <circle cx="90" cy="20" r="10" strokeWidth="0.6" />
+                <circle cx="90" cy="20" r="5" strokeWidth="0.4" />
+                <circle cx="90" cy="20" r="2" fill="currentColor" />
+                {/* Small buds */}
+                <circle cx="70" cy="45" r="4" strokeWidth="0.5" />
+                <circle cx="110" cy="45" r="4" strokeWidth="0.5" />
+                {/* Center leaves */}
+                <path d="M85 70 Q75 60 85 55" />
+                <path d="M95 70 Q105 60 95 55" />
+              </g>
+            </svg>
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="font-script text-4xl md:text-5xl mb-2"
+            style={{ color: C.text }}
+          >
             {data.brideName?.split(" ")[0] || "Bride"} &amp;{" "}
             {data.groomName?.split(" ")[0] || "Groom"}
-          </p>
-          <p
-            className="text-xs tracking-[0.2em] uppercase mt-4"
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.15 }}
+            className="flex items-center justify-center gap-3 my-4"
+          >
+            <div
+              className="w-12 h-[1px]"
+              style={{ backgroundColor: C.goldLight }}
+            />
+            <Heart size={14} style={{ color: C.gold }} fill={C.gold} />
+            <div
+              className="w-12 h-[1px]"
+              style={{ backgroundColor: C.goldLight }}
+            />
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="text-xs tracking-[0.2em] uppercase"
             style={{ color: C.textMuted, fontFamily: FONTS.body }}
           >
             {formatWeddingDate(data.weddingDate)}
-          </p>
-          <p className="text-[10px] mt-10" style={{ color: C.goldLight, fontFamily: FONTS.body }}>
+          </motion.p>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+            className="italic text-sm mt-6 mb-8"
+            style={{ color: C.textLight, fontFamily: FONTS.serif }}
+          >
+            We can&apos;t wait to celebrate with you
+          </motion.p>
+
+          {/* Bottom floral accent */}
+          <div className="flex justify-center mb-6">
+            <svg
+              width="120"
+              height="30"
+              viewBox="0 0 120 30"
+              fill="none"
+              style={{ color: C.gold, opacity: 0.5 }}
+            >
+              <path
+                d="M0 15 Q15 5 30 15 Q45 25 60 15 Q75 5 90 15 Q105 25 120 15"
+                stroke="currentColor"
+                strokeWidth="0.8"
+                fill="none"
+              />
+              <circle cx="30" cy="15" r="2" fill="currentColor" opacity="0.4" />
+              <circle
+                cx="60"
+                cy="15"
+                r="2.5"
+                fill="currentColor"
+                opacity="0.5"
+              />
+              <circle cx="90" cy="15" r="2" fill="currentColor" opacity="0.4" />
+            </svg>
+          </div>
+
+          <p
+            className="text-[10px] mt-4"
+            style={{ color: C.goldLight, fontFamily: FONTS.body }}
+          >
             Made with love on ShubhAarambh
           </p>
         </div>
@@ -225,8 +357,11 @@ const PremiumEleganteTemplate = ({
 };
 
 /* ══════════════════════════════════════════════════════════
-   HERO SECTION — Full viewport, watercolor background
+   HERO SECTION — Video background with names overlay
    ══════════════════════════════════════════════════════════ */
+const VIDEO_URL =
+  "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/7/video/header%20video.mp4";
+
 const HeroSection = ({
   mode,
   data,
@@ -243,38 +378,23 @@ const HeroSection = ({
   uploadStage?: "temp" | "draft" | "published";
 }) => (
   <section className="relative min-h-[100dvh] flex flex-col items-center justify-center overflow-hidden">
-    {/* Background */}
+    {/* Video background */}
     <div className="absolute inset-0">
-      {mode === "edit" ? (
-        <EditablePhoto
-          photoUrl={data.couplePhotoUrl}
-          onSave={(url) => onUpdate({ couplePhotoUrl: url })}
-          mode={mode}
-          className="w-full h-full"
-          placeholderText="Add Hero Background (watercolor painting)"
-          templateId={templateId}
-          sessionUUID={sessionUUID}
-          uploadStage={uploadStage || "temp"}
-        />
-      ) : data.couplePhotoUrl ? (
-        <img
-          src={data.couplePhotoUrl}
-          alt={`${data.brideName} & ${data.groomName}`}
-          className="w-full h-full object-cover"
-        />
-      ) : (
-        <div
-          className="w-full h-full"
-          style={{
-            background: `linear-gradient(180deg, #e8d5b8 0%, #f0e4d1 30%, #d4c4a8 60%, #c9b896 100%)`,
-          }}
-        />
-      )}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+        preload="metadata"
+      >
+        <source src={VIDEO_URL} type="video/mp4" />
+      </video>
       {/* Warm vignette overlay */}
       <div
         className="absolute inset-0"
         style={{
-          background: `linear-gradient(180deg, rgba(220,200,170,0.25) 0%, rgba(200,180,150,0.15) 50%, rgba(220,200,170,0.35) 100%)`,
+          background: `linear-gradient(180deg, rgba(92,74,50,0.45) 0%, rgba(92,74,50,0.15) 40%, rgba(92,74,50,0.5) 100%)`,
         }}
       />
     </div>
@@ -286,7 +406,7 @@ const HeroSection = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.8 }}
         className="text-sm md:text-base tracking-[0.35em] uppercase mb-10"
-        style={{ color: C.text, fontFamily: FONTS.body }}
+        style={{ color: C.white, fontFamily: FONTS.body }}
       >
         We&apos;re Getting Married
       </motion.p>
@@ -302,10 +422,10 @@ const HeroSection = ({
           onSave={(val) => onUpdate({ brideName: val })}
           mode={mode}
           placeholder="Bride"
-          className="block font-script text-6xl sm:text-7xl md:text-8xl leading-tight"
+          className="block font-script text-6xl sm:text-7xl md:text-8xl leading-tight text-white drop-shadow-lg"
           as="h1"
         />
-        <p className="text-3xl my-2 font-script" style={{ color: C.textMuted }}>
+        <p className="text-3xl my-2 font-script text-white/80 drop-shadow">
           &amp;
         </p>
         <EditableText
@@ -313,7 +433,7 @@ const HeroSection = ({
           onSave={(val) => onUpdate({ groomName: val })}
           mode={mode}
           placeholder="Groom"
-          className="block font-script text-6xl sm:text-7xl md:text-8xl leading-tight"
+          className="block font-script text-6xl sm:text-7xl md:text-8xl leading-tight text-white drop-shadow-lg"
           as="h1"
         />
       </motion.div>
@@ -325,17 +445,17 @@ const HeroSection = ({
         transition={{ delay: 0.9, duration: 0.8 }}
         className="flex items-center justify-center gap-3 mb-6"
       >
-        <div className="w-16 h-[1px]" style={{ backgroundColor: C.textMuted }} />
-        <span style={{ color: C.textMuted, fontSize: "14px" }}>◆</span>
-        <div className="w-16 h-[1px]" style={{ backgroundColor: C.textMuted }} />
+        <div className="w-16 h-[1px] bg-white/60" />
+        <span className="text-white/60 text-sm">◆</span>
+        <div className="w-16 h-[1px] bg-white/60" />
       </motion.div>
 
       {/* Date */}
       {mode === "edit" ? (
         <div className="mt-4">
           <label
-            className="text-xs block mb-2 tracking-wider uppercase"
-            style={{ color: C.textMuted, fontFamily: FONTS.body }}
+            className="text-xs block mb-2 tracking-wider uppercase text-white/70"
+            style={{ fontFamily: FONTS.body }}
           >
             Wedding Date
           </label>
@@ -343,8 +463,8 @@ const HeroSection = ({
             type="date"
             value={data.weddingDate}
             onChange={(e) => onUpdate({ weddingDate: e.target.value })}
-            className="bg-white/30 backdrop-blur border rounded-lg px-4 py-2 text-sm"
-            style={{ borderColor: C.goldLight, color: C.text, fontFamily: FONTS.body }}
+            className="bg-white/30 backdrop-blur border border-white/40 rounded-lg px-4 py-2 text-sm text-white"
+            style={{ fontFamily: FONTS.body }}
           />
         </div>
       ) : (
@@ -352,8 +472,8 @@ const HeroSection = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.1 }}
-          className="text-base md:text-lg tracking-[0.25em] uppercase"
-          style={{ color: C.text, fontFamily: FONTS.serif }}
+          className="text-base md:text-lg tracking-[0.25em] uppercase text-white/90 drop-shadow"
+          style={{ fontFamily: FONTS.serif }}
         >
           {formatWeddingDate(data.weddingDate)}
         </motion.p>
@@ -368,8 +488,8 @@ const HeroSection = ({
           className="mt-12"
         >
           <p
-            className="text-xs tracking-[0.3em] uppercase mb-2"
-            style={{ color: C.textMuted, fontFamily: FONTS.body }}
+            className="text-xs tracking-[0.3em] uppercase mb-2 text-white/70"
+            style={{ fontFamily: FONTS.body }}
           >
             RSVP
           </p>
@@ -377,7 +497,7 @@ const HeroSection = ({
             animate={{ y: [0, 6, 0] }}
             transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
           >
-            <ChevronDown size={20} style={{ color: C.textMuted }} className="mx-auto" />
+            <ChevronDown size={20} className="mx-auto text-white/70" />
           </motion.div>
         </motion.div>
       )}
@@ -469,7 +589,7 @@ const CountdownDisplay = ({ weddingDate }: { weddingDate: string }) => {
       }
       const diff = new Date(weddingDate).getTime() - Date.now();
       if (diff <= 0) {
-        setCountdown(null);
+        setCountdown({ days: 0, hours: 0, minutes: 0 });
         return;
       }
       setCountdown({
@@ -496,7 +616,10 @@ const CountdownDisplay = ({ weddingDate }: { weddingDate: string }) => {
       {items.map((item, i) => (
         <div key={item.label} className="flex items-center">
           {i > 0 && (
-            <div className="w-[1px] h-14 mx-8 md:mx-12" style={{ backgroundColor: C.goldLight }} />
+            <div
+              className="w-[1px] h-14 mx-8 md:mx-12"
+              style={{ backgroundColor: C.goldLight }}
+            />
           )}
           <div className="text-center">
             <span
@@ -551,7 +674,7 @@ const WelcomeSection = ({
           value={welcomeMessage}
           onSave={(val) => onUpdate({ welcomeMessage: val })}
           mode={mode}
-          placeholder="We warmly invite you to celebrate our wedding day..."
+          placeholder="We warmly welcome you to celebrate our union of love and togetherness..."
           className="text-lg leading-relaxed italic"
           multiline
           as="p"
@@ -579,7 +702,7 @@ const GallerySection = ({
   sessionUUID?: string;
   uploadStage?: "temp" | "draft" | "published";
 }) => (
-  <section className="pb-12 pt-0" style={{ backgroundColor: C.cream }}>
+  <section className="pb-12 pt-0" style={{ backgroundColor: C.bg }}>
     <div className="max-w-7xl mx-auto px-6">
       {mode === "edit" ? (
         <div className="max-w-5xl mx-auto">
@@ -593,7 +716,7 @@ const GallerySection = ({
             defaultPhotos={data.templateDefaults.defaultPhotos}
             onUpdate={(photos) => onUpdate({ galleryPhotos: photos })}
             mode={mode}
-            maxPhotos={12}
+            maxPhotos={10}
             invitationId={data.invitationId ?? undefined}
             templateId={templateId}
             sessionUUID={sessionUUID}
@@ -649,7 +772,7 @@ const HorizontalGalleryStrip = ({
           {allPhotos.map((photo, i) => (
             <div
               key={`gallery-${i}`}
-              className="flex-shrink-0 overflow-hidden cursor-pointer"
+              className="flex-shrink-0 overflow-hidden cursor-pointer rounded-lg"
               style={{ height: "340px", width: "240px" }}
               onClick={() => setLightboxUrl(photo.photoUrl)}
             >
@@ -706,6 +829,9 @@ const HorizontalGalleryStrip = ({
 /* ══════════════════════════════════════════════════════════
    THE VENUE — Gold background with venue card
    ══════════════════════════════════════════════════════════ */
+const VENUE_IMAGE_URL =
+  "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/7/palace.png";
+
 const VenueSection = ({
   event,
   weddingDate,
@@ -713,7 +839,10 @@ const VenueSection = ({
   event: EventData;
   weddingDate: string;
 }) => (
-  <section className="py-20 md:py-28" style={{ backgroundColor: C.gold }}>
+  <section
+    className="py-20 md:py-28 relative overflow-hidden"
+    style={{ backgroundColor: C.gold }}
+  >
     <div className="max-w-3xl mx-auto px-6 text-center">
       <motion.h2
         initial={{ opacity: 0, y: 20 }}
@@ -740,69 +869,106 @@ const VenueSection = ({
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ delay: 0.3 }}
-        className="rounded-2xl p-8 md:p-10"
-        style={{ backgroundColor: C.white, boxShadow: "0 10px 40px -10px rgba(59,38,19,.15), 0 4px 15px -3px rgba(59,38,19,.08)" }}
+        className="rounded-2xl overflow-hidden"
+        style={{
+          backgroundColor: C.white,
+          boxShadow:
+            "0 10px 40px -10px rgba(59,38,19,.15), 0 4px 15px -3px rgba(59,38,19,.08)",
+        }}
       >
-        {/* Building illustration */}
-        <VenueIllustration />
+        {/* Venue image */}
+        <div className="w-full overflow-hidden bg-[#f3ede3]">
+          <img
+            src={VENUE_IMAGE_URL}
+            alt="Maharaja Palace"
+            className="w-full object-contain"
+            style={{ maxHeight: "360px" }}
+          />
+        </div>
 
-        {/* Venue name */}
-        <h3 className="font-script text-3xl md:text-4xl mb-6" style={{ color: "#7a6545" }}>
-          {event.venueName || "Venue Name"}
-        </h3>
+        <div className="p-8 md:p-10">
+          {/* Venue name */}
+          <h3
+            className="font-script text-3xl md:text-4xl mb-6"
+            style={{ color: "#7a6545" }}
+          >
+            {event.venueName || "Maharaja Palace"}
+          </h3>
 
-        <div className="w-20 h-[1px] mx-auto mb-6" style={{ backgroundColor: C.goldLight }} />
+          <div
+            className="w-20 h-[1px] mx-auto mb-6"
+            style={{ backgroundColor: C.goldLight }}
+          />
 
-        {/* Date & time */}
-        <p className="text-base italic mb-1" style={{ color: C.textMuted, fontFamily: FONTS.serif }}>
-          {formatEventDate(event.eventDate)}
-          {event.eventTime && <span className="mx-3">·</span>}
-          {event.eventTime && <span className="italic">{formatTime(event.eventTime)}</span>}
-        </p>
+          {/* Date & time */}
+          <p
+            className="text-base italic mb-1"
+            style={{ color: C.textMuted, fontFamily: FONTS.serif }}
+          >
+            {formatEventDate(event.eventDate)}
+            {event.eventTime && <span className="mx-3">·</span>}
+            {event.eventTime && (
+              <span className="italic">{formatTime(event.eventTime)}</span>
+            )}
+          </p>
 
-        <div className="w-12 h-[1px] mx-auto my-5" style={{ backgroundColor: C.goldLight }} />
+          <div
+            className="w-12 h-[1px] mx-auto my-5"
+            style={{ backgroundColor: C.goldLight }}
+          />
 
-        {/* Address */}
-        <p className="text-sm md:text-base font-medium mb-1" style={{ color: C.text, fontFamily: FONTS.serif }}>
-          {event.venueAddress || "Address"}
-        </p>
+          {/* Address */}
+          <p
+            className="text-sm md:text-base font-medium mb-1"
+            style={{ color: C.text, fontFamily: FONTS.serif }}
+          >
+            {event.venueAddress || "Address"}
+          </p>
 
-        {/* Google map embed */}
-        <div className="mt-8">
-          <div className="rounded-xl overflow-hidden border" style={{ borderColor: "#d4c4a8" }}>
-            <iframe
-              src={
-                event.mapsUrl
-                  ? getEmbedMapUrl(event.mapsUrl)
-                  : "https://maps.google.com/maps?q=wedding+venue&output=embed"
-              }
-              width="100%"
-              height="250"
-              style={{ border: 0, filter: "sepia(0.25) saturate(0.6) hue-rotate(5deg) brightness(1.05)" }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title="Venue Location"
-            />
+          {/* Google map embed */}
+          <div className="mt-8">
+            <div
+              className="rounded-xl overflow-hidden border"
+              style={{ borderColor: "#d4c4a8" }}
+            >
+              <iframe
+                src={
+                  event.mapsUrl
+                    ? getEmbedMapUrl(event.mapsUrl)
+                    : "https://maps.google.com/maps?q=wedding+venue&output=embed"
+                }
+                width="100%"
+                height="250"
+                style={{
+                  border: 0,
+                  filter:
+                    "sepia(0.25) saturate(0.6) hue-rotate(5deg) brightness(1.05)",
+                }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Venue Location"
+              />
+            </div>
+            {event.mapsUrl ? (
+              <a
+                href={event.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 mt-4 text-xs tracking-[0.2em] uppercase"
+                style={{ color: "#7a6545", fontFamily: FONTS.body }}
+              >
+                <MapPin size={14} /> Open in Maps
+              </a>
+            ) : (
+              <p
+                className="inline-flex items-center gap-2 mt-4 text-xs tracking-[0.2em] uppercase"
+                style={{ color: "#7a6545", fontFamily: FONTS.body }}
+              >
+                <MapPin size={14} /> Open in Maps
+              </p>
+            )}
           </div>
-          {event.mapsUrl ? (
-            <a
-              href={event.mapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 mt-4 text-xs tracking-[0.2em] uppercase"
-              style={{ color: "#7a6545", fontFamily: FONTS.body }}
-            >
-              <MapPin size={14} /> Open in Maps
-            </a>
-          ) : (
-            <p
-              className="inline-flex items-center gap-2 mt-4 text-xs tracking-[0.2em] uppercase"
-              style={{ color: "#7a6545", fontFamily: FONTS.body }}
-            >
-              <MapPin size={14} /> Open in Maps
-            </p>
-          )}
         </div>
       </motion.div>
     </div>
@@ -857,24 +1023,15 @@ const DayProgrammeSection = ({
         </motion.p>
       </div>
 
-      {mode === "edit" ? (
-        <div className="space-y-6">
-          {data.events.map((event, i) => (
-            <EditableEventCard
-              key={event.id || i}
-              event={event}
-              onUpdate={(updates) => {
-                const newEvents = [...data.events];
-                newEvents[i] = { ...newEvents[i], ...updates };
-                onUpdate({ events: newEvents });
-              }}
-              onDelete={() => {
-                onUpdate({ events: data.events.filter((_, idx) => idx !== i) });
-              }}
-              mode={mode}
-              index={i}
-            />
-          ))}
+      <AlternatingTimeline
+        events={data.events}
+        mode={mode}
+        onUpdate={onUpdate}
+        data={data}
+      />
+
+      {mode === "edit" && (
+        <div className="mt-8">
           <AddEventButton
             onAdd={() => {
               const newEvent: EventData = {
@@ -893,85 +1050,250 @@ const DayProgrammeSection = ({
             currentCount={data.events.length}
           />
         </div>
-      ) : (
-        <AlternatingTimeline events={data.events} />
       )}
     </div>
   </section>
 );
 
-/** Alternating left/right timeline with dots and central line */
-const AlternatingTimeline = ({ events }: { events: EventData[] }) => (
-  <div className="relative">
-    {/* Central vertical line */}
-    <div
-      className="absolute left-1/2 top-0 bottom-0 w-[1px] -translate-x-1/2"
-      style={{ backgroundColor: C.goldLight }}
-    />
+/** Alternating left/right timeline with dots and central line — editable in edit mode */
+const AlternatingTimeline = ({
+  events,
+  mode = "view",
+  onUpdate,
+  data,
+}: {
+  events: EventData[];
+  mode?: TemplateProps["mode"];
+  onUpdate?: TemplateProps["onUpdate"];
+  data?: TemplateProps["data"];
+}) => {
+  const isEdit = mode === "edit" && onUpdate && data;
 
-    <div className="space-y-0">
-      {events.map((event, i) => (
-        <motion.div
-          key={event.id || i}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: i * 0.1 }}
-          className="relative grid grid-cols-2 py-6"
-        >
-          {/* Dot on timeline */}
-          <div
-            className="absolute left-1/2 top-1/2 w-2.5 h-2.5 rounded-full -translate-x-1/2 -translate-y-1/2 z-10"
-            style={{ backgroundColor: C.textMuted }}
-          />
+  const updateEvent = (index: number, updates: Partial<EventData>) => {
+    if (!onUpdate || !data) return;
+    const newEvents = [...data.events];
+    newEvents[index] = { ...newEvents[index], ...updates };
+    onUpdate({ events: newEvents });
+  };
 
-          {i % 2 === 0 ? (
-            <>
-              <div className="text-right pr-10">
-                <p
-                  className="font-bold text-sm md:text-base tracking-[0.15em]"
-                  style={{ color: C.text, fontFamily: FONTS.body }}
-                >
-                  {formatTime(event.eventTime)}
-                </p>
-                <p
-                  className="text-xs tracking-[0.15em] uppercase mt-0.5"
-                  style={{ color: C.textMuted + "cc", fontFamily: FONTS.body }}
-                >
-                  {event.eventName}
-                </p>
-              </div>
-              <div className="pl-10" />
-            </>
+  const deleteEvent = (index: number) => {
+    if (!onUpdate || !data) return;
+    onUpdate({ events: data.events.filter((_, idx) => idx !== index) });
+  };
+
+  return (
+    <div className="relative">
+      {/* Central vertical line */}
+      <div
+        className="absolute left-1/2 top-0 bottom-0 w-[1px] -translate-x-1/2"
+        style={{ backgroundColor: C.goldLight }}
+      />
+
+      <div className="space-y-0">
+        {events.map((event, i) => {
+          const isLeft = i % 2 === 0;
+
+          const timeContent = isEdit ? (
+            <InlineTimePicker
+              value={event.eventTime}
+              onChange={(val) => updateEvent(i, { eventTime: val })}
+            />
           ) : (
-            <>
-              <div className="pr-10" />
-              <div className="text-left pl-10">
-                <p
-                  className="font-bold text-sm md:text-base tracking-[0.15em]"
-                  style={{ color: C.text, fontFamily: FONTS.body }}
-                >
-                  {formatTime(event.eventTime)}
-                </p>
-                <p
-                  className="text-xs tracking-[0.15em] uppercase mt-0.5"
-                  style={{ color: C.textMuted + "cc", fontFamily: FONTS.body }}
-                >
-                  {event.eventName}
-                </p>
-              </div>
-            </>
-          )}
-        </motion.div>
-      ))}
+            <p
+              className="font-bold text-base md:text-lg tracking-[0.15em]"
+              style={{ color: C.text, fontFamily: FONTS.body }}
+            >
+              {formatTime(event.eventTime)}
+            </p>
+          );
+
+          const nameContent = isEdit ? (
+            <EditableText
+              value={event.eventName}
+              onSave={(val) => updateEvent(i, { eventName: val })}
+              mode={mode}
+              placeholder="Event Name"
+              className="text-sm md:text-base tracking-[0.12em] uppercase mt-1"
+              as="p"
+            />
+          ) : (
+            <p
+              className="text-sm md:text-base tracking-[0.12em] uppercase mt-1"
+              style={{ color: C.textMuted, fontFamily: FONTS.body }}
+            >
+              {event.eventName}
+            </p>
+          );
+
+          const venueContent = isEdit ? (
+            <EditableText
+              value={event.venueName}
+              onSave={(val) => updateEvent(i, { venueName: val })}
+              mode={mode}
+              placeholder="Venue Name"
+              className="text-xs md:text-sm italic mt-1"
+              as="p"
+            />
+          ) : (
+            event.venueName && (
+              <p
+                className="text-xs md:text-sm italic mt-1"
+                style={{ color: C.textLight, fontFamily: FONTS.serif }}
+              >
+                {event.venueName}
+              </p>
+            )
+          );
+
+          const dateContent = isEdit ? (
+            <InlineDatePicker
+              value={event.eventDate}
+              onChange={(val) => updateEvent(i, { eventDate: val })}
+            />
+          ) : null;
+
+          const deleteBtn = isEdit ? (
+            <button
+              onClick={() => deleteEvent(i)}
+              className="mt-2 p-1 rounded text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+              title="Delete event"
+            >
+              <Trash2 size={14} />
+            </button>
+          ) : null;
+
+          return (
+            <motion.div
+              key={event.id || i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className="relative grid grid-cols-2 py-8"
+            >
+              {/* Dot on timeline */}
+              <div
+                className="absolute left-1/2 top-1/2 w-3 h-3 rounded-full -translate-x-1/2 -translate-y-1/2 z-10"
+                style={{ backgroundColor: C.gold }}
+              />
+
+              {isLeft ? (
+                <>
+                  <div className="text-right pr-10">
+                    {timeContent}
+                    {nameContent}
+                    {venueContent}
+                    {dateContent}
+                    {deleteBtn && (
+                      <div className="flex justify-end">{deleteBtn}</div>
+                    )}
+                  </div>
+                  <div className="pl-10" />
+                </>
+              ) : (
+                <>
+                  <div className="pr-10" />
+                  <div className="text-left pl-10">
+                    {timeContent}
+                    {nameContent}
+                    {venueContent}
+                    {dateContent}
+                    {deleteBtn}
+                  </div>
+                </>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
     </div>
-  </div>
-);
+  );
+};
+
+/** Small inline date picker for timeline edit mode */
+const InlineDatePicker = ({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative inline-block mt-1">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1 text-xs hover:opacity-80 transition-opacity"
+        style={{ color: C.textLight, fontFamily: FONTS.body }}
+      >
+        <Calendar size={12} />
+        {value ? formatEventDate(value) : "Set date"}
+      </button>
+      {open && (
+        <div
+          className="absolute top-full left-0 mt-1 z-20 bg-white border rounded-lg p-2 shadow-lg"
+          style={{ borderColor: C.goldLight }}
+        >
+          <input
+            type="date"
+            value={value}
+            onChange={(e) => {
+              onChange(e.target.value);
+              setOpen(false);
+            }}
+            className="bg-transparent text-xs outline-none"
+            style={{ color: C.text, fontFamily: FONTS.body }}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+/** Small inline time picker for timeline edit mode */
+const InlineTimePicker = ({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative inline-block">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1 font-bold text-base md:text-lg tracking-[0.15em] hover:opacity-80 transition-opacity"
+        style={{ color: C.text, fontFamily: FONTS.body }}
+      >
+        <Clock size={14} />
+        {value ? formatTime(value) : "Set time"}
+      </button>
+      {open && (
+        <div
+          className="absolute top-full left-0 mt-1 z-20 bg-white border rounded-lg p-2 shadow-lg"
+          style={{ borderColor: C.goldLight }}
+        >
+          <input
+            type="time"
+            value={value?.slice(0, 5) || ""}
+            onChange={(e) => {
+              onChange(e.target.value + ":00");
+              setOpen(false);
+            }}
+            className="bg-transparent text-sm outline-none"
+            style={{ color: C.text, fontFamily: FONTS.body }}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
 
 /* ══════════════════════════════════════════════════════════
-   DRESS CODE — Full bg image with frosted card overlay
+   PRE-WEDDING EVENTS — Gold bg with Indian wedding event cards
    ══════════════════════════════════════════════════════════ */
-const DressCodeSection = ({
+const PreWeddingEventsSection = ({
   mode,
   data,
   onUpdate,
@@ -979,81 +1301,18 @@ const DressCodeSection = ({
   mode: TemplateProps["mode"];
   data: TemplateProps["data"];
   onUpdate: TemplateProps["onUpdate"];
-}) => (
-  <section className="relative py-20 md:py-28 overflow-hidden">
-    {/* Background image or gradient */}
-    <div className="absolute inset-0">
-      {data.bridePhotoUrl || data.groomPhotoUrl || data.couplePhotoUrl ? (
-        <img
-          src={data.bridePhotoUrl || data.groomPhotoUrl || data.couplePhotoUrl || ""}
-          alt="Background"
-          className="w-full h-full object-cover"
-        />
-      ) : (
-        <div
-          className="w-full h-full"
-          style={{
-            background: `linear-gradient(180deg, #a8967a 0%, #8a7a60 50%, #6b5d48 100%)`,
-          }}
-        />
-      )}
-      <div className="absolute inset-0 bg-black/30" />
-    </div>
+}) => {
+  const subEvents = data.events.slice(1);
+  if (subEvents.length === 0 && mode !== "edit") return null;
 
-    <div className="relative z-10 max-w-xl mx-auto px-6">
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="rounded-2xl p-10 md:p-14 text-center backdrop-blur-sm"
-        style={{ backgroundColor: "rgba(255, 255, 255, 0.90)" }}
-      >
-        <h2 className="font-script text-4xl md:text-7xl mb-10" style={{ color: C.text }}>
-          Dress Code
-        </h2>
+  const isEdit = mode === "edit";
 
-        {/* Women */}
-        <div className="mb-8">
-          <h3 className="font-script text-3xl mb-2" style={{ color: "#7a6545" }}>
-            Women
-          </h3>
-          <EditableText
-            value={data.brideBio || "Cocktail or formal dress"}
-            onSave={(val) => onUpdate({ brideBio: val })}
-            mode={mode}
-            placeholder="Cocktail or formal dress"
-            className="italic text-sm"
-            as="p"
-          />
-        </div>
-
-        <div className="w-16 h-[1px] mx-auto my-6" style={{ backgroundColor: C.goldLight }} />
-
-        {/* Men */}
-        <div>
-          <h3 className="font-script text-3xl mb-2" style={{ color: "#7a6545" }}>
-            Men
-          </h3>
-          <EditableText
-            value={data.groomBio || "Dark suit and tie"}
-            onSave={(val) => onUpdate({ groomBio: val })}
-            mode={mode}
-            placeholder="Dark suit and tie"
-            className="italic text-sm"
-            as="p"
-          />
-        </div>
-      </motion.div>
-    </div>
-  </section>
-);
-
-/* ══════════════════════════════════════════════════════════
-   PRE-WEDDING EVENTS — Gold bg with event cards
-   ══════════════════════════════════════════════════════════ */
-const PreWeddingEventsSection = ({ events }: { events: EventData[] }) => {
-  const subEvents = events.slice(1);
-  if (subEvents.length === 0) return null;
+  const updateSubEvent = (subIndex: number, updates: Partial<EventData>) => {
+    const actualIndex = subIndex + 1; // offset by 1 since we skip events[0]
+    const newEvents = [...data.events];
+    newEvents[actualIndex] = { ...newEvents[actualIndex], ...updates };
+    onUpdate({ events: newEvents });
+  };
 
   return (
     <section className="py-20 md:py-28" style={{ backgroundColor: C.gold }}>
@@ -1065,7 +1324,7 @@ const PreWeddingEventsSection = ({ events }: { events: EventData[] }) => {
           className="text-xs tracking-[0.35em] uppercase mb-4"
           style={{ color: C.whiteWarm, fontFamily: FONTS.body }}
         >
-          Pre-Wedding Events
+          Wedding Celebrations
         </motion.p>
 
         <motion.h2
@@ -1075,7 +1334,7 @@ const PreWeddingEventsSection = ({ events }: { events: EventData[] }) => {
           className="font-script text-4xl md:text-7xl mb-4"
           style={{ color: C.white }}
         >
-          Come Say Hello...
+          Join the Festivities
         </motion.h2>
 
         <motion.p
@@ -1086,7 +1345,8 @@ const PreWeddingEventsSection = ({ events }: { events: EventData[] }) => {
           className="italic text-sm mb-14 max-w-lg mx-auto"
           style={{ color: C.whiteWarm, fontFamily: FONTS.serif }}
         >
-          These are informal gatherings, so feel free to join us if you&apos;re in the area.
+          We warmly invite you to be part of each joyous celebration leading up
+          to our wedding day.
         </motion.p>
 
         <div className="space-y-8">
@@ -1097,33 +1357,154 @@ const PreWeddingEventsSection = ({ events }: { events: EventData[] }) => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.15 }}
-              className="rounded-2xl p-8 md:p-10"
+              className="rounded-2xl p-8 md:p-10 relative group"
               style={{ backgroundColor: C.cream }}
             >
-              <SmallEventIcon index={i} />
-
-              <h3 className="font-script text-3xl md:text-4xl mb-4" style={{ color: C.text }}>
-                {event.eventName}
-              </h3>
-
-              <div className="w-16 h-[1px] mx-auto mb-4" style={{ backgroundColor: C.goldLight }} />
-
-              <p
-                className="text-sm font-semibold mb-1"
-                style={{ color: "#7a6545", fontFamily: FONTS.body }}
-              >
-                {formatEventDate(event.eventDate)}
-              </p>
-              {event.eventTime && (
-                <p className="text-sm italic mb-2" style={{ color: C.textMuted, fontFamily: FONTS.serif }}>
-                  {formatTime(event.eventTime)}
-                </p>
+              {isEdit && (
+                <button
+                  onClick={() => {
+                    const actualIndex = i + 1;
+                    onUpdate({
+                      events: data.events.filter(
+                        (_, idx) => idx !== actualIndex,
+                      ),
+                    });
+                  }}
+                  className="absolute top-3 right-3 p-2 rounded-lg bg-red-50 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 hover:text-red-600"
+                  title="Delete event"
+                >
+                  <Trash2 size={16} />
+                </button>
               )}
-              {event.venueName && (
-                <p className="text-sm italic" style={{ color: C.textMuted, fontFamily: FONTS.serif }}>
-                  {event.venueName}
-                  {event.venueAddress && `, ${event.venueAddress}`}
-                </p>
+
+              <IndianEventIcon eventName={event.eventName} />
+
+              {isEdit ? (
+                <EditableText
+                  value={event.eventName}
+                  onSave={(val) => updateSubEvent(i, { eventName: val })}
+                  mode={mode}
+                  placeholder="Event Name"
+                  className="font-script text-3xl md:text-4xl mb-4"
+                  as="h3"
+                />
+              ) : (
+                <h3
+                  className="font-script text-3xl md:text-4xl mb-4"
+                  style={{ color: C.text }}
+                >
+                  {event.eventName}
+                </h3>
+              )}
+
+              <div
+                className="w-16 h-[1px] mx-auto mb-4"
+                style={{ backgroundColor: C.goldLight }}
+              />
+
+              {isEdit ? (
+                <div className="flex items-center justify-center gap-3 mb-3">
+                  <InlineDatePicker
+                    value={event.eventDate}
+                    onChange={(val) => updateSubEvent(i, { eventDate: val })}
+                  />
+                  <span style={{ color: C.textMuted }}>·</span>
+                  <InlineTimePicker
+                    value={event.eventTime}
+                    onChange={(val) => updateSubEvent(i, { eventTime: val })}
+                  />
+                </div>
+              ) : (
+                <>
+                  <p
+                    className="text-sm font-semibold mb-1"
+                    style={{ color: "#7a6545", fontFamily: FONTS.body }}
+                  >
+                    {formatEventDate(event.eventDate)}
+                  </p>
+                  {event.eventTime && (
+                    <p
+                      className="text-sm italic mb-3"
+                      style={{ color: C.textMuted, fontFamily: FONTS.serif }}
+                    >
+                      {formatTime(event.eventTime)}
+                    </p>
+                  )}
+                </>
+              )}
+
+              {isEdit ? (
+                <>
+                  <EditableText
+                    value={event.venueName}
+                    onSave={(val) => updateSubEvent(i, { venueName: val })}
+                    mode={mode}
+                    placeholder="Venue Name"
+                    className="text-sm font-medium mb-1"
+                    as="p"
+                  />
+                  <EditableText
+                    value={event.venueAddress}
+                    onSave={(val) => updateSubEvent(i, { venueAddress: val })}
+                    mode={mode}
+                    placeholder="Venue Address"
+                    className="text-xs italic"
+                    as="p"
+                  />
+                </>
+              ) : (
+                <>
+                  {event.venueName && (
+                    <p
+                      className="text-sm font-medium mb-1"
+                      style={{ color: C.text, fontFamily: FONTS.serif }}
+                    >
+                      {event.venueName}
+                    </p>
+                  )}
+                  {event.venueAddress && (
+                    <p
+                      className="text-xs italic flex items-center justify-center gap-1"
+                      style={{ color: C.textMuted, fontFamily: FONTS.serif }}
+                    >
+                      <MapPin size={12} />
+                      {event.venueAddress}
+                    </p>
+                  )}
+                </>
+              )}
+
+              {/* Maps link icon */}
+              {event.mapsUrl && (
+                <a
+                  href={event.mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 mt-4 text-xs tracking-[0.2em] uppercase hover:opacity-80 transition-opacity"
+                  style={{ color: "#7a6545", fontFamily: FONTS.body }}
+                >
+                  <MapPin size={14} /> View on Maps
+                </a>
+              )}
+
+              {/* Maps URL editor in edit mode */}
+              {isEdit && (
+                <div className="mt-4">
+                  <input
+                    type="url"
+                    value={event.mapsUrl || ""}
+                    onChange={(e) =>
+                      updateSubEvent(i, { mapsUrl: e.target.value || null })
+                    }
+                    placeholder="Google Maps URL"
+                    className="w-full bg-white/60 border rounded-lg px-3 py-2 text-xs"
+                    style={{
+                      borderColor: C.goldLight,
+                      color: C.text,
+                      fontFamily: FONTS.body,
+                    }}
+                  />
+                </div>
               )}
             </motion.div>
           ))}
@@ -1134,183 +1515,221 @@ const PreWeddingEventsSection = ({ events }: { events: EventData[] }) => {
 };
 
 /* ══════════════════════════════════════════════════════════
-   ACCOMMODATION SECTION
-   ══════════════════════════════════════════════════════════ */
-const AccommodationSection = ({
-  mode,
-  hashtag,
-  onUpdate,
-}: {
-  mode: TemplateProps["mode"];
-  hashtag: string;
-  onUpdate: TemplateProps["onUpdate"];
-}) => (
-  <section className="py-20 md:py-28" style={{ backgroundColor: C.bg }}>
-    <div className="max-w-3xl mx-auto px-6 text-center">
-      <motion.h2
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="font-script text-4xl md:text-7xl mb-4"
-        style={{ color: C.text }}
-      >
-        Accommodation
-      </motion.h2>
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.2 }}
-        className="mb-12"
-      >
-        <EditableText
-          value={hashtag}
-          onSave={(val) => onUpdate({ hashtag: val })}
-          mode={mode}
-          placeholder="Add accommodation info, nearby hotels, or travel tips..."
-          className="italic text-sm leading-relaxed"
-          multiline
-          as="p"
-        />
-      </motion.div>
-
-      {/* Sample hotel cards (visible in view/demo) */}
-      {mode !== "edit" && hashtag && hashtag !== "#BrideWedGroom" && (
-        <div className="space-y-6 text-center">
-          {/* These are sample cards — user text goes above */}
-          <div className="w-16 h-[1px] mx-auto" style={{ backgroundColor: C.goldLight }} />
-        </div>
-      )}
-    </div>
-  </section>
-);
-
-/* ══════════════════════════════════════════════════════════
    SVG ORNAMENTS / ILLUSTRATIONS
    ══════════════════════════════════════════════════════════ */
 
-/** Floral vase ornament (between gallery and venue) */
+/** Floral vase ornament (between gallery and venue) — uses R2 flower image */
+const FLOWER_IMAGE_URL =
+  "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/7/flower.png";
+
 const FloralVaseOrnament = () => (
   <div className="py-10 flex justify-center" style={{ backgroundColor: C.bg }}>
-    <svg width="120" height="160" viewBox="0 0 120 160" fill="none" style={{ color: C.ornament }}>
-      <g stroke="currentColor" strokeWidth="1" fill="none">
-        {/* Vase */}
-        <path d="M45 110 Q40 130 45 150 L75 150 Q80 130 75 110Z" />
-        <path d="M50 110 Q60 105 70 110" />
-        <ellipse cx="60" cy="150" rx="16" ry="4" />
-        <rect x="48" y="150" width="24" height="4" rx="1" />
-        {/* Flowers */}
-        <circle cx="45" cy="80" r="10" />
-        <circle cx="75" cy="80" r="10" />
-        <circle cx="60" cy="70" r="12" />
-        <circle cx="35" cy="90" r="8" />
-        <circle cx="85" cy="90" r="8" />
-        <circle cx="50" cy="65" r="8" />
-        <circle cx="70" cy="65" r="8" />
-        {/* Stems */}
-        <line x1="60" y1="82" x2="60" y2="110" />
-        <path d="M45 90 Q50 100 55 110" />
-        <path d="M75 90 Q70 100 65 110" />
-        {/* Leaves */}
-        <path d="M50 95 Q42 100 50 105" />
-        <path d="M70 95 Q78 100 70 105" />
-      </g>
-    </svg>
+    <motion.img
+      initial={{ opacity: 0, scale: 0.9 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true }}
+      src={FLOWER_IMAGE_URL}
+      alt="Floral decoration"
+      className="w-28 h-36 md:w-36 md:h-44 object-contain"
+      style={{ mixBlendMode: "multiply" }}
+    />
   </div>
 );
 
 /** Ribbon bow ornament (footer dividers) */
 const RibbonBowOrnament = () => (
   <div className="py-6 flex justify-center">
-    <svg width="80" height="60" viewBox="0 0 80 60" fill="none" style={{ color: C.gold }}>
-      <path d="M40 20 C25 5, 5 10, 15 25 C20 32, 30 28, 40 20Z" stroke="currentColor" strokeWidth="1" fill="none" />
-      <path d="M40 20 C55 5, 75 10, 65 25 C60 32, 50 28, 40 20Z" stroke="currentColor" strokeWidth="1" fill="none" />
-      <path d="M35 25 C30 35, 20 50, 25 55" stroke="currentColor" strokeWidth="1" fill="none" />
-      <path d="M45 25 C50 35, 60 50, 55 55" stroke="currentColor" strokeWidth="1" fill="none" />
+    <svg
+      width="80"
+      height="60"
+      viewBox="0 0 80 60"
+      fill="none"
+      style={{ color: C.gold }}
+    >
+      <path
+        d="M40 20 C25 5, 5 10, 15 25 C20 32, 30 28, 40 20Z"
+        stroke="currentColor"
+        strokeWidth="1"
+        fill="none"
+      />
+      <path
+        d="M40 20 C55 5, 75 10, 65 25 C60 32, 50 28, 40 20Z"
+        stroke="currentColor"
+        strokeWidth="1"
+        fill="none"
+      />
+      <path
+        d="M35 25 C30 35, 20 50, 25 55"
+        stroke="currentColor"
+        strokeWidth="1"
+        fill="none"
+      />
+      <path
+        d="M45 25 C50 35, 60 50, 55 55"
+        stroke="currentColor"
+        strokeWidth="1"
+        fill="none"
+      />
       <circle cx="40" cy="22" r="2" fill="currentColor" />
     </svg>
   </div>
 );
 
-/** Venue building illustration */
-const VenueIllustration = () => (
-  <div className="mb-6">
-    <svg viewBox="0 0 400 220" className="w-full max-w-md mx-auto" style={{ color: C.ornament }}>
-      <g stroke="currentColor" fill="none" strokeWidth="1.2">
-        {/* Main building */}
-        <rect x="80" y="60" width="240" height="140" rx="2" />
-        {/* Roof /pediment */}
-        <path d="M70 60 L200 15 L330 60" />
-        <line x1="200" y1="15" x2="200" y2="8" />
-        {/* Windows row 1 */}
-        <rect x="100" y="80" width="24" height="35" rx="12" />
-        <rect x="140" y="80" width="24" height="35" rx="12" />
-        <rect x="237" y="80" width="24" height="35" rx="12" />
-        <rect x="277" y="80" width="24" height="35" rx="12" />
-        {/* Central entrance */}
-        <rect x="178" y="75" width="44" height="60" rx="22" />
-        <line x1="200" y1="135" x2="200" y2="200" />
-        {/* Door */}
-        <rect x="185" y="150" width="30" height="50" rx="15" />
-        <line x1="200" y1="150" x2="200" y2="200" />
-        {/* Windows row 2 */}
-        <rect x="100" y="140" width="24" height="30" rx="2" />
-        <rect x="140" y="140" width="24" height="30" rx="2" />
-        <rect x="237" y="140" width="24" height="30" rx="2" />
-        <rect x="277" y="140" width="24" height="30" rx="2" />
-        {/* Side towers */}
-        <rect x="60" y="40" width="30" height="160" rx="1" />
-        <rect x="310" y="40" width="30" height="160" rx="1" />
-        <line x1="60" y1="40" x2="75" y2="25" />
-        <line x1="75" y1="25" x2="90" y2="40" />
-        <line x1="310" y1="40" x2="325" y2="25" />
-        <line x1="325" y1="25" x2="340" y2="40" />
-        {/* Decorative top circle */}
-        <circle cx="200" cy="45" r="14" />
-        {/* Path / driveway */}
-        <path d="M170 200 Q185 210 200 215 Q215 210 230 200" />
-      </g>
-    </svg>
-  </div>
-);
+/** Indian wedding event icons based on event name */
+const IndianEventIcon = ({ eventName }: { eventName: string }) => {
+  const name = eventName.toLowerCase();
 
-/** Small event icons for pre-wedding cards */
-const SmallEventIcon = ({ index }: { index: number }) => {
-  const icons = [
-    // Cheese/appetizer plate
-    <svg key="0" width="50" height="50" viewBox="0 0 50 50" fill="none" style={{ color: C.ornament }}>
-      <g stroke="currentColor" strokeWidth="1" fill="none">
-        <ellipse cx="25" cy="35" rx="18" ry="6" />
-        <path d="M10 33 Q15 15 25 12 Q35 15 40 33" />
-        <circle cx="20" cy="22" r="3" />
-        <circle cx="30" cy="18" r="2.5" />
-        <path d="M25 28 L22 24 L28 24Z" />
-      </g>
-    </svg>,
-    // Teacup with steam
-    <svg key="1" width="50" height="50" viewBox="0 0 50 50" fill="none" style={{ color: C.ornament }}>
-      <g stroke="currentColor" strokeWidth="1" fill="none">
-        <path d="M12 20 Q12 38 25 38 Q38 38 38 20Z" />
-        <path d="M38 24 Q46 24 46 30 Q46 36 38 36" />
-        <ellipse cx="25" cy="40" rx="15" ry="3" />
-        <path d="M20 15 Q22 10 20 5" />
-        <path d="M25 13 Q27 8 25 3" />
-        <path d="M30 15 Q32 10 30 5" />
-      </g>
-    </svg>,
-    // Champagne glass
-    <svg key="2" width="50" height="50" viewBox="0 0 50 50" fill="none" style={{ color: C.ornament }}>
-      <g stroke="currentColor" strokeWidth="1" fill="none">
-        <path d="M18 5 Q18 22 25 28 Q32 22 32 5Z" />
-        <line x1="25" y1="28" x2="25" y2="42" />
-        <ellipse cx="25" cy="44" rx="8" ry="3" />
-        <path d="M20 10 Q25 14 30 10" />
-      </g>
-    </svg>,
-  ];
+  // Haldi — turmeric/mortar icon
+  if (name.includes("haldi")) {
+    return (
+      <div className="flex justify-center mb-3 opacity-70">
+        <svg
+          width="50"
+          height="50"
+          viewBox="0 0 50 50"
+          fill="none"
+          style={{ color: C.ornament }}
+        >
+          <g stroke="currentColor" strokeWidth="1" fill="none">
+            <ellipse cx="25" cy="38" rx="14" ry="5" />
+            <path d="M14 36 Q14 22 25 18 Q36 22 36 36" />
+            <circle cx="25" cy="24" r="3.5" />
+            <path d="M20 14 Q25 8 30 14" />
+            <line x1="25" y1="8" x2="25" y2="14" />
+            <path d="M22 11 L25 8 L28 11" />
+          </g>
+        </svg>
+      </div>
+    );
+  }
 
-  return <div className="flex justify-center mb-2 opacity-70">{icons[index % icons.length]}</div>;
+  // Mehendi — henna hand
+  if (name.includes("mehendi") || name.includes("mehndi")) {
+    return (
+      <div className="flex justify-center mb-3 opacity-70">
+        <svg
+          width="50"
+          height="50"
+          viewBox="0 0 50 50"
+          fill="none"
+          style={{ color: C.ornament }}
+        >
+          <g stroke="currentColor" strokeWidth="1" fill="none">
+            <path d="M25 45 Q20 35 18 25 Q16 18 20 12 Q24 8 28 12 Q32 18 30 25 Q28 35 25 45Z" />
+            <path d="M22 30 Q25 26 28 30" />
+            <circle cx="25" cy="22" r="2.5" />
+            <path d="M23 17 Q25 14 27 17" />
+            <circle cx="25" cy="35" r="1.5" />
+            <path d="M21 25 L29 25" />
+          </g>
+        </svg>
+      </div>
+    );
+  }
+
+  // Sangeet — music/dance
+  if (
+    name.includes("sangeet") ||
+    name.includes("music") ||
+    name.includes("dance")
+  ) {
+    return (
+      <div className="flex justify-center mb-3 opacity-70">
+        <svg
+          width="50"
+          height="50"
+          viewBox="0 0 50 50"
+          fill="none"
+          style={{ color: C.ornament }}
+        >
+          <g stroke="currentColor" strokeWidth="1" fill="none">
+            <circle cx="18" cy="36" r="6" />
+            <line x1="24" y1="36" x2="24" y2="10" />
+            <path d="M24 10 Q34 8 34 16 Q34 22 24 20" />
+            <path d="M30 14 Q36 12 36 18" />
+            <circle cx="15" cy="15" r="1.5" fill="currentColor" />
+            <circle cx="10" cy="20" r="1" fill="currentColor" />
+            <circle cx="38" cy="28" r="1.5" fill="currentColor" />
+          </g>
+        </svg>
+      </div>
+    );
+  }
+
+  // Baraat — decorated horse/procession
+  if (name.includes("baraat") || name.includes("barat")) {
+    return (
+      <div className="flex justify-center mb-3 opacity-70">
+        <svg
+          width="50"
+          height="50"
+          viewBox="0 0 50 50"
+          fill="none"
+          style={{ color: C.ornament }}
+        >
+          <g stroke="currentColor" strokeWidth="1" fill="none">
+            <path d="M15 38 Q12 30 15 22 Q20 15 28 18 Q32 20 34 25" />
+            <path d="M34 25 Q36 30 34 38" />
+            <line x1="18" y1="38" x2="18" y2="44" />
+            <line x1="30" y1="38" x2="30" y2="44" />
+            <path d="M12 18 Q15 10 20 12" />
+            <circle cx="14" cy="20" r="1.5" fill="currentColor" />
+            <path d="M22 14 Q24 8 28 10 Q30 12 28 15" />
+          </g>
+        </svg>
+      </div>
+    );
+  }
+
+  // Pooja/Puja — diya/lamp
+  if (
+    name.includes("pooja") ||
+    name.includes("puja") ||
+    name.includes("prayer")
+  ) {
+    return (
+      <div className="flex justify-center mb-3 opacity-70">
+        <svg
+          width="50"
+          height="50"
+          viewBox="0 0 50 50"
+          fill="none"
+          style={{ color: C.ornament }}
+        >
+          <g stroke="currentColor" strokeWidth="1" fill="none">
+            <path d="M15 35 Q15 28 25 25 Q35 28 35 35Z" />
+            <ellipse cx="25" cy="36" rx="12" ry="4" />
+            <path d="M25 25 Q25 18 25 15" />
+            <path d="M22 15 Q25 8 28 15" />
+            <circle cx="25" cy="10" r="2" fill="currentColor" opacity="0.5" />
+          </g>
+        </svg>
+      </div>
+    );
+  }
+
+  // Default — lotus flower (universal Indian symbol)
+  return (
+    <div className="flex justify-center mb-3 opacity-70">
+      <svg
+        width="50"
+        height="50"
+        viewBox="0 0 50 50"
+        fill="none"
+        style={{ color: C.ornament }}
+      >
+        <g stroke="currentColor" strokeWidth="1" fill="none">
+          <path d="M25 40 Q25 30 25 22" />
+          <path d="M25 22 Q20 15 15 20 Q12 25 18 28 Q22 30 25 28" />
+          <path d="M25 22 Q30 15 35 20 Q38 25 32 28 Q28 30 25 28" />
+          <path d="M25 18 Q22 10 25 5 Q28 10 25 18" />
+          <path d="M20 24 Q14 18 10 22 Q8 28 15 28" />
+          <path d="M30 24 Q36 18 40 22 Q42 28 35 28" />
+          <circle cx="25" cy="24" r="2.5" fill="currentColor" opacity="0.3" />
+        </g>
+      </svg>
+    </div>
+  );
 };
 
 /* ══════════════════════════════════════════════════════════
@@ -1325,10 +1744,12 @@ function getEmbedMapUrl(mapsUrl: string): string {
       const place = decodeURIComponent(
         url.pathname.split("/place/")[1]?.split("/")[0] || "",
       );
-      if (place) return `https://maps.google.com/maps?q=${encodeURIComponent(place)}&output=embed`;
+      if (place)
+        return `https://maps.google.com/maps?q=${encodeURIComponent(place)}&output=embed`;
     }
     const q = url.searchParams.get("q") || url.searchParams.get("query");
-    if (q) return `https://maps.google.com/maps?q=${encodeURIComponent(q)}&output=embed`;
+    if (q)
+      return `https://maps.google.com/maps?q=${encodeURIComponent(q)}&output=embed`;
   } catch {
     // fallback
   }

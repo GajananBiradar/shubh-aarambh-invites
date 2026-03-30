@@ -36,7 +36,6 @@ const EditablePhotoGallery = ({
   );
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const multiInputRef = useRef<HTMLInputElement | null>(null);
 
   // Use photos or default to defaultPhotos
   const displayPhotos: PhotoData[] =
@@ -111,64 +110,6 @@ const EditablePhotoGallery = ({
     }
   };
 
-  const handleMultiFileChange = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-
-    const remaining = maxPhotos - photoCount;
-    const filesToUpload = files.slice(0, remaining);
-
-    for (let i = 0; i < filesToUpload.length; i++) {
-      const file = filesToUpload[i];
-      const error = validatePhoto(file);
-      if (error) {
-        toast.error(`${file.name}: ${error}`);
-        continue;
-      }
-
-      const slotIdx = photoCount + i;
-      setUploadingSlots((prev) => ({ ...prev, [slotIdx]: 0 }));
-
-      try {
-        const publicUrl = await uploadFile({
-          file,
-          uploadType: "photo",
-          onProgress: (progress) => {
-            setUploadingSlots((prev) => ({ ...prev, [slotIdx]: progress }));
-          },
-          invitationId: invitationId ?? null,
-          templateId,
-          sessionUUID,
-          uploadStage,
-        });
-
-        const newPhoto: PhotoData = {
-          photoUrl: publicUrl,
-          sortOrder: slotIdx,
-          isDefault: false,
-        };
-
-        // We need to build the updated array; since uploads are sequential,
-        // we read displayPhotos at time of completion
-        const updated = [...displayPhotos, newPhoto];
-        updated.forEach((p, idx) => (p.sortOrder = idx));
-        onUpdate(updated);
-      } catch (err) {
-        toast.error(`Failed to upload ${file.name}`);
-      } finally {
-        setUploadingSlots((prev) => {
-          const next = { ...prev };
-          delete next[slotIdx];
-          return next;
-        });
-      }
-    }
-
-    if (multiInputRef.current) multiInputRef.current.value = "";
-  };
-
   const handleRemove = (index: number) => {
     const newPhotos = displayPhotos.filter((_, i) => i !== index);
     newPhotos.forEach((p, i) => (p.sortOrder = i));
@@ -232,11 +173,77 @@ const EditablePhotoGallery = ({
     );
   }
 
-  // Edit mode: 10-slot grid
-  const slots = Array.from(
-    { length: maxPhotos },
-    (_, i) => displayPhotos[i] || null,
-  );
+  // Edit mode: show existing photos + single add button
+  const addInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleAddClick = () => {
+    if (isAtCapacity) {
+      toast.error(`Maximum ${maxPhotos} photos allowed`);
+      return;
+    }
+    addInputRef.current?.click();
+  };
+
+  const handleAddFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const remaining = maxPhotos - photoCount;
+    if (files.length > remaining) {
+      toast.error(
+        `You can only add ${remaining} more photo${remaining === 1 ? "" : "s"} (max ${maxPhotos})`,
+      );
+    }
+    const filesToUpload = files.slice(0, remaining);
+
+    for (let i = 0; i < filesToUpload.length; i++) {
+      const file = filesToUpload[i];
+      const error = validatePhoto(file);
+      if (error) {
+        toast.error(`${file.name}: ${error}`);
+        continue;
+      }
+
+      const slotIdx = photoCount + i;
+      setUploadingSlots((prev) => ({ ...prev, [slotIdx]: 0 }));
+
+      try {
+        const publicUrl = await uploadFile({
+          file,
+          uploadType: "photo",
+          onProgress: (progress) => {
+            setUploadingSlots((prev) => ({ ...prev, [slotIdx]: progress }));
+          },
+          invitationId: invitationId ?? null,
+          templateId,
+          sessionUUID,
+          uploadStage,
+        });
+
+        const newPhoto: PhotoData = {
+          photoUrl: publicUrl,
+          sortOrder: slotIdx,
+          isDefault: false,
+        };
+
+        const updated = [...displayPhotos, newPhoto];
+        updated.forEach((p, idx) => (p.sortOrder = idx));
+        onUpdate(updated);
+      } catch (err) {
+        toast.error(`Failed to upload ${file.name}`);
+      } finally {
+        setUploadingSlots((prev) => {
+          const next = { ...prev };
+          delete next[slotIdx];
+          return next;
+        });
+      }
+    }
+
+    if (addInputRef.current) addInputRef.current.value = "";
+  };
+
+  const uploadingCount = Object.keys(uploadingSlots).length;
 
   return (
     <div className="space-y-4">
@@ -260,28 +267,27 @@ const EditablePhotoGallery = ({
         </span>
       </div>
 
-      {isAtCapacity && (
-        <p className="font-body text-xs text-destructive">
-          Maximum reached — remove a photo to add more
-        </p>
-      )}
+      {/* Hidden file input for adding */}
+      <input
+        ref={addInputRef}
+        type="file"
+        accept="image/jpeg,image/jpg,image/png,image/webp"
+        multiple
+        onChange={handleAddFiles}
+        className="hidden"
+      />
 
-      {/* Grid */}
+      {/* Photo grid — only existing photos + one Add button */}
       <div
         className={cn(
           "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3",
           className,
         )}
       >
-        {slots.map((photo, i) => (
+        {displayPhotos.map((photo, i) => (
           <div
-            key={i}
-            className={cn(
-              "aspect-square rounded-xl overflow-hidden relative",
-              "border-2",
-              photo ? "border-transparent" : "border-dashed border-border",
-              isAtCapacity && !photo && "opacity-40 pointer-events-none",
-            )}
+            key={`${photo.photoUrl}-${i}`}
+            className="aspect-square rounded-xl overflow-hidden relative border-2 border-transparent"
           >
             <input
               ref={(el) => {
@@ -292,57 +298,63 @@ const EditablePhotoGallery = ({
               onChange={(e) => handleFileChange(e, i)}
               className="hidden"
             />
+            <div className="relative w-full h-full group">
+              <img
+                src={photo.photoUrl}
+                alt={`Gallery ${i + 1}`}
+                className="w-full h-full object-cover"
+              />
 
-            {photo ? (
-              <div className="relative w-full h-full group">
-                <img
-                  src={photo.photoUrl}
-                  alt={`Gallery ${i + 1}`}
-                  className="w-full h-full object-cover"
-                />
-
-                {photo.isDefault && (
-                  <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] bg-background/80 text-foreground font-body">
-                    Default
-                  </span>
-                )}
-
-                <button
-                  onClick={() => handleRemove(i)}
-                  className="absolute top-1 right-1 p-1 rounded-full bg-destructive/90 text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X size={12} />
-                </button>
-
-                <div
-                  onClick={() => inputRefs.current[i]?.click()}
-                  className="absolute inset-0 bg-background/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-                >
-                  <span className="font-body text-xs text-foreground">
-                    Replace
-                  </span>
-                </div>
-              </div>
-            ) : uploadingSlots[i] !== undefined ? (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-muted">
-                <Loader2 className="w-6 h-6 text-primary animate-spin mb-1" />
-                <span className="font-body text-xs text-muted-foreground">
-                  {uploadingSlots[i]}%
+              {photo.isDefault && (
+                <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] bg-background/80 text-foreground font-body">
+                  Default
                 </span>
-              </div>
-            ) : (
+              )}
+
               <button
-                onClick={() => inputRefs.current[i]?.click()}
-                className="w-full h-full flex flex-col items-center justify-center bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+                onClick={() => handleRemove(i)}
+                className="absolute top-1 right-1 p-1 rounded-full bg-destructive/90 text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
               >
-                <Plus className="w-6 h-6 text-muted-foreground mb-1" />
-                <span className="font-body text-[10px] text-muted-foreground">
-                  Add
-                </span>
+                <X size={12} />
               </button>
-            )}
+
+              <div
+                onClick={() => inputRefs.current[i]?.click()}
+                className="absolute inset-0 bg-background/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+              >
+                <span className="font-body text-xs text-foreground">
+                  Replace
+                </span>
+              </div>
+            </div>
           </div>
         ))}
+
+        {/* Uploading indicators */}
+        {Object.entries(uploadingSlots).map(([idx, progress]) => (
+          <div
+            key={`uploading-${idx}`}
+            className="aspect-square rounded-xl overflow-hidden border-2 border-dashed border-border flex flex-col items-center justify-center bg-muted"
+          >
+            <Loader2 className="w-6 h-6 text-primary animate-spin mb-1" />
+            <span className="font-body text-xs text-muted-foreground">
+              {progress}%
+            </span>
+          </div>
+        ))}
+
+        {/* Single Add button (only if not at capacity and not uploading) */}
+        {!isAtCapacity && uploadingCount === 0 && (
+          <button
+            onClick={handleAddClick}
+            className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+          >
+            <Plus className="w-6 h-6 text-muted-foreground mb-1" />
+            <span className="font-body text-[10px] text-muted-foreground">
+              Add Photo
+            </span>
+          </button>
+        )}
       </div>
     </div>
   );

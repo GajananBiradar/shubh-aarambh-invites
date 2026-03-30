@@ -7,6 +7,7 @@ import {
   getTemplateTheme,
   getTemplateMetadata,
 } from "@/templates";
+import { loadTemplateDemoData } from "@/templates/demoData";
 import {
   InvitationData,
   TemplateComponent,
@@ -70,9 +71,25 @@ const CreateInvitationPage = ({
   });
 
   // Fetch template demo data (with defaults, photos, events)
+  // Falls back to frontend per-template demo data when backend has no photos
   const { data: demoData, isLoading: demoDataLoading } = useQuery({
     queryKey: ["templateDemoData", effectiveTemplateId],
-    queryFn: () => getTemplateDemoData(effectiveTemplateId),
+    queryFn: async () => {
+      const backendData = await getTemplateDemoData(effectiveTemplateId);
+      // If backend returned no default photos, merge in frontend demo data
+      if (!backendData?.defaultPhotos?.length) {
+        const slug = getTemplateTheme(effectiveTemplateId);
+        const frontendData = await loadTemplateDemoData(slug);
+        if (frontendData?.galleryPhotos?.length) {
+          backendData.defaultPhotos = frontendData.galleryPhotos;
+        }
+        if (!backendData.musicUrl && frontendData?.musicUrl) {
+          backendData.musicUrl = frontendData.musicUrl;
+          backendData.musicName = frontendData.musicName;
+        }
+      }
+      return backendData;
+    },
     enabled: !editMode, // Only fetch if not in edit mode
   });
 
@@ -306,7 +323,8 @@ const CreateInvitationPage = ({
       };
 
       window.addEventListener("beforeunload", handleBeforeUnload);
-      return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+      return () =>
+        window.removeEventListener("beforeunload", handleBeforeUnload);
     }
   }, [isDirty, data.invitationId, editMode]);
 

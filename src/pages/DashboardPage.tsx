@@ -13,10 +13,13 @@ import {
   Sparkles,
   Trash2,
   Loader2,
+  ChevronDown,
+  Users,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { deleteInvitation } from "@/api/invitations";
+import { getRsvps, RsvpResponseItem } from "@/api/rsvp";
 
 const DashboardPage = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -25,6 +28,9 @@ const DashboardPage = () => {
   const [localInvitations, setLocalInvitations] = useState<any[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
+  const [expandedRsvp, setExpandedRsvp] = useState<number | null>(null);
+  const [rsvpData, setRsvpData] = useState<Record<number, RsvpResponseItem[]>>({});
+  const [rsvpLoading, setRsvpLoading] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) navigate("/login");
@@ -86,6 +92,25 @@ const DashboardPage = () => {
       }
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const toggleRsvpPanel = async (invId: number) => {
+    if (expandedRsvp === invId) {
+      setExpandedRsvp(null);
+      return;
+    }
+    setExpandedRsvp(invId);
+    if (!rsvpData[invId]) {
+      setRsvpLoading(invId);
+      try {
+        const data = await getRsvps(invId);
+        setRsvpData((prev) => ({ ...prev, [invId]: data }));
+      } catch {
+        toast.error("Could not load RSVPs");
+      } finally {
+        setRsvpLoading(null);
+      }
     }
   };
 
@@ -237,8 +262,88 @@ const DashboardPage = () => {
 
                 <div className="flex gap-4 text-xs text-muted-foreground font-body mb-4">
                   <span>💌 {inv.viewCount || 0} views</span>
-                  <span>👥 {inv.rsvpCount || 0} RSVPs</span>
+                  <button
+                    onClick={() => inv.id && toggleRsvpPanel(inv.id)}
+                    className="flex items-center gap-1 hover:text-foreground transition-colors"
+                  >
+                    <Users size={12} />
+                    {inv.rsvpCount || 0} RSVPs
+                    <ChevronDown
+                      size={12}
+                      className={`transition-transform ${expandedRsvp === inv.id ? "rotate-180" : ""}`}
+                    />
+                  </button>
                 </div>
+
+                {/* RSVP Detail Panel */}
+                <AnimatePresence>
+                  {expandedRsvp === inv.id && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="overflow-hidden mb-4"
+                    >
+                      <div className="bg-muted/30 rounded-xl p-4 border border-border/50">
+                        {rsvpLoading === inv.id ? (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader2 size={16} className="animate-spin text-muted-foreground" />
+                            <span className="ml-2 font-body text-xs text-muted-foreground">Loading RSVPs...</span>
+                          </div>
+                        ) : (rsvpData[inv.id] || []).length === 0 ? (
+                          <p className="font-body text-xs text-muted-foreground text-center py-3">
+                            No RSVPs yet
+                          </p>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="flex gap-3 text-[10px] font-body text-muted-foreground uppercase tracking-wider px-1">
+                              <span className="flex-1">Guest</span>
+                              <span className="w-20 text-center">Status</span>
+                              <span className="w-12 text-center">Guests</span>
+                            </div>
+                            {(rsvpData[inv.id] || []).map((rsvp) => (
+                              <div
+                                key={rsvp.id}
+                                className="flex gap-3 items-center bg-card rounded-lg px-3 py-2.5 border border-border/50"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-body text-sm font-medium truncate">
+                                    {rsvp.guestName}
+                                  </p>
+                                  <p className="font-body text-[10px] text-muted-foreground">
+                                    {rsvp.guestPhone}
+                                    {rsvp.message && (
+                                      <span className="ml-2 italic">— "{rsvp.message}"</span>
+                                    )}
+                                  </p>
+                                </div>
+                                <span
+                                  className={`w-20 text-center font-body text-[10px] font-semibold px-2 py-1 rounded-full ${
+                                    rsvp.attending === "YES"
+                                      ? "bg-emerald-500/10 text-emerald-600"
+                                      : rsvp.attending === "MAYBE"
+                                        ? "bg-amber-500/10 text-amber-600"
+                                        : "bg-red-500/10 text-red-600"
+                                  }`}
+                                >
+                                  {rsvp.attending === "YES"
+                                    ? "Attending"
+                                    : rsvp.attending === "MAYBE"
+                                      ? "Maybe"
+                                      : "Declined"}
+                                </span>
+                                <span className="w-12 text-center font-body text-xs">
+                                  {rsvp.guestCount}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 <div className="flex flex-wrap gap-2">
                   {/* View published invitation */}

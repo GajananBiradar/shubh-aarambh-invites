@@ -7,6 +7,10 @@ import {
   Calendar,
   Clock,
   Trash2,
+  Check,
+  Minus,
+  Plus,
+  Send,
 } from "lucide-react";
 import { TemplateProps, EventData } from "@/templates/types";
 import {
@@ -23,6 +27,8 @@ import {
   formatTime,
 } from "@/utils/formatDate";
 import { cn } from "@/lib/utils";
+import { submitRsvp } from "@/api/rsvp";
+import toast from "react-hot-toast";
 
 /* ────────────────────────────────────────────
    Premium Elegante Template
@@ -163,6 +169,14 @@ const PremiumEleganteTemplate = ({
             />
           </div>
         </section>
+      )}
+
+      {/* ═══════════ RSVP ═══════════ */}
+      {mode !== "edit" && data.rsvpEnabled !== false && (
+        <RsvpSection
+          invitationId={data.invitationId}
+          isDemo={mode === "demo"}
+        />
       )}
 
       {/* ═══════════ FOOTER ═══════════ */}
@@ -1759,5 +1773,365 @@ function getEmbedMapUrl(mapsUrl: string): string {
 
   return `https://maps.google.com/maps?q=${encodeURIComponent(mapsUrl)}&output=embed`;
 }
+
+/* ══════════════════════════════════════════════════════════
+   RSVP SECTION — Premium Elegante styled RSVP form
+   ══════════════════════════════════════════════════════════ */
+const RsvpSection = ({
+  invitationId,
+  isDemo,
+}: {
+  invitationId: number | null;
+  isDemo: boolean;
+}) => {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [attending, setAttending] = useState<"yes" | "maybe" | "no">("yes");
+  const [guestCount, setGuestCount] = useState(2);
+  const [message, setMessage] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      toast.error("Please enter your name");
+      return;
+    }
+    if (!phone.trim() || phone.length < 10) {
+      toast.error("Please enter a valid 10-digit phone number");
+      return;
+    }
+
+    if (isDemo) {
+      toast("This is a demo — create your invitation to receive real RSVPs", {
+        icon: "✨",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const attendingMap: Record<string, string> = {
+        yes: "YES",
+        maybe: "MAYBE",
+        no: "NO",
+      };
+      await submitRsvp(String(invitationId || ""), {
+        guestName: name,
+        guestPhone: phone,
+        attending: attendingMap[attending] || "YES",
+        guestCount,
+        message: message || undefined,
+      });
+      setSubmitted(true);
+    } catch {
+      toast.error("Could not submit RSVP. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const attendOptions = [
+    { value: "yes" as const, label: "Joyfully Accept", icon: "🌿" },
+    { value: "maybe" as const, label: "Yet to Decide", icon: "💭" },
+    { value: "no" as const, label: "Regretfully Decline", icon: "🙏" },
+  ];
+
+  if (submitted) {
+    return (
+      <section className="relative py-24 overflow-hidden" style={{ backgroundColor: C.bg }}>
+        <div
+          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          style={{ backgroundImage: NOISE_BG }}
+        />
+        <div className="max-w-md mx-auto px-6 relative z-10">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.6 }}
+            className="text-center rounded-2xl p-10 border"
+            style={{
+              backgroundColor: C.cream,
+              borderColor: `${C.gold}30`,
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring" }}
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
+              style={{ backgroundColor: `${C.gold}15` }}
+            >
+              <Check className="w-8 h-8" style={{ color: C.gold }} />
+            </motion.div>
+            <p
+              className="text-2xl mb-2"
+              style={{ fontFamily: FONTS.serif, color: C.text }}
+            >
+              Thank you, {name}!
+            </p>
+            <p
+              className="text-sm"
+              style={{ fontFamily: FONTS.body, color: C.textMuted }}
+            >
+              We can&apos;t wait to celebrate with you.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="relative py-24 overflow-hidden" style={{ backgroundColor: C.bg }}>
+      <div
+        className="absolute inset-0 opacity-[0.03] pointer-events-none"
+        style={{ backgroundImage: NOISE_BG }}
+      />
+
+      <div className="max-w-md mx-auto px-6 relative z-10">
+        {/* Section header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-10"
+        >
+          {/* Decorative line */}
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <div className="w-16 h-[0.5px]" style={{ backgroundColor: C.goldLight }} />
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              style={{ color: C.gold }}
+            >
+              <path
+                d="M10 2 Q12 6 16 8 Q12 10 10 14 Q8 10 4 8 Q8 6 10 2Z"
+                fill="currentColor"
+                opacity="0.5"
+              />
+            </svg>
+            <div className="w-16 h-[0.5px]" style={{ backgroundColor: C.goldLight }} />
+          </div>
+
+          <p
+            className="text-xs tracking-[0.3em] uppercase mb-3"
+            style={{ fontFamily: FONTS.body, color: C.textMuted }}
+          >
+            Kindly Respond
+          </p>
+          <h2
+            className="text-3xl md:text-4xl"
+            style={{ fontFamily: FONTS.serif, color: C.text }}
+          >
+            Will You Join Us?
+          </h2>
+        </motion.div>
+
+        {/* RSVP Form */}
+        <motion.form
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.15 }}
+          onSubmit={handleSubmit}
+          className="rounded-2xl p-8 border space-y-6"
+          style={{
+            backgroundColor: C.cream,
+            borderColor: `${C.gold}25`,
+            boxShadow: `0 4px 30px ${C.gold}08`,
+          }}
+        >
+          {/* Name */}
+          <div>
+            <label
+              className="text-xs tracking-[0.15em] uppercase block mb-2"
+              style={{ fontFamily: FONTS.body, color: C.textMuted }}
+            >
+              Your Name *
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all"
+              style={{
+                fontFamily: FONTS.body,
+                color: C.text,
+                backgroundColor: C.white,
+                border: `1px solid ${C.gold}30`,
+              }}
+              onFocus={(e) =>
+                (e.target.style.borderColor = C.gold)
+              }
+              onBlur={(e) =>
+                (e.target.style.borderColor = `${C.gold}30`)
+              }
+              placeholder="Enter your full name"
+            />
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label
+              className="text-xs tracking-[0.15em] uppercase block mb-2"
+              style={{ fontFamily: FONTS.body, color: C.textMuted }}
+            >
+              Phone Number *
+            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) =>
+                setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
+              }
+              required
+              className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all"
+              style={{
+                fontFamily: FONTS.body,
+                color: C.text,
+                backgroundColor: C.white,
+                border: `1px solid ${C.gold}30`,
+              }}
+              onFocus={(e) =>
+                (e.target.style.borderColor = C.gold)
+              }
+              onBlur={(e) =>
+                (e.target.style.borderColor = `${C.gold}30`)
+              }
+              placeholder="10-digit phone number"
+            />
+          </div>
+
+          {/* Attendance */}
+          <div>
+            <label
+              className="text-xs tracking-[0.15em] uppercase block mb-3"
+              style={{ fontFamily: FONTS.body, color: C.textMuted }}
+            >
+              Will you attend?
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {attendOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setAttending(opt.value)}
+                  className="rounded-xl py-3 px-2 text-xs transition-all"
+                  style={{
+                    fontFamily: FONTS.body,
+                    backgroundColor:
+                      attending === opt.value ? C.gold : C.white,
+                    color:
+                      attending === opt.value ? C.white : C.text,
+                    border: `1px solid ${attending === opt.value ? C.gold : `${C.gold}30`}`,
+                  }}
+                >
+                  <span className="text-base block mb-0.5">{opt.icon}</span>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Guest count */}
+          <div>
+            <label
+              className="text-xs tracking-[0.15em] uppercase block mb-3"
+              style={{ fontFamily: FONTS.body, color: C.textMuted }}
+            >
+              Number of Guests
+            </label>
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => setGuestCount(Math.max(1, guestCount - 1))}
+                className="w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+                style={{
+                  border: `1px solid ${C.gold}40`,
+                  color: C.gold,
+                  backgroundColor: C.white,
+                }}
+              >
+                <Minus size={16} />
+              </button>
+              <span
+                className="text-xl font-semibold w-8 text-center tabular-nums"
+                style={{ fontFamily: FONTS.serif, color: C.text }}
+              >
+                {guestCount}
+              </span>
+              <button
+                type="button"
+                onClick={() => setGuestCount(Math.min(10, guestCount + 1))}
+                className="w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+                style={{
+                  border: `1px solid ${C.gold}40`,
+                  color: C.gold,
+                  backgroundColor: C.white,
+                }}
+              >
+                <Plus size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Message */}
+          <div>
+            <label
+              className="text-xs tracking-[0.15em] uppercase block mb-2"
+              style={{ fontFamily: FONTS.body, color: C.textMuted }}
+            >
+              Message (Optional)
+            </label>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={2}
+              className="w-full rounded-xl px-4 py-3 text-sm outline-none resize-none transition-all"
+              style={{
+                fontFamily: FONTS.body,
+                color: C.text,
+                backgroundColor: C.white,
+                border: `1px solid ${C.gold}30`,
+              }}
+              onFocus={(e) =>
+                (e.target.style.borderColor = C.gold)
+              }
+              onBlur={(e) =>
+                (e.target.style.borderColor = `${C.gold}30`)
+              }
+              placeholder="Any message for the couple?"
+            />
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3.5 rounded-xl text-sm tracking-[0.15em] uppercase flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            style={{
+              fontFamily: FONTS.body,
+              backgroundColor: C.gold,
+              color: C.white,
+            }}
+          >
+            {loading ? (
+              "Sending..."
+            ) : (
+              <>
+                <Send size={14} /> Send My RSVP
+              </>
+            )}
+          </button>
+        </motion.form>
+      </div>
+    </section>
+  );
+};
 
 export default PremiumEleganteTemplate;

@@ -144,6 +144,7 @@ export const useInvitationEditor = ({
         hashtag: data.hashtag || null,
         welcome_message: data.welcomeMessage || defaultWelcome,
         show_countdown: data.showCountdown,
+        rsvp_enabled: data.rsvpEnabled !== false,
         slug: data.slug || null,
         wedding_date: data.weddingDate || null,
       },

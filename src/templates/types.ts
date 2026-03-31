@@ -59,6 +59,7 @@ export interface InvitationData {
   slug: string;
   accessCode: string | null;
   status: 'DRAFT' | 'PUBLISHED';
+  rsvpEnabled: boolean;
   templateDefaults: TemplateDefaults;
 }
 
@@ -132,6 +133,7 @@ export const createEmptyInvitationData = (
   slug: '',
   accessCode: null,
   status: 'DRAFT',
+  rsvpEnabled: true,
   templateDefaults: {
     defaultPhotos: defaults.defaultPhotos || [],
     defaultMusicUrl: defaults.defaultMusicUrl || '',

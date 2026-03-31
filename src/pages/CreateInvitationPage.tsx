@@ -181,6 +181,7 @@ const CreateInvitationPage = ({
         slug: editData.slug || "",
         accessCode: editData.accessCode || editData.code || null,
         status: editData.status || "DRAFT",
+        rsvpEnabled: editData.invitationData?.rsvp_enabled !== false,
         templateDefaults: {
           defaultPhotos: [],
           defaultMusicUrl: template?.defaultMusicUrl || "",

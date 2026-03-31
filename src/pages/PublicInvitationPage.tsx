@@ -152,6 +152,10 @@ const PublicInvitationPage = () => {
           slug: invitation.slug || "",
           accessCode: invitation.accessCode || invitation.code || code || null,
           status: invitation.status || "PUBLISHED",
+          rsvpEnabled:
+            invitation.rsvpEnabled ??
+            invitation.invitationData?.rsvp_enabled ??
+            true,
           templateDefaults: {
             defaultPhotos:
               invitation.templateDefaultPhotos ||

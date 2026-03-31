@@ -110,10 +110,10 @@ const CreatePreviewPage = () => {
         accessCode: null,
         status: "DRAFT",
         templateDefaults: {
-          defaultPhotos: [],
-          defaultMusicUrl: "",
-          defaultMusicName: "",
-          defaultVideoUrl: null,
+          defaultPhotos: parsed.templateDefaults?.defaultPhotos || [],
+          defaultMusicUrl: parsed.templateDefaults?.defaultMusicUrl || "",
+          defaultMusicName: parsed.templateDefaults?.defaultMusicName || "",
+          defaultVideoUrl: parsed.templateDefaults?.defaultVideoUrl || null,
         },
       };
 
@@ -203,8 +203,11 @@ const CreatePreviewPage = () => {
   return (
     <div
       data-theme={theme}
-      className="min-h-screen bg-background text-foreground"
+      className="min-h-screen bg-background text-foreground preview-page-wrapper"
     >
+      {/* Bump music player above the bottom toolbar */}
+      <style>{`.preview-page-wrapper .fixed.bottom-6.right-6 { bottom: 5rem !important; }`}</style>
+
       {/* Preview Template in VIEW mode */}
       <div>
         <TemplateComp

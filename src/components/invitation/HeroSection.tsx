@@ -1,19 +1,23 @@
-import { motion } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
-import { Invitation } from '@/types';
-import { formatWeddingDate } from '@/utils/formatDate';
-import { useMemo } from 'react';
+import { motion } from "framer-motion";
+import { ChevronDown } from "lucide-react";
+import { Invitation } from "@/types";
+import { formatWeddingDate } from "@/utils/formatDate";
+import { useMemo } from "react";
 
 const InvitationHero = ({ invitation }: { invitation: Invitation }) => {
-  const petals = useMemo(() => Array.from({ length: 14 }, (_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    size: 8 + Math.random() * 12,
-    opacity: 0.3 + Math.random() * 0.5,
-    duration: 7 + Math.random() * 8,
-    delay: Math.random() * 10,
-    drift: -80 + Math.random() * 160,
-  })), []);
+  const petals = useMemo(
+    () =>
+      Array.from({ length: 14 }, (_, i) => ({
+        id: i,
+        left: `${Math.random() * 100}%`,
+        size: 8 + Math.random() * 12,
+        opacity: 0.3 + Math.random() * 0.5,
+        duration: 7 + Math.random() * 8,
+        delay: Math.random() * 10,
+        drift: -80 + Math.random() * 160,
+      })),
+    [],
+  );
 
   return (
     <section className="relative min-h-[100dvh] flex flex-col items-center justify-center overflow-hidden">
@@ -29,20 +33,22 @@ const InvitationHero = ({ invitation }: { invitation: Invitation }) => {
 
       {/* Petals */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {petals.map(p => (
+        {petals.map((p) => (
           <div
             key={p.id}
             className="absolute rounded-full animate-petal"
-            style={{
-              left: p.left,
-              width: p.size,
-              height: p.size,
-              background: `radial-gradient(circle, hsl(var(--primary) / 0.6), hsl(var(--accent) / 0.4))`,
-              '--petal-opacity': p.opacity,
-              '--fall-duration': `${p.duration}s`,
-              '--fall-delay': `${p.delay}s`,
-              '--drift': `${p.drift}px`,
-            } as React.CSSProperties}
+            style={
+              {
+                left: p.left,
+                width: p.size,
+                height: p.size,
+                background: `radial-gradient(circle, hsl(var(--primary) / 0.6), hsl(var(--accent) / 0.4))`,
+                "--petal-opacity": p.opacity,
+                "--fall-duration": `${p.duration}s`,
+                "--fall-delay": `${p.delay}s`,
+                "--drift": `${p.drift}px`,
+              } as React.CSSProperties
+            }
           />
         ))}
       </div>
@@ -65,7 +71,7 @@ const InvitationHero = ({ invitation }: { invitation: Invitation }) => {
           transition={{ delay: 0.3, duration: 0.8 }}
           className="font-body italic text-sm text-card-foreground/80 mb-4"
         >
-          Together with their families
+          Together with our families
         </motion.p>
 
         <motion.h1
@@ -75,7 +81,7 @@ const InvitationHero = ({ invitation }: { invitation: Invitation }) => {
           className="font-script text-5xl sm:text-6xl md:text-7xl text-card-foreground mb-2"
           style={{ lineHeight: 1.2 }}
         >
-          {invitation.brideName.split(' ')[0]}
+          {invitation.brideName.split(" ")[0]}
         </motion.h1>
 
         <motion.p
@@ -94,7 +100,7 @@ const InvitationHero = ({ invitation }: { invitation: Invitation }) => {
           className="font-script text-5xl sm:text-6xl md:text-7xl text-card-foreground mb-6"
           style={{ lineHeight: 1.2 }}
         >
-          {invitation.groomName.split(' ')[0]}
+          {invitation.groomName.split(" ")[0]}
         </motion.h1>
 
         {/* Gold line */}
@@ -118,10 +124,12 @@ const InvitationHero = ({ invitation }: { invitation: Invitation }) => {
       {/* Scroll indicator */}
       <motion.div
         animate={{ y: [0, 10, 0] }}
-        transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 text-center"
       >
-        <p className="font-body text-xs text-card-foreground/70 mb-2">Open Invitation</p>
+        <p className="font-body text-xs text-card-foreground/70 mb-2">
+          Open Invitation
+        </p>
         <ChevronDown className="w-6 h-6 text-card-foreground/70 mx-auto" />
       </motion.div>
     </section>

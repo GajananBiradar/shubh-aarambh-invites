@@ -133,7 +133,7 @@ const MidnightNawabTemplate = ({
             transition={{ delay: 0.5 }}
             className="font-body text-sm italic text-foreground/60 mb-6"
           >
-            Together with their families
+            Together with our families
           </motion.p>
 
           {/* Names */}

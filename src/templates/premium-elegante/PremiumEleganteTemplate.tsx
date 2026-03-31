@@ -653,8 +653,8 @@ const WelcomeSection = ({
   welcomeMessage: string;
   onUpdate: TemplateProps["onUpdate"];
 }) => (
-  <section className="pb-0 pt-0" style={{ backgroundColor: C.cream }}>
-    <div className="max-w-3xl mx-auto text-center mb-12 md:mb-16 px-6 pt-20 md:pt-28">
+  <section className="py-20 md:py-28" style={{ backgroundColor: C.cream }}>
+    <div className="max-w-3xl mx-auto text-center px-6">
       <motion.h2
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -702,7 +702,7 @@ const GallerySection = ({
   sessionUUID?: string;
   uploadStage?: "temp" | "draft" | "published";
 }) => (
-  <section className="pb-12 pt-0" style={{ backgroundColor: C.bg }}>
+  <section className="pb-0 pt-0" style={{ backgroundColor: C.bg }}>
     <div className="max-w-7xl mx-auto px-6">
       {mode === "edit" ? (
         <div className="max-w-5xl mx-auto">
@@ -1523,7 +1523,10 @@ const FLOWER_IMAGE_URL =
   "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/7/flower.png";
 
 const FloralVaseOrnament = () => (
-  <div className="py-10 flex justify-center" style={{ backgroundColor: C.bg }}>
+  <div
+    className="py-6 md:py-8 flex items-center justify-center"
+    style={{ backgroundColor: C.bg }}
+  >
     <motion.img
       initial={{ opacity: 0, scale: 0.9 }}
       whileInView={{ opacity: 1, scale: 1 }}

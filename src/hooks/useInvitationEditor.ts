@@ -126,7 +126,7 @@ export const useInvitationEditor = ({
 
   // Build API request body
   const buildRequestBody = useCallback(() => {
-    const defaultWelcome = `Together with their families, ${data.groomName || '[Groom]'} & ${data.brideName || '[Bride]'} joyfully invite you to be part of their celebration of love.`;
+    const defaultWelcome = `Together with our families, ${data.groomName || '[Groom]'} & ${data.brideName || '[Bride]'} joyfully invite you to be part of their celebration of love.`;
 
     return {
       templateId: data.templateId,

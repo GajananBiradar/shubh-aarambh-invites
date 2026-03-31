@@ -170,7 +170,7 @@ const CrimsonShaadiTemplate = ({
             transition={{ delay: 0.3, duration: 0.8 }}
             className="font-body italic text-sm text-card-foreground/80 mb-4"
           >
-            Together with their families
+            Together with our families
           </motion.p>
 
           {/* Bride Name */}

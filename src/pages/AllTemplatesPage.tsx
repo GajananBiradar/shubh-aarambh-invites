@@ -1,4 +1,12 @@
-import { useState, useMemo, useEffect, Suspense, lazy } from "react";
+import {
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  useCallback,
+  Suspense,
+  lazy,
+} from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -53,6 +61,8 @@ const DynamicTemplatePreview = ({
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
 
   // Create sample data for preview
   const sampleData: InvitationData = useMemo(() => {
@@ -72,7 +82,7 @@ const DynamicTemplatePreview = ({
       couplePhotoUrl: null,
       hashtag: "#AnanyaWedVikram",
       welcomeMessage:
-        "Together with their families, we invite you to celebrate our wedding.",
+        "Together with our families, we invite you to celebrate our wedding.",
       showCountdown: true,
       weddingDate: "2026-02-14",
       events: [
@@ -122,6 +132,17 @@ const DynamicTemplatePreview = ({
     loadTemplate();
   }, [templateId]);
 
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0.1 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   if (loading) {
     return (
       <div className="w-full h-full bg-muted/30 flex items-center justify-center">
@@ -137,11 +158,18 @@ const DynamicTemplatePreview = ({
 
   return (
     <div
+      ref={containerRef}
       data-theme={theme}
-      className="w-full h-full overflow-hidden transform origin-top scale-[0.35] -mt-[32.5%]"
-      style={{ width: "285%", height: "285%" }}
+      className="w-full h-full overflow-hidden relative bg-white"
     >
-      <div className="pointer-events-none">
+      <div
+        className={`pointer-events-none origin-top-left absolute top-0 left-0 ${isVisible ? "template-preview-scroll" : ""}`}
+        style={{
+          width: "150%",
+          transform: "scale(0.667)",
+          transformOrigin: "top left",
+        }}
+      >
         <TemplateComp
           mode="view"
           data={sampleData}
@@ -152,6 +180,15 @@ const DynamicTemplatePreview = ({
           isPublishing={false}
         />
       </div>
+      <style>{`
+        .template-preview-scroll {
+          animation: templateAutoScroll 20s ease-in-out infinite alternate;
+        }
+        @keyframes templateAutoScroll {
+          0% { transform: scale(0.667) translateY(0); }
+          100% { transform: scale(0.667) translateY(-50%); }
+        }
+      `}</style>
     </div>
   );
 };
@@ -165,7 +202,7 @@ const FallbackPreview = ({ theme }: { theme: string }) => {
     <div data-theme={theme} className="w-full bg-background text-foreground">
       <div className="h-52 bg-gradient-to-b from-primary/20 via-primary/5 to-background flex flex-col items-center justify-center p-6">
         <p className="font-body text-[10px] text-muted-foreground italic">
-          Together with their families
+          Together with our families
         </p>
         <p className="font-script text-3xl text-primary mt-2">
           {inv.groomName.split(" ")[0]} & {inv.brideName.split(" ")[0]}
@@ -205,6 +242,21 @@ const FallbackPreview = ({ theme }: { theme: string }) => {
   );
 };
 
+/**
+ * Template preview image with fallback chain:
+ * 1. Try rendering actual template scaled down with auto-scroll
+ * 2. On error, fall back to static preview image or FallbackPreview
+ */
+const TemplatePreviewImage = ({
+  template,
+  theme,
+}: {
+  template: Template;
+  theme: string;
+}) => {
+  return <DynamicTemplatePreview templateId={template.id} theme={theme} />;
+};
+
 const TemplateCard = ({
   template,
   draftInfo,
@@ -241,155 +293,131 @@ const TemplateCard = ({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="card-hover bg-card rounded-2xl overflow-hidden border border-border relative group"
+      className="card-hover rounded-2xl overflow-hidden relative group max-w-[280px] mx-auto w-full aspect-[9/16] cursor-pointer"
+      onClick={() => window.open(`/templates/${template.id}/demo`, "_blank")}
     >
+      {/* Full-bleed template preview */}
+      <div className="absolute inset-0">
+        <TemplatePreviewImage template={template} theme={templateTheme} />
+      </div>
+
+      {/* Top badges */}
       {draftInfo && (
-        <div className="absolute top-3 left-3 z-10 bg-amber-500/90 text-amber-950 font-body text-[10px] font-bold px-2.5 py-1.5 rounded-full flex items-center gap-1">
+        <div className="absolute top-3 left-3 z-10 bg-amber-500/90 text-amber-950 font-body text-[10px] font-bold px-2.5 py-1.5 rounded-full flex items-center gap-1 backdrop-blur-sm">
           ✏️ Draft saved
         </div>
       )}
       {template.isPremium && !draftInfo && (
-        <div className="absolute top-3 left-3 z-10 bg-gold/90 text-background font-body text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+        <div className="absolute top-3 left-3 z-10 bg-gold/90 text-background font-body text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 backdrop-blur-sm">
           <Crown size={10} /> PREMIUM
         </div>
       )}
       {template.isFree ? (
-        <div className="absolute top-3 right-3 z-10 bg-emerald text-white font-body text-xs font-semibold px-3 py-1.5 rounded-full">
+        <div className="absolute top-3 right-3 z-10 bg-emerald text-white font-body text-xs font-semibold px-3 py-1.5 rounded-full backdrop-blur-sm">
           FREE
         </div>
       ) : (
-        <div className="absolute top-3 right-3 z-10 btn-gold text-xs px-3 py-1.5 rounded-full">
+        <div className="absolute top-3 right-3 z-10 btn-gold text-xs px-3 py-1.5 rounded-full backdrop-blur-sm">
           ₹{template.priceInr}
         </div>
       )}
 
-      {/* Template Preview - Uses actual template component */}
-      <div className="h-72 overflow-hidden relative bg-background">
-        <div
-          className="w-full h-full"
-          style={{ animation: "autoScroll 25s linear infinite" }}
-        >
-          <DynamicTemplatePreview
-            templateId={template.id}
-            theme={templateTheme}
-          />
-        </div>
-
-        {/* Hover overlay */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-      </div>
-
-      <div className="p-5">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="font-display text-lg font-semibold">
-            {template.name}
-          </h3>
-          <span className="font-body text-[10px] text-muted-foreground border border-border px-2 py-0.5 rounded-full">
-            {template.category}
-          </span>
-        </div>
-        <p className="font-body text-xs text-muted-foreground line-clamp-1">
+      {/* Bottom overlay with info + actions */}
+      <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/80 via-black/50 to-transparent pt-16 pb-4 px-4">
+        <h3 className="font-display text-base font-semibold text-white leading-tight">
+          {template.name}
+        </h3>
+        <p className="font-body text-[11px] text-white/70 line-clamp-1 mt-1">
           {template.description}
         </p>
-        <div className="flex flex-wrap gap-1.5 mt-2">
-          {template.tags.map((tag) => {
-            const tagName = typeof tag === "string" ? tag : tag.name;
-            return (
-              <span
-                key={tagName}
-                className="font-body text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded-full"
-              >
-                {tagName}
-              </span>
-            );
-          })}
-        </div>
 
         {draftInfo ? (
-          <>
-            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2.5 my-3">
-              <p className="font-body text-xs text-amber-900/80">
-                Draft:{" "}
-                {draftInfo.brideName && draftInfo.groomName
-                  ? `${draftInfo.brideName} & ${draftInfo.groomName}`
-                  : "Draft in progress"}
-              </p>
-            </div>
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => navigate(`/edit/${draftInfo.invitationId}`)}
-                className="w-full btn-outline-accent px-3 py-2 rounded-lg text-sm font-body font-semibold flex items-center justify-center gap-1.5"
-              >
-                <Pencil size={16} /> Continue Editing
-              </button>
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="w-full btn-outline-accent px-3 py-2 rounded-lg text-sm font-body font-semibold flex items-center justify-center gap-1.5 text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 size={16} /> Start Fresh
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="flex gap-3 mt-4">
+          <div className="flex gap-2 mt-3">
             <button
-              onClick={() =>
-                window.open(`/templates/${template.id}/demo`, "_blank")
-              }
-              className="flex-1 btn-outline-accent px-3 py-2 rounded-lg text-sm font-body font-semibold flex items-center justify-center gap-1.5"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/edit/${draftInfo.invitationId}`);
+              }}
+              className="flex-1 bg-white/20 backdrop-blur-sm text-white px-2 py-1.5 rounded-lg text-xs font-body font-semibold flex items-center justify-center gap-1 hover:bg-white/30 transition-colors"
             >
-              <Eye size={16} /> Demo
+              <Pencil size={13} /> Edit
             </button>
             <button
-              onClick={() => triggerPaymentFlow(template.id)}
-              className={`flex-1 ${template.isFree ? "btn-emerald" : "btn-gold"} px-3 py-2 rounded-lg text-sm font-body font-semibold flex items-center justify-center gap-1.5`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDeleteConfirm(true);
+              }}
+              className="flex-1 bg-white/20 backdrop-blur-sm text-white px-2 py-1.5 rounded-lg text-xs font-body font-semibold flex items-center justify-center gap-1 hover:bg-red-500/60 transition-colors"
             >
-              <Sparkles size={16} />{" "}
-              {template.isFree ? "Start Free" : "Use This Template"}
+              <Trash2 size={13} /> Fresh
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(`/templates/${template.id}/demo`, "_blank");
+              }}
+              className="flex-1 bg-white/20 backdrop-blur-sm text-white px-2 py-1.5 rounded-lg text-xs font-body font-semibold flex items-center justify-center gap-1 hover:bg-white/30 transition-colors"
+            >
+              <Eye size={13} /> Demo
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                triggerPaymentFlow(template.id);
+              }}
+              className={`flex-1 ${template.isFree ? "bg-emerald-500 hover:bg-emerald-600" : "bg-amber-600 hover:bg-amber-700"} text-white px-2 py-1.5 rounded-lg text-xs font-body font-semibold flex items-center justify-center gap-1 transition-colors`}
+            >
+              <Sparkles size={13} /> {template.isFree ? "Free" : "Use"}
             </button>
           </div>
         )}
-
-        {/* Delete confirmation dialog */}
-        {showDeleteConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
-            onClick={() => setShowDeleteConfirm(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              className="bg-card border border-border rounded-2xl p-6 max-w-sm"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 className="font-heading text-lg font-semibold mb-2">
-                Start Fresh?
-              </h3>
-              <p className="font-body text-sm text-muted-foreground mb-6">
-                You already have a draft for this template. Starting fresh will
-                delete your current draft and all uploaded photos. Are you sure?
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 btn-outline-accent px-4 py-2 rounded-lg"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteDraft}
-                  disabled={isDeleting}
-                  className="flex-1 bg-destructive text-destructive-foreground px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
-                >
-                  {isDeleting ? "Deleting..." : "Yes, Start Fresh"}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
       </div>
+
+      {/* Delete confirmation dialog */}
+      {showDeleteConfirm && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowDeleteConfirm(false);
+          }}
+        >
+          <motion.div
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            className="bg-card border border-border rounded-2xl p-6 max-w-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-heading text-lg font-semibold mb-2">
+              Start Fresh?
+            </h3>
+            <p className="font-body text-sm text-muted-foreground mb-6">
+              You already have a draft for this template. Starting fresh will
+              delete your current draft and all uploaded photos. Are you sure?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 btn-outline-accent px-4 py-2 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteDraft}
+                disabled={isDeleting}
+                className="flex-1 bg-destructive text-destructive-foreground px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
+              >
+                {isDeleting ? "Deleting..." : "Yes, Start Fresh"}
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </motion.div>
   );
 };
@@ -527,7 +555,7 @@ const AllTemplatesPage = () => {
             </div>
 
             {filtered.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto justify-items-center">
                 {filtered.map((t) => (
                   <TemplateCard
                     key={t.id}

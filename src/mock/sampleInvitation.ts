@@ -10,7 +10,7 @@ export const SAMPLE_INVITATION: Invitation = {
   hashtag: '#AnanyaWedVikram',
   slug: 'ananya-weds-vikram',
   code: 'AV26X',
-  welcomeMessage: 'Together with their families, Ananya & Vikram joyfully invite you to be part of their celebration of love and new beginnings.',
+  welcomeMessage: 'Together with our families, Ananya & Vikram joyfully invite you to be part of their celebration of love and new beginnings.',
   musicUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
   musicName: 'Tum Hi Ho (Instrumental)',
   showCountdown: true,

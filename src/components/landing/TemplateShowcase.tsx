@@ -1,3 +1,4 @@
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -9,19 +10,166 @@ import {
   ChevronDown,
   ChevronUp,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { usePayment } from "@/hooks/usePayment";
 import { Template } from "@/types";
 import { getTemplates } from "@/api/templates";
 import { SkeletonGrid } from "@/components/ui/SkeletonLoading";
+import { getTemplateComponent, getTemplateTheme } from "@/templates";
+import {
+  TemplateComponent,
+  InvitationData,
+  createEmptyInvitationData,
+} from "@/templates/types";
 
-const MiniInvitePreview = ({ theme }: { theme: string }) => {
+const DynamicTemplatePreview = ({
+  templateId,
+  theme,
+}: {
+  templateId: string | number;
+  theme: string;
+}) => {
+  const [TemplateComp, setTemplateComp] = useState<TemplateComponent | null>(
+    null,
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  const sampleData: InvitationData = useMemo(() => {
+    const base = createEmptyInvitationData(
+      typeof templateId === "string" ? parseInt(templateId) : templateId,
+      theme,
+      { defaultPhotos: [], defaultMusicUrl: "", defaultMusicName: "" },
+    );
+    return {
+      ...base,
+      brideName: "Ananya",
+      groomName: "Vikram",
+      brideBio: "Designer who paints sunsets & dreams",
+      groomBio: "Architect who builds worlds & love",
+      couplePhotoUrl: null,
+      hashtag: "#AnanyaWedVikram",
+      welcomeMessage:
+        "Together with our families, we invite you to celebrate our wedding.",
+      showCountdown: true,
+      weddingDate: "2026-02-14",
+      events: [
+        {
+          id: 1,
+          eventName: "Haldi",
+          eventDate: "2026-02-11",
+          eventTime: "10:00:00",
+          venueName: "Sharma Residence",
+          venueAddress: "Banjara Hills",
+          mapsUrl: null,
+        },
+        {
+          id: 2,
+          eventName: "Mehendi",
+          eventDate: "2026-02-12",
+          eventTime: "17:00:00",
+          venueName: "The Garden Club",
+          venueAddress: "Jubilee Hills",
+          mapsUrl: null,
+        },
+      ],
+      galleryPhotos: [],
+      status: "PUBLISHED",
+    };
+  }, [templateId, theme]);
+
+  useEffect(() => {
+    const loadTemplate = async () => {
+      setLoading(true);
+      setError(false);
+      try {
+        const id =
+          typeof templateId === "number" ? templateId.toString() : templateId;
+        const component = await getTemplateComponent(id);
+        if (component) {
+          setTemplateComp(() => component);
+        } else {
+          setError(true);
+        }
+      } catch (e) {
+        console.error("[v0] Failed to load template:", e);
+        setError(true);
+      }
+      setLoading(false);
+    };
+    loadTemplate();
+  }, [templateId]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0.1 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="w-full h-full bg-muted/30 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  if (error || !TemplateComp) {
+    return <FallbackPreview theme={theme} />;
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      data-theme={theme}
+      className="w-full h-full overflow-hidden relative bg-white"
+    >
+      <div
+        className={`pointer-events-none origin-top-left absolute top-0 left-0 ${isVisible ? "showcase-preview-scroll" : ""}`}
+        style={{
+          width: "150%",
+          transform: "scale(0.667)",
+          transformOrigin: "top left",
+        }}
+      >
+        <TemplateComp
+          mode="view"
+          data={sampleData}
+          onUpdate={() => {}}
+          onSaveDraft={() => Promise.resolve(null)}
+          onPublish={() => Promise.resolve()}
+          isSaving={false}
+          isPublishing={false}
+        />
+      </div>
+      <style>{`
+        .showcase-preview-scroll {
+          animation: showcaseAutoScroll 20s ease-in-out infinite alternate;
+        }
+        @keyframes showcaseAutoScroll {
+          0% { transform: scale(0.667) translateY(0); }
+          100% { transform: scale(0.667) translateY(-50%); }
+        }
+      `}</style>
+    </div>
+  );
+};
+
+const FallbackPreview = ({ theme }: { theme: string }) => {
   const inv = SAMPLE_INVITATION;
   return (
     <div data-theme={theme} className="w-full bg-background text-foreground">
       <div className="h-52 bg-gradient-to-b from-primary/20 via-primary/5 to-background flex flex-col items-center justify-center p-6">
         <p className="font-body text-[10px] text-muted-foreground italic tracking-wide">
-          Together with their families
+          Together with our families
         </p>
         <p className="font-script text-3xl text-primary mt-2">
           {inv.groomName.split(" ")[0]} & {inv.brideName.split(" ")[0]}
@@ -45,36 +193,6 @@ const MiniInvitePreview = ({ theme }: { theme: string }) => {
             {inv.groomName.split(" ")[0]}
           </p>
         </div>
-      </div>
-      <div className="px-4 py-6 space-y-2">
-        {inv.events.slice(0, 3).map((e, i) => (
-          <div key={i} className="bg-card rounded-lg p-3 border border-border">
-            <p className="text-[9px] font-display font-semibold">
-              {e.eventName}
-            </p>
-            <p className="text-[8px] text-muted-foreground font-body">
-              {e.venueName}
-            </p>
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-3 gap-1.5 px-4 pb-6">
-        {inv.galleryPhotos.slice(0, 3).map((p, i) => (
-          <div
-            key={i}
-            className="aspect-square rounded-md bg-muted overflow-hidden"
-          >
-            <img
-              src={p}
-              alt=""
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          </div>
-        ))}
-      </div>
-      <div className="h-36 bg-gradient-to-t from-primary/8 to-background flex items-center justify-center">
-        <p className="font-script text-xl text-primary">{inv.hashtag}</p>
       </div>
     </div>
   );
@@ -104,48 +222,51 @@ const TemplateCard = ({ template }: { template: Template }) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.15 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className="card-hover bg-card rounded-2xl overflow-hidden border border-border relative group"
+      className="card-hover rounded-2xl overflow-hidden relative group max-w-[280px] mx-auto w-full aspect-[9/16] cursor-pointer"
+      onClick={() => window.open(`/templates/${template.id}/demo`, "_blank")}
     >
+      {/* Full-bleed template preview */}
+      <div className="absolute inset-0">
+        <DynamicTemplatePreview
+          templateId={template.id}
+          theme={template.theme}
+        />
+      </div>
+
+      {/* Top badges */}
       {template.isPremium && (
-        <div className="absolute top-3 left-3 z-10 bg-gold/90 text-background font-body text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
+        <div className="absolute top-3 left-3 z-10 bg-gold/90 text-background font-body text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm backdrop-blur-sm">
           <Crown size={10} /> PREMIUM
         </div>
       )}
       <PriceBadge template={template} />
 
-      <div className="h-72 overflow-hidden relative">
-        <div style={{ animation: "autoScroll 25s linear infinite" }}>
-          <MiniInvitePreview theme={template.theme} />
-        </div>
-      </div>
-
-      <div className="p-5">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="font-display text-lg font-semibold">
-            {template.name}
-          </h3>
-          <span className="font-body text-[10px] text-muted-foreground border border-border px-2 py-0.5 rounded-full">
-            {template.category}
-          </span>
-        </div>
-        <p className="font-body text-xs text-muted-foreground line-clamp-1">
+      {/* Bottom overlay with info */}
+      <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/80 via-black/50 to-transparent pt-16 pb-4 px-4">
+        <h3 className="font-display text-base font-semibold text-white leading-tight">
+          {template.name}
+        </h3>
+        <p className="font-body text-[11px] text-white/70 line-clamp-1 mt-1">
           {template.description}
         </p>
-        <div className="flex gap-3 mt-4">
+        <div className="flex gap-2 mt-3">
           <button
-            onClick={() =>
-              window.open(`/templates/${template.id}/demo`, "_blank")
-            }
-            className="flex-1 btn-outline-accent px-3 py-2 rounded-lg text-sm font-body font-semibold flex items-center justify-center gap-1.5"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.open(`/templates/${template.id}/demo`, "_blank");
+            }}
+            className="flex-1 bg-white/20 backdrop-blur-sm text-white px-2 py-1.5 rounded-lg text-xs font-body font-semibold flex items-center justify-center gap-1 hover:bg-white/30 transition-colors"
           >
-            <Eye size={16} /> Demo
+            <Eye size={13} /> Demo
           </button>
           <button
-            onClick={() => triggerPaymentFlow(template.id)}
-            className={`flex-1 ${template.isFree ? "btn-emerald" : "btn-gold"} px-3 py-2 rounded-lg text-sm font-body font-semibold flex items-center justify-center gap-1.5`}
+            onClick={(e) => {
+              e.stopPropagation();
+              triggerPaymentFlow(template.id);
+            }}
+            className={`flex-1 ${template.isFree ? "bg-emerald-500 hover:bg-emerald-600" : "bg-amber-600 hover:bg-amber-700"} text-white px-2 py-1.5 rounded-lg text-xs font-body font-semibold flex items-center justify-center gap-1 transition-colors`}
           >
-            <Sparkles size={16} />{" "}
-            {template.isFree ? "Start Free" : "Use This Template"}
+            <Sparkles size={13} /> {template.isFree ? "Free" : "Use"}
           </button>
         </div>
       </div>
@@ -208,7 +329,7 @@ const TemplateShowcase = () => {
         {/* Loaded State */}
         {!isLoading && !isError && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-5xl mx-auto justify-items-center">
               {visibleTemplates.map((t) => (
                 <TemplateCard key={t.id} template={t} />
               ))}

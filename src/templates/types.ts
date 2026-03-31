@@ -105,7 +105,7 @@ export const createEmptyInvitationData = (
   bridePhotoUrl: null,
   groomPhotoUrl: null,
   hashtag: '#BrideWedGroom',
-  welcomeMessage: 'Together with their families, we joyfully invite you to be part of our celebration of love and new beginnings.',
+  welcomeMessage: 'Together with our families, we joyfully invite you to be part of our celebration of love and new beginnings.',
   showCountdown: true,
   weddingDate: '',
   events: [

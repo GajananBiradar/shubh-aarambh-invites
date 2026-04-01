@@ -867,7 +867,7 @@ const RsvpSection = ({ invitationId, isDemo }: { invitationId: number | null; is
             <label className="text-xs tracking-[0.15em] uppercase block mb-3" style={{ color: C.textMuted }}>Your Response</label>
             <div className="grid grid-cols-3 gap-2">
               {attendOptions.map((opt) => (
-                <button key={opt.value} type="button" onClick={() => setAttending(opt.value)} className={cn("rounded-xl py-3 text-center transition-all border", attending === opt.value ? "ring-2 shadow-md" : "opacity-70 hover:opacity-100")} style={{ borderColor: attending === opt.value ? C.sage : `${C.sage}30`, backgroundColor: attending === opt.value ? `${C.sage}15` : C.white, ringColor: C.sage }}>
+                <button key={opt.value} type="button" onClick={() => setAttending(opt.value)} className={cn("rounded-xl py-3 text-center transition-all border", attending === opt.value ? "ring-2 shadow-md" : "opacity-70 hover:opacity-100")} style={{ borderColor: attending === opt.value ? C.sage : `${C.sage}30`, backgroundColor: attending === opt.value ? `${C.sage}15` : C.white, ['--tw-ring-color' as any]: C.sage }}>
                   <span className="block text-lg mb-1">{opt.icon}</span>
                   <span className="text-[10px] uppercase tracking-wider" style={{ color: C.text }}>{opt.label}</span>
                 </button>

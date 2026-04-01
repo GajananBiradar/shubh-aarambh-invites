@@ -3,17 +3,15 @@ import { DemoDataOverrides } from '../demoData';
 const R2_BASE = 'https://pub-ae188d768af94d25a7750692051dfeea.r2.dev';
 
 const galleryPhotos = [
-  `${R2_BASE}/templates/7/photos/Dance.png`,
-  `${R2_BASE}/templates/7/photos/Phere.png`,
-  `${R2_BASE}/templates/7/photos/Pose.png`,
-  `${R2_BASE}/templates/7/photos/haldi.png`,
-  `${R2_BASE}/templates/7/photos/marriage.png`,
-  `${R2_BASE}/templates/7/photos/mehandi.png`,
+  `${R2_BASE}/templates/3/photos/Garden.jpeg`,
+  `${R2_BASE}/templates/3/photos/Dinner%20table.jpeg`,
+  `${R2_BASE}/templates/3/photos/couple%20phto.jpg`,
 ];
 
 const demoData: DemoDataOverrides = {
   welcomeMessage:
     'We are so excited to make this day truly special and warmly invite you to share in our celebration of love and new beginnings!',
+  couplePhotoUrl: `${R2_BASE}/templates/3/photos/couple%20phto.jpg`,
   weddingDate: '2027-08-12',
   events: [
     {

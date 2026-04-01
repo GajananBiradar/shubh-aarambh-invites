@@ -68,8 +68,8 @@ const FONTS = {
 
 // R2 base — reuse premium-elegante assets as placeholders
 const R2_BASE = "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev";
-const DEFAULT_COUPLE_PHOTO = `${R2_BASE}/templates/7/photos/marriage.png`;
-const DEFAULT_VENUE_PHOTO = `${R2_BASE}/templates/7/palace.png`;
+const DEFAULT_COUPLE_PHOTO = `${R2_BASE}/templates/3/photos/couple%20phto.jpg`;
+const DEFAULT_VENUE_PHOTO = `${R2_BASE}/templates/3/photos/Dinner%20table.jpeg`;
 
 /* ────────────────────────────────────────────
    TORN PAPER EDGE SVG (transition between sections)

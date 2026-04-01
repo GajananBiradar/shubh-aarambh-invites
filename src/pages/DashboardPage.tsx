@@ -29,7 +29,9 @@ const DashboardPage = () => {
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [deleting, setDeleting] = useState(false);
   const [expandedRsvp, setExpandedRsvp] = useState<number | null>(null);
-  const [rsvpData, setRsvpData] = useState<Record<number, RsvpResponseItem[]>>({});
+  const [rsvpData, setRsvpData] = useState<Record<number, RsvpResponseItem[]>>(
+    {},
+  );
   const [rsvpLoading, setRsvpLoading] = useState<number | null>(null);
 
   useEffect(() => {
@@ -288,8 +290,13 @@ const DashboardPage = () => {
                       <div className="bg-muted/30 rounded-xl p-4 border border-border/50">
                         {rsvpLoading === inv.id ? (
                           <div className="flex items-center justify-center py-4">
-                            <Loader2 size={16} className="animate-spin text-muted-foreground" />
-                            <span className="ml-2 font-body text-xs text-muted-foreground">Loading RSVPs...</span>
+                            <Loader2
+                              size={16}
+                              className="animate-spin text-muted-foreground"
+                            />
+                            <span className="ml-2 font-body text-xs text-muted-foreground">
+                              Loading RSVPs...
+                            </span>
                           </div>
                         ) : (rsvpData[inv.id] || []).length === 0 ? (
                           <p className="font-body text-xs text-muted-foreground text-center py-3">
@@ -314,7 +321,9 @@ const DashboardPage = () => {
                                   <p className="font-body text-[10px] text-muted-foreground">
                                     {rsvp.guestPhone}
                                     {rsvp.message && (
-                                      <span className="ml-2 italic">— "{rsvp.message}"</span>
+                                      <span className="ml-2 italic">
+                                        — "{rsvp.message}"
+                                      </span>
                                     )}
                                   </p>
                                 </div>
@@ -368,22 +377,24 @@ const DashboardPage = () => {
                   >
                     <Pencil size={13} /> Edit
                   </button>
-                  {inv.status === "PUBLISHED" && (inv.accessCode || inv.code) && inv.slug && (
-                    <>
-                      <button
-                        onClick={() => copyLink(inv)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card font-body text-xs hover:bg-secondary transition-colors"
-                      >
-                        <Copy size={13} /> Copy Link
-                      </button>
-                      <button
-                        onClick={() => shareWhatsApp(inv)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(142,70%,40%)] text-white font-body text-xs hover:opacity-90 transition-opacity"
-                      >
-                        Share
-                      </button>
-                    </>
-                  )}
+                  {inv.status === "PUBLISHED" &&
+                    (inv.accessCode || inv.code) &&
+                    inv.slug && (
+                      <>
+                        <button
+                          onClick={() => copyLink(inv)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card font-body text-xs hover:bg-secondary transition-colors"
+                        >
+                          <Copy size={13} /> Copy Link
+                        </button>
+                        <button
+                          onClick={() => shareWhatsApp(inv)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[hsl(142,70%,40%)] text-white font-body text-xs hover:opacity-90 transition-opacity"
+                        >
+                          Share
+                        </button>
+                      </>
+                    )}
                   {inv.status === "DRAFT" && (
                     <button
                       onClick={() => window.open(`/edit/${inv.id}`, "_blank")}

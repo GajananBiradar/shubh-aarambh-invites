@@ -1840,7 +1840,10 @@ const RsvpSection = ({
 
   if (submitted) {
     return (
-      <section className="relative py-24 overflow-hidden" style={{ backgroundColor: C.bg }}>
+      <section
+        className="relative py-24 overflow-hidden"
+        style={{ backgroundColor: C.bg }}
+      >
         <div
           className="absolute inset-0 opacity-[0.03] pointer-events-none"
           style={{ backgroundImage: NOISE_BG }}
@@ -1884,7 +1887,10 @@ const RsvpSection = ({
   }
 
   return (
-    <section className="relative py-24 overflow-hidden" style={{ backgroundColor: C.bg }}>
+    <section
+      className="relative py-24 overflow-hidden"
+      style={{ backgroundColor: C.bg }}
+    >
       <div
         className="absolute inset-0 opacity-[0.03] pointer-events-none"
         style={{ backgroundImage: NOISE_BG }}
@@ -1900,7 +1906,10 @@ const RsvpSection = ({
         >
           {/* Decorative line */}
           <div className="flex items-center justify-center gap-4 mb-6">
-            <div className="w-16 h-[0.5px]" style={{ backgroundColor: C.goldLight }} />
+            <div
+              className="w-16 h-[0.5px]"
+              style={{ backgroundColor: C.goldLight }}
+            />
             <svg
               width="20"
               height="20"
@@ -1914,7 +1923,10 @@ const RsvpSection = ({
                 opacity="0.5"
               />
             </svg>
-            <div className="w-16 h-[0.5px]" style={{ backgroundColor: C.goldLight }} />
+            <div
+              className="w-16 h-[0.5px]"
+              style={{ backgroundColor: C.goldLight }}
+            />
           </div>
 
           <p
@@ -1965,12 +1977,8 @@ const RsvpSection = ({
                 backgroundColor: C.white,
                 border: `1px solid ${C.gold}30`,
               }}
-              onFocus={(e) =>
-                (e.target.style.borderColor = C.gold)
-              }
-              onBlur={(e) =>
-                (e.target.style.borderColor = `${C.gold}30`)
-              }
+              onFocus={(e) => (e.target.style.borderColor = C.gold)}
+              onBlur={(e) => (e.target.style.borderColor = `${C.gold}30`)}
               placeholder="Enter your full name"
             />
           </div>
@@ -1997,12 +2005,8 @@ const RsvpSection = ({
                 backgroundColor: C.white,
                 border: `1px solid ${C.gold}30`,
               }}
-              onFocus={(e) =>
-                (e.target.style.borderColor = C.gold)
-              }
-              onBlur={(e) =>
-                (e.target.style.borderColor = `${C.gold}30`)
-              }
+              onFocus={(e) => (e.target.style.borderColor = C.gold)}
+              onBlur={(e) => (e.target.style.borderColor = `${C.gold}30`)}
               placeholder="10-digit phone number"
             />
           </div>
@@ -2024,10 +2028,8 @@ const RsvpSection = ({
                   className="rounded-xl py-3 px-2 text-xs transition-all"
                   style={{
                     fontFamily: FONTS.body,
-                    backgroundColor:
-                      attending === opt.value ? C.gold : C.white,
-                    color:
-                      attending === opt.value ? C.white : C.text,
+                    backgroundColor: attending === opt.value ? C.gold : C.white,
+                    color: attending === opt.value ? C.white : C.text,
                     border: `1px solid ${attending === opt.value ? C.gold : `${C.gold}30`}`,
                   }}
                 >
@@ -2099,12 +2101,8 @@ const RsvpSection = ({
                 backgroundColor: C.white,
                 border: `1px solid ${C.gold}30`,
               }}
-              onFocus={(e) =>
-                (e.target.style.borderColor = C.gold)
-              }
-              onBlur={(e) =>
-                (e.target.style.borderColor = `${C.gold}30`)
-              }
+              onFocus={(e) => (e.target.style.borderColor = C.gold)}
+              onBlur={(e) => (e.target.style.borderColor = `${C.gold}30`)}
               placeholder="Any message for the couple?"
             />
           </div>

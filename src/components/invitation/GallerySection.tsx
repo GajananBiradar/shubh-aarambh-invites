@@ -68,7 +68,7 @@ const GallerySection = ({ invitation }: { invitation: Invitation }) => {
               <ChevronRight size={32} />
             </button>
             <img
-              src={invitation.galleryPhotos[lightboxIndex]}
+              src={typeof invitation.galleryPhotos[lightboxIndex] === 'string' ? invitation.galleryPhotos[lightboxIndex] : (invitation.galleryPhotos[lightboxIndex] as any).photoUrl}
               alt=""
               className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg"
               onClick={(e) => e.stopPropagation()}

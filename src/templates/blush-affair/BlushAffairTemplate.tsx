@@ -270,12 +270,12 @@ const HeroSection = ({ mode, data, onUpdate, templateId, sessionUUID, uploadStag
         </motion.p>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-          <div style={{ fontFamily: FONTS.script }}>
-            <EditableText value={data.brideName} onSave={(val) => onUpdate({ brideName: val })} mode={mode} placeholder="Bride's Name" className="block text-5xl sm:text-6xl md:text-7xl drop-shadow-lg" style={{ color: C.gold }} as="h1" />
+          <div style={{ fontFamily: FONTS.script, color: C.gold }}>
+            <EditableText value={data.brideName} onSave={(val) => onUpdate({ brideName: val })} mode={mode} placeholder="Bride's Name" className="block text-5xl sm:text-6xl md:text-7xl drop-shadow-lg" as="h1" />
           </div>
           <p className="text-2xl my-2" style={{ fontFamily: FONTS.script, color: `${C.gold}80` }}>&amp;</p>
-          <div style={{ fontFamily: FONTS.script }}>
-            <EditableText value={data.groomName} onSave={(val) => onUpdate({ groomName: val })} mode={mode} placeholder="Groom's Name" className="block text-5xl sm:text-6xl md:text-7xl drop-shadow-lg" style={{ color: C.gold }} as="h1" />
+          <div style={{ fontFamily: FONTS.script, color: C.gold }}>
+            <EditableText value={data.groomName} onSave={(val) => onUpdate({ groomName: val })} mode={mode} placeholder="Groom's Name" className="block text-5xl sm:text-6xl md:text-7xl drop-shadow-lg" as="h1" />
           </div>
         </motion.div>
 

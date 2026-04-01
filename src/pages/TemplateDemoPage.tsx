@@ -171,6 +171,7 @@ const TemplateDemoPage = () => {
     slug: "ananya-weds-vikram",
     accessCode: "DEMO",
     status: "PUBLISHED",
+    rsvpEnabled: true,
     templateDefaults: {
       defaultPhotos: defaultDefaults.defaultPhotos || [],
       defaultMusicUrl: defaultDefaults.defaultMusicUrl || "",

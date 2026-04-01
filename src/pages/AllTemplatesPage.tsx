@@ -560,10 +560,10 @@ const AllTemplatesPage = () => {
                   <TemplateCard
                     key={t.id}
                     template={t}
-                    draftInfo={drafts.get(t.id)}
+                    draftInfo={drafts.get(Number(t.id))}
                     onDraftDelete={() => {
                       const newDrafts = new Map(drafts);
-                      newDrafts.delete(t.id);
+                      newDrafts.delete(Number(t.id));
                       setDrafts(newDrafts);
                     }}
                   />

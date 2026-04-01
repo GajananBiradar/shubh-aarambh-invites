@@ -14,9 +14,13 @@ interface SessionData {
   galleryPhotos?: any[];
   musicUrl?: string | null;
   musicName?: string | null;
+  effectiveMusicUrl?: string;
+  effectiveMusicName?: string;
   hashtag?: string;
   welcomeMessage?: string;
   invitationId?: number | null;
+  templateDefaults?: any;
+  rsvpEnabled?: boolean;
 }
 
 /**

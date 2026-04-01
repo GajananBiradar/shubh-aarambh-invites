@@ -39,7 +39,7 @@ const GallerySection = ({ invitation }: { invitation: Invitation }) => {
               className="break-inside-avoid group cursor-pointer relative rounded-lg overflow-hidden"
               onClick={() => setLightboxIndex(i)}
             >
-              <img src={photo} alt={`Gallery ${i + 1}`} className="w-full rounded-lg transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+              <img src={typeof photo === 'string' ? photo : photo.photoUrl} alt={`Gallery ${i + 1}`} className="w-full rounded-lg transition-transform duration-300 group-hover:scale-105" loading="lazy" />
               <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/20 transition-colors flex items-center justify-center">
                 <Heart className="w-8 h-8 text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
@@ -68,7 +68,7 @@ const GallerySection = ({ invitation }: { invitation: Invitation }) => {
               <ChevronRight size={32} />
             </button>
             <img
-              src={invitation.galleryPhotos[lightboxIndex]}
+              src={typeof invitation.galleryPhotos[lightboxIndex] === 'string' ? invitation.galleryPhotos[lightboxIndex] : (invitation.galleryPhotos[lightboxIndex] as any).photoUrl}
               alt=""
               className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg"
               onClick={(e) => e.stopPropagation()}

@@ -109,6 +109,7 @@ const CreatePreviewPage = () => {
         slug: "",
         accessCode: null,
         status: "DRAFT",
+        rsvpEnabled: parsed.rsvpEnabled !== false,
         templateDefaults: {
           defaultPhotos: parsed.templateDefaults?.defaultPhotos || [],
           defaultMusicUrl: parsed.templateDefaults?.defaultMusicUrl || "",

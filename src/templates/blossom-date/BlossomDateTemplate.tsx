@@ -5,8 +5,8 @@
  * Calendar with scribble circle → Animated S-curve heart timeline →
  * Venue with directions → Dress code palette → Gallery → Details → RSVP
  */
-import { useState, useEffect, useRef, useMemo } from "react";
-import { motion, AnimatePresence, useInView } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useInView, useScroll, useTransform } from "framer-motion";
 import {
   MapPin,
   Heart,
@@ -70,6 +70,7 @@ const FONTS = {
 const R2_BASE = "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev";
 const DEFAULT_COUPLE_PHOTO = `${R2_BASE}/templates/3/photos/couple%20phto.jpg`;
 const DEFAULT_VENUE_PHOTO = `${R2_BASE}/templates/3/photos/Dinner%20table.jpeg`;
+const DEFAULT_DETAIL_PHOTO = `${R2_BASE}/templates/3/photos/Garden.jpeg`;
 
 /* ────────────────────────────────────────────
    TORN PAPER EDGE SVG
@@ -121,6 +122,54 @@ const HandDrawnCircle = ({ className = "" }: { className?: string }) => (
       transition={{ duration: 1.8, ease: "easeInOut", delay: 0.3 }}
     />
   </svg>
+);
+
+const PaperDivider = ({
+  flip = false,
+  className = "",
+}: {
+  flip?: boolean;
+  className?: string;
+}) => (
+  <motion.div
+    initial={{ opacity: 0, y: flip ? -12 : 12 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, amount: 0.6 }}
+    transition={{ duration: 0.7 }}
+    className={cn("pointer-events-none relative h-20 w-full overflow-visible", className)}
+    style={{ transform: flip ? "scaleY(-1)" : undefined }}
+  >
+    <svg
+      viewBox="0 0 1440 160"
+      preserveAspectRatio="none"
+      className="absolute inset-0 h-full w-full"
+      fill="none"
+    >
+      <path
+        d="M0 46L26 60L54 44L82 68L108 40L136 76L164 50L192 72L220 42L248 82L276 54L304 74L332 46L360 86L388 58L416 76L444 48L472 88L500 56L528 82L556 50L584 92L612 60L640 84L668 52L696 78L724 46L752 96L780 58L808 86L836 54L864 82L892 48L920 94L948 62L976 84L1004 56L1032 88L1060 52L1088 80L1116 46L1144 90L1172 60L1200 82L1228 54L1256 86L1284 50L1312 78L1340 44L1368 74L1396 52L1422 66L1440 58V160H0V46Z"
+        fill={C.cream}
+      />
+      <path
+        d="M0 44L26 58L54 42L82 66L108 38L136 74L164 48L192 70L220 40L248 80L276 52L304 72L332 44L360 84L388 56L416 74L444 46L472 86L500 54L528 80L556 48L584 90L612 58L640 82L668 50L696 76L724 44L752 94L780 56L808 84L836 52L864 80L892 46L920 92L948 60L976 82L1004 54L1032 86L1060 50L1088 78L1116 44L1144 88L1172 58L1200 80L1228 52L1256 84L1284 48L1312 76L1340 42L1368 72L1396 50L1422 64L1440 56"
+        stroke="rgba(88, 94, 74, 0.18)"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  </motion.div>
+);
+
+const HeartPin = ({ className = "" }: { className?: string }) => (
+  <div
+    className={cn(
+      "flex h-11 w-11 items-center justify-center rounded-full border border-white/70 bg-[#8a9470]",
+      className,
+    )}
+    style={{ boxShadow: "0 4px 20px rgba(82, 87, 66, 0.16)" }}
+  >
+    <Heart size={16} fill={C.cream} style={{ color: C.cream }} />
+  </div>
 );
 
 /* ════════════════════════════════════════════
@@ -224,8 +273,7 @@ const BlossomDateTemplate = ({
 
   return (
     <div data-theme="blossom" className="min-h-screen" style={{ backgroundColor: C.sage, fontFamily: FONTS.body }}>
-      {/* Google Fonts for Great Vibes */}
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Great+Vibes&display=swap');`}</style>
 
       {/* ═══════════ ENVELOPE SCREEN ═══════════ */}
       {!envelopeOpen && mode !== "edit" && (
@@ -244,30 +292,26 @@ const BlossomDateTemplate = ({
             {/* Hero: Couple Photo */}
             <HeroSection mode={mode} data={data} onUpdate={onUpdate} templateId={templateId} sessionUUID={sessionUUID} uploadStage={uploadStage} />
 
-            <TornEdgeTop color={C.cream} />
-
             {/* Welcome + Inline Music Toggle */}
-            <WelcomeSection mode={mode} data={data} onUpdate={onUpdate} effectiveMusicUrl={effectiveMusicUrl} />
+            <EditorialWelcomeSection mode={mode} data={data} onUpdate={onUpdate} effectiveMusicUrl={effectiveMusicUrl} />
 
             {/* Calendar Date with hand-drawn circle */}
-            <CalendarDateSection mode={mode} weddingDate={data.weddingDate} onUpdate={onUpdate} />
+            <EditorialCalendarDateSection mode={mode} weddingDate={data.weddingDate} onUpdate={onUpdate} />
 
             {/* Animated S-Curve Timeline */}
-            <TimelineSection mode={mode} data={data} onUpdate={onUpdate} />
+            <EditorialTimelineSection mode={mode} data={data} onUpdate={onUpdate} />
 
             {/* Venue */}
-            {data.events[0] && <VenueSection mode={mode} event={data.events[0]} />}
-
-            <TornEdgeTop color={C.cream} />
+            {data.events[0] && <EditorialVenueSection mode={mode} event={data.events[0]} />}
 
             {/* Dress Code */}
-            <DressCodeSection />
+            <EditorialDressCodeSection />
 
             {/* Gallery */}
             <GallerySection mode={mode} data={data} onUpdate={onUpdate} templateId={templateId} sessionUUID={sessionUUID} uploadStage={uploadStage} />
 
             {/* Details */}
-            <DetailsSection />
+            <EditorialDetailsSection />
 
             {/* Music Editor (edit only) */}
             {mode === "edit" && (
@@ -333,44 +377,93 @@ const EnvelopeScreen = ({ brideName, groomName, onOpen }: { brideName: string; g
   const [hovering, setHovering] = useState(false);
 
   return (
-    <motion.section className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden" style={{ backgroundColor: C.sage }} exit={{ opacity: 0, scale: 1.1 }} transition={{ duration: 0.6 }}>
-      <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,0.1) 35px, rgba(255,255,255,0.1) 70px)" }} />
-
-      <motion.div initial={{ opacity: 0, y: -30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="text-center mb-10 relative z-10">
-        <p className="text-4xl md:text-5xl leading-relaxed" style={{ fontFamily: FONTS.script, color: C.cream }}>
-          Wedding Invitation
+    <motion.section
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden px-6"
+      style={{
+        background:
+          "radial-gradient(circle at top, rgba(238,236,225,0.12), transparent 28%), linear-gradient(180deg, #87906f 0%, #788260 52%, #6d7756 100%)",
+      }}
+      exit={{ opacity: 0, scale: 1.05 }}
+      transition={{ duration: 0.6 }}
+    >
+      <div
+        className="absolute inset-0 opacity-[0.08]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.18) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
+          backgroundSize: "42px 42px",
+        }}
+      />
+      <motion.div
+        initial={{ opacity: 0, y: -24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="relative z-10 mb-8 text-center"
+      >
+        <p className="text-sm uppercase tracking-[0.42em]" style={{ color: `${C.cream}b0` }}>
+          Invitation
+        </p>
+        <p className="mt-4 text-4xl leading-tight md:text-5xl" style={{ fontFamily: FONTS.script, color: C.cream }}>
+          {brideName.split(" ")[0]} &amp; {groomName.split(" ")[0]}
         </p>
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, y: 40, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.8, delay: 0.3 }} className="relative w-[300px] h-[200px] md:w-[380px] md:h-[240px] mx-auto">
-        <div className="absolute inset-0 rounded-lg" style={{ backgroundColor: C.sageDark }} />
-        <svg viewBox="0 0 380 120" className="absolute -top-[1px] left-0 w-full" style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.1))" }}>
-          <path d="M0,0 L190,100 L380,0 L380,0 L0,0Z" fill={C.sageDark} opacity="0.8" />
-          <path d="M0,0 L190,100 L380,0" fill="none" stroke={C.sageLight} strokeWidth="0.5" opacity="0.4" />
+      <motion.div
+        initial={{ opacity: 0, y: 40, scale: 0.94 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+        className="relative z-10 mx-auto h-[220px] w-[320px] max-w-full md:h-[260px] md:w-[390px]"
+      >
+        <div
+          className="absolute inset-0 rounded-[24px]"
+          style={{
+            background: "linear-gradient(180deg, rgba(140,150,112,0.95), rgba(115,124,91,0.98))",
+            boxShadow: "0 30px 80px rgba(33,38,24,0.34), inset 0 0 0 1px rgba(255,255,255,0.18)",
+          }}
+        />
+        <div
+          className="absolute left-1/2 top-[18px] h-10 w-10 -translate-x-1/2 rounded-full border border-white/30"
+          style={{ backgroundColor: "rgba(255,255,255,0.06)" }}
+        />
+        <svg viewBox="0 0 390 260" className="absolute inset-0 h-full w-full">
+          <path d="M16 16 L195 145 L374 16" fill="none" stroke="rgba(52,57,42,0.28)" strokeWidth="2.5" />
+          <path d="M16 244 L195 118 L374 244" fill="none" stroke="rgba(52,57,42,0.2)" strokeWidth="2.5" />
+          <path d="M16 16 L16 244" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1.5" />
+          <path d="M374 16 L374 244" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="1.5" />
         </svg>
-        <div className="absolute inset-0 rounded-lg" style={{ backgroundColor: C.sage }}>
-          <svg viewBox="0 0 380 240" className="absolute inset-0 w-full h-full">
-            <path d="M0,240 L190,130 L380,240" fill="none" stroke={C.sageLight} strokeWidth="0.8" opacity="0.3" />
-            <path d="M0,0 L190,130 L380,0" fill="none" stroke={C.sageLight} strokeWidth="0.5" opacity="0.2" />
-          </svg>
-        </div>
+        <motion.div
+          animate={{ y: hovering ? -8 : [0, -5, 0] }}
+          transition={hovering ? { duration: 0.2 } : { duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute inset-x-[7%] top-[12%] rounded-[18px] border border-[#ebe4d4]/60 bg-[#f6efe2] px-8 py-8 text-center shadow-[0_24px_50px_rgba(72,78,55,0.2)]"
+        >
+          <p className="text-xs uppercase tracking-[0.38em]" style={{ color: C.sageDark }}>
+            Wedding Day
+          </p>
+          <p className="mt-4 text-4xl leading-tight md:text-5xl" style={{ fontFamily: FONTS.script, color: C.text }}>
+            Open Me
+          </p>
+          <p className="mt-3 text-sm leading-relaxed" style={{ color: C.textMuted }}>
+            Tap the wax seal to unfold your invitation.
+          </p>
+        </motion.div>
 
         <motion.button
           onClick={onOpen}
           onMouseEnter={() => setHovering(true)}
           onMouseLeave={() => setHovering(false)}
           animate={{ scale: hovering ? 1.08 : [1, 1.04, 1] }}
-          transition={hovering ? { duration: 0.2 } : { duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center cursor-pointer"
-          style={{ background: `radial-gradient(circle at 35% 35%, ${C.waxSeal}, ${C.waxSealDark})`, boxShadow: `0 4px 20px rgba(164,124,85,0.5), inset 0 1px 3px rgba(255,255,255,0.2)` }}
+          transition={hovering ? { duration: 0.2 } : { duration: 2.3, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute left-1/2 top-[66%] z-20 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full md:h-24 md:w-24"
+          style={{
+            background: `radial-gradient(circle at 35% 35%, ${C.waxSeal}, ${C.waxSealDark})`,
+            boxShadow: "0 10px 26px rgba(123, 82, 50, 0.4), inset 0 2px 8px rgba(255,255,255,0.22)",
+          }}
         >
-          <span className="text-[10px] md:text-xs tracking-[0.15em] uppercase font-semibold" style={{ color: C.cream }}>Open</span>
+          <span className="text-[11px] uppercase tracking-[0.18em] font-semibold" style={{ color: C.cream }}>
+            Tap
+          </span>
         </motion.button>
       </motion.div>
-
-      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }} className="mt-8 text-xs tracking-[0.2em] uppercase" style={{ color: `${C.cream}70` }}>
-        Tap the seal to open
-      </motion.p>
     </motion.section>
   );
 };
@@ -383,47 +476,108 @@ const HeroSection = ({ mode, data, onUpdate, templateId, sessionUUID, uploadStag
   templateId?: number; sessionUUID?: string; uploadStage?: "temp" | "draft" | "published";
 }) => {
   const couplePhoto = data.couplePhotoUrl || DEFAULT_COUPLE_PHOTO;
+  const dateObj = data.weddingDate ? new Date(data.weddingDate) : null;
+  const heroDate = dateObj
+    ? `${String(dateObj.getDate()).padStart(2, "0")}/${String(dateObj.getMonth() + 1).padStart(2, "0")}`
+    : "";
 
   return (
-    <section className="relative min-h-[100dvh] flex flex-col items-center justify-end overflow-hidden">
-      <div className="absolute inset-0">
+    <section className="relative min-h-[100dvh] overflow-hidden bg-[#20261a]">
+      <motion.div
+        animate={mode === "edit" ? undefined : { scale: [1, 1.04, 1] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute inset-0"
+      >
         {mode === "edit" ? (
           <EditablePhoto photoUrl={data.couplePhotoUrl} onSave={(url) => onUpdate({ couplePhotoUrl: url })} mode={mode} className="w-full h-full object-cover" alt="Couple Photo" placeholderText="Add Couple Photo" invitationId={data.invitationId ?? undefined} templateId={templateId} sessionUUID={sessionUUID} uploadStage={uploadStage} oldPublicUrl={data.couplePhotoUrl || undefined} />
         ) : (
           <img src={couplePhoto} alt={`${data.brideName} & ${data.groomName}`} className="w-full h-full object-cover" />
         )}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.65) 100%)" }} />
+        <div
+          className="absolute inset-0"
+          style={{ background: "linear-gradient(180deg, rgba(21,24,16,0.15) 0%, rgba(21,24,16,0.08) 38%, rgba(18,18,15,0.76) 100%)" }}
+        />
+      </motion.div>
+
+      <div className="absolute inset-x-0 top-0 z-10 flex justify-center px-6 pt-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, delay: 0.2 }}
+          className="rounded-full border border-white/15 bg-white/8 px-5 py-2 backdrop-blur-sm"
+        >
+          <p className="text-[11px] uppercase tracking-[0.35em]" style={{ color: "rgba(255,255,255,0.82)" }}>
+            Wedding Invitation
+          </p>
+        </motion.div>
       </div>
 
-      <div className="relative z-10 text-center px-6 pb-12 w-full max-w-2xl">
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }}>
-          <div style={{ fontFamily: FONTS.script }}>
-            <EditableText value={data.brideName} onSave={(val) => onUpdate({ brideName: val })} mode={mode} placeholder="Bride's Name" className="block text-5xl sm:text-6xl md:text-7xl text-white drop-shadow-lg" as="h1" />
-          </div>
-          <p className="text-2xl my-1 text-white/80 drop-shadow" style={{ fontFamily: FONTS.script }}>&amp;</p>
-          <div style={{ fontFamily: FONTS.script }}>
-            <EditableText value={data.groomName} onSave={(val) => onUpdate({ groomName: val })} mode={mode} placeholder="Groom's Name" className="block text-5xl sm:text-6xl md:text-7xl text-white drop-shadow-lg" as="h1" />
-          </div>
-        </motion.div>
+      <div className="relative z-10 flex min-h-[100dvh] items-end">
+        <div className="relative w-full px-6 pb-0">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1 }}
+            className="mx-auto max-w-3xl text-center"
+          >
+            <div className="mb-8">
+              <div style={{ fontFamily: FONTS.script }}>
+                <EditableText
+                  value={data.brideName}
+                  onSave={(val) => onUpdate({ brideName: val })}
+                  mode={mode}
+                  placeholder="Bride's Name"
+                  className="block text-5xl leading-none text-white drop-shadow-[0_10px_26px_rgba(0,0,0,0.35)] sm:text-6xl md:text-7xl"
+                  as="h1"
+                />
+              </div>
+              <p className="my-1 text-2xl text-white/80 drop-shadow" style={{ fontFamily: FONTS.script }}>
+                &amp;
+              </p>
+              <div style={{ fontFamily: FONTS.script }}>
+                <EditableText
+                  value={data.groomName}
+                  onSave={(val) => onUpdate({ groomName: val })}
+                  mode={mode}
+                  placeholder="Groom's Name"
+                  className="block text-5xl leading-none text-white drop-shadow-[0_10px_26px_rgba(0,0,0,0.35)] sm:text-6xl md:text-7xl"
+                  as="h1"
+                />
+              </div>
+            </div>
 
-        {mode === "edit" ? (
-          <div className="mt-6">
-            <label className="text-xs block mb-2 tracking-wider uppercase text-white/70">Wedding Date</label>
-            <input type="date" value={data.weddingDate} onChange={(e) => onUpdate({ weddingDate: e.target.value })} className="bg-white/20 backdrop-blur border border-white/30 rounded-lg px-4 py-2 text-sm text-white" />
-          </div>
-        ) : (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="mt-4">
-            <p className="text-4xl md:text-5xl text-white/95 drop-shadow-lg" style={{ fontFamily: FONTS.script }}>
-              {data.weddingDate ? `${new Date(data.weddingDate).getDate()}/${String(new Date(data.weddingDate).getMonth() + 1).padStart(2, "0")}` : ""}
-            </p>
+            {mode === "edit" ? (
+              <div className="mb-10">
+                <label className="mb-2 block text-xs uppercase tracking-[0.25em] text-white/70">Wedding Date</label>
+                <input
+                  type="date"
+                  value={data.weddingDate}
+                  onChange={(e) => onUpdate({ weddingDate: e.target.value })}
+                  className="rounded-full border border-white/30 bg-white/15 px-5 py-3 text-sm text-white backdrop-blur"
+                />
+              </div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="mb-8 inline-flex items-center gap-4 rounded-full border border-white/20 bg-black/15 px-5 py-3 backdrop-blur-sm"
+              >
+                <div className="h-[1px] w-10 bg-white/35" />
+                <p className="text-4xl leading-none text-white/95 drop-shadow-lg md:text-5xl" style={{ fontFamily: FONTS.heading }}>
+                  {heroDate}
+                </p>
+                <div className="h-[1px] w-10 bg-white/35" />
+              </motion.div>
+            )}
           </motion.div>
-        )}
-
-        {mode !== "edit" && (
-          <motion.div animate={{ y: [0, 6, 0] }} transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }} className="mt-8">
-            <ChevronDown size={20} className="mx-auto text-white/60" />
-          </motion.div>
-        )}
+          {mode !== "edit" && (
+            <motion.div animate={{ y: [0, 6, 0] }} transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }} className="pb-10">
+              <ChevronDown size={20} className="mx-auto text-white/60" />
+            </motion.div>
+          )}
+          <PaperDivider className="absolute inset-x-0 -bottom-8 z-30" />
+        </div>
       </div>
     </section>
   );
@@ -753,11 +907,11 @@ const GallerySection = ({ mode, data, onUpdate, templateId, sessionUUID, uploadS
     <section style={{ backgroundColor: C.cream }}>
       {mode !== "edit" ? (
         <>
-          <TornEdgeBottom color={C.cream} />
+          <PaperDivider flip className="-mb-px" />
           <div className="relative w-full overflow-hidden" style={{ maxHeight: "300px" }}>
             {displayPhotos[0] && <img src={displayPhotos[0].photoUrl} alt="Gallery" className="w-full h-[300px] object-cover" />}
           </div>
-          <TornEdgeTop color={C.cream} />
+          <PaperDivider className="-mt-px" />
         </>
       ) : (
         <div className="py-12 px-6 max-w-5xl mx-auto">
@@ -904,5 +1058,310 @@ const RsvpSection = ({ invitationId, isDemo }: { invitationId: number | null; is
     </section>
   );
 };
+
+const EditorialWelcomeSection = ({ mode, data, onUpdate, effectiveMusicUrl }: {
+  mode: TemplateProps["mode"]; data: TemplateProps["data"]; onUpdate: TemplateProps["onUpdate"]; effectiveMusicUrl: string | null;
+}) => (
+  <section className="relative z-20 -mt-10 overflow-hidden px-0 pt-28 pb-16 md:-mt-12 md:pt-32 md:pb-24" style={{ backgroundColor: C.cream }}>
+    <div className="absolute left-1/2 top-0 h-44 w-44 -translate-x-1/2 rounded-full bg-[#e8dfcb]/70 blur-3xl" />
+    <div className="mx-auto max-w-xl px-6 text-center">
+      {mode !== "edit" && effectiveMusicUrl && (
+        <div className="mb-8">
+          <InlineMusicToggle musicUrl={effectiveMusicUrl} />
+        </div>
+      )}
+      <motion.p initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-3 text-xs uppercase tracking-[0.38em]" style={{ color: C.sageDark }}>
+        Dear Guests
+      </motion.p>
+      <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-6 text-5xl md:text-6xl" style={{ fontFamily: FONTS.script, color: C.text }}>
+        Dear Guests!
+      </motion.h2>
+      <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.15 }} className="rounded-[2rem] border border-[#d6ccbb] bg-[#f8f1e6]/90 px-7 py-8 shadow-[0_24px_40px_rgba(122,140,110,0.08)]">
+        <div style={{ color: C.textMuted, fontFamily: FONTS.body }}>
+          <EditableText value={data.welcomeMessage} onSave={(val) => onUpdate({ welcomeMessage: val })} mode={mode} placeholder="We warmly invite you to share our joy on this special day..." className="text-lg leading-relaxed md:text-[1.35rem]" multiline as="p" />
+        </div>
+        <div className="mt-6 flex items-center justify-center gap-3">
+          <div className="h-px w-10 bg-[#b7b099]" />
+          <Heart size={12} fill={C.heartGreen} style={{ color: C.heartGreen }} />
+          <div className="h-px w-10 bg-[#b7b099]" />
+        </div>
+      </motion.div>
+    </div>
+  </section>
+);
+
+const EditorialCalendarDateSection = ({ mode, weddingDate, onUpdate }: {
+  mode: TemplateProps["mode"]; weddingDate: string; onUpdate: TemplateProps["onUpdate"];
+}) => {
+  const dateObj = weddingDate ? new Date(weddingDate) : null;
+  const day = dateObj?.getDate();
+  const dayBefore = dateObj ? new Date(dateObj.getTime() - 86400000).getDate() : null;
+  const dayAfter = dateObj ? new Date(dateObj.getTime() + 86400000).getDate() : null;
+  const monthName = dateObj?.toLocaleDateString("en", { month: "long" });
+  const dayName = dateObj?.toLocaleDateString("en", { weekday: "long" });
+
+  return (
+    <section className="pb-14 pt-4 md:pb-16" style={{ backgroundColor: C.cream }}>
+      <div className="mx-auto max-w-md px-6 text-center">
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} className="relative mb-2 inline-block">
+          <div className="absolute -inset-4 z-0 md:-inset-6">
+            <HandDrawnCircle className="h-full w-full" />
+          </div>
+          <div className="relative z-10 flex items-end gap-2">
+            <div className="min-w-[74px] border bg-[#faf3e8]/80 px-3 py-2 text-center opacity-45" style={{ borderColor: C.textLight }}>
+              <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: C.textLight }}>{monthName || "Month"}</p>
+              <p className="text-2xl font-light" style={{ color: C.text, fontFamily: FONTS.heading }}>{dayBefore ?? "-"}</p>
+            </div>
+            <div className="min-w-[110px] border-2 bg-[#fff8ef] px-5 py-4 text-center shadow-[0_12px_30px_rgba(107,100,96,0.08)]" style={{ borderColor: C.text }}>
+              <p className="text-[10px] uppercase tracking-[0.24em] font-semibold" style={{ color: C.text }}>{dayName || "Day"}</p>
+              <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: C.textMuted }}>{monthName || "Month"}</p>
+              <p className="text-5xl font-light" style={{ color: C.text, fontFamily: FONTS.heading }}>{day ?? "-"}</p>
+            </div>
+            <div className="min-w-[74px] border bg-[#faf3e8]/80 px-3 py-2 text-center opacity-45" style={{ borderColor: C.textLight }}>
+              <p className="text-[10px] uppercase tracking-[0.22em]" style={{ color: C.textLight }}>{monthName || "Month"}</p>
+              <p className="text-2xl font-light" style={{ color: C.text, fontFamily: FONTS.heading }}>{dayAfter ?? "-"}</p>
+            </div>
+          </div>
+        </motion.div>
+        {mode === "edit" && (
+          <div className="mt-8">
+            <label className="mb-2 block text-xs uppercase tracking-[0.25em]" style={{ color: C.sageDark }}>
+              Wedding Date
+            </label>
+            <input
+              type="date"
+              value={weddingDate}
+              onChange={(e) => onUpdate({ weddingDate: e.target.value })}
+              className="rounded-full border px-5 py-3 text-sm"
+              style={{ borderColor: `${C.sage}55`, backgroundColor: "#fff8ef", color: C.text }}
+            />
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
+
+const EditorialTimelineSection = ({ mode, data, onUpdate }: {
+  mode: TemplateProps["mode"]; data: TemplateProps["data"]; onUpdate: TemplateProps["onUpdate"];
+}) => {
+  const isEdit = mode === "edit";
+  const updateEvent = (index: number, updates: Partial<EventData>) => {
+    const newEvents = [...data.events];
+    newEvents[index] = { ...newEvents[index], ...updates };
+    onUpdate({ events: newEvents });
+  };
+
+  return (
+    <section className="overflow-hidden py-14 md:py-16" style={{ backgroundColor: C.cream }}>
+      <div className="mx-auto max-w-4xl px-6">
+        <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-10 text-center text-4xl md:text-5xl" style={{ fontFamily: FONTS.script, color: C.text }}>
+          Programme
+        </motion.h2>
+        {isEdit ? (
+          <div className="mx-auto max-w-md space-y-4">
+            {data.events.map((event, i) => (
+              <EditableEventCard key={event.id || i} event={event} onUpdate={(updates) => updateEvent(i, updates)} onDelete={() => onUpdate({ events: data.events.filter((_, idx) => idx !== i) })} mode={mode} index={i} />
+            ))}
+            <AddEventButton
+              onAdd={() => onUpdate({ events: [...data.events, { id: null, eventName: "New Event", eventDate: "", eventTime: "", venueName: "", venueAddress: "", mapsUrl: null }] })}
+              mode={mode}
+              maxEvents={8}
+              currentCount={data.events.length}
+            />
+          </div>
+        ) : (
+          <EditorialSCurveTimeline events={data.events} />
+        )}
+      </div>
+    </section>
+  );
+};
+
+const EditorialSCurveTimeline = ({ events }: { events: EventData[] }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, amount: 0.2 });
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start 80%", "end 20%"],
+  });
+
+  if (events.length === 0) return null;
+
+  const itemHeight = 170;
+  const totalHeight = Math.max(events.length * itemHeight + 40, 430);
+  const pathPoints = events.map((_, i) => {
+    const y = i * itemHeight + 88;
+    const x = i % 2 === 0 ? 246 : 134;
+    return { x, y };
+  });
+
+  let pathD = `M ${pathPoints[0]?.x ?? 246} 0`;
+  pathPoints.forEach((pt, i) => {
+    if (i === 0) {
+      pathD += ` C ${pt.x + 4} 16, ${pt.x + 14} ${pt.y - 36}, ${pt.x} ${pt.y}`;
+      return;
+    }
+    const prev = pathPoints[i - 1];
+    const midY = (prev.y + pt.y) / 2;
+    pathD += ` C ${prev.x} ${midY - 26}, ${pt.x} ${midY + 26}, ${pt.x} ${pt.y}`;
+  });
+  pathD += ` C ${pathPoints[pathPoints.length - 1].x} ${totalHeight - 44}, ${pathPoints[pathPoints.length - 1].x - 6} ${totalHeight - 20}, ${pathPoints[pathPoints.length - 1].x - 8} ${totalHeight}`;
+
+  const progressLength = useTransform(scrollYProgress, [0, 1], [0.03, 1]);
+  const heartOffset = useTransform(scrollYProgress, (v) => `${Math.max(3, v * 100)}%`);
+
+  return (
+    <div ref={ref} className="relative mx-auto max-w-[460px]" style={{ minHeight: totalHeight }}>
+      <svg className="absolute inset-0 h-full w-full" viewBox={`0 0 380 ${totalHeight}`} preserveAspectRatio="none" fill="none">
+        <motion.path
+          d={pathD}
+          stroke="rgba(112, 109, 101, 0.32)"
+          strokeWidth="2"
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          initial={{ pathLength: 0 }}
+          animate={isInView ? { pathLength: 1 } : { pathLength: 0 }}
+          transition={{ duration: 1.2, ease: "easeOut" }}
+        />
+        <motion.path
+          d={pathD}
+          stroke={C.sageDark}
+          strokeWidth="2.4"
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ pathLength: progressLength }}
+        />
+        <motion.g style={{ offsetPath: `path('${pathD}')`, offsetDistance: heartOffset, offsetRotate: "0deg" }}>
+          <path
+            d="M 0 -9 C -9 -19, -18 -8, 0 8 C 18 -8, 9 -19, 0 -9 Z"
+            fill={C.heartGreen}
+            stroke="#eef0e5"
+            strokeWidth="1.5"
+            transform="translate(0 2)"
+          />
+        </motion.g>
+      </svg>
+      {events.map((event, i) => {
+        const isLeft = i % 2 !== 0;
+        const top = i * itemHeight + 6;
+        return (
+          <motion.div
+            key={event.id || i}
+            initial={{ opacity: 0, x: isLeft ? -30 : 30 }}
+            animate={isInView ? { opacity: 1, x: 0 } : {}}
+            transition={{ delay: 0.35 + i * 0.28, duration: 0.45 }}
+            className="absolute w-[34%] max-w-[145px] sm:max-w-[160px]"
+            style={{ top, ...(isLeft ? { right: 36, textAlign: "right" as const } : { left: 36, textAlign: "left" as const }) }}
+          >
+            <p className="text-[2.2rem] leading-[0.95] md:text-[3rem]" style={{ fontFamily: FONTS.script, color: C.text }}>
+              {event.eventName}
+            </p>
+            {event.eventTime && (
+              <p className="mt-3 text-[1.9rem] leading-none md:text-[2.6rem]" style={{ color: C.text, fontFamily: FONTS.heading }}>
+                {formatTime(event.eventTime)}
+              </p>
+            )}
+            {event.venueName && (
+              <p className="mt-3 text-[11px] uppercase tracking-[0.22em]" style={{ color: C.textMuted }}>
+                {event.venueName}
+              </p>
+            )}
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+};
+
+const EditorialVenueSection = ({ event }: { mode: TemplateProps["mode"]; event: EventData }) => (
+  <section style={{ backgroundColor: C.cream }}>
+    <div className="mx-auto max-w-xl px-6 py-14 text-center md:py-16">
+      <HeartPin className="mx-auto mb-5" />
+      <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-4 text-5xl md:text-6xl" style={{ fontFamily: FONTS.script, color: C.text }}>
+        Venue
+      </motion.h2>
+      <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.15 }}>
+        <p className="text-2xl md:text-[2rem]" style={{ color: C.text, fontFamily: FONTS.heading }}>{event.venueName || "Venue Name"}</p>
+        <p className="mx-auto mt-3 max-w-md text-base leading-relaxed" style={{ color: C.textMuted }}>{event.venueAddress || "Venue Address"}</p>
+      </motion.div>
+      <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: 0.25 }} className="mt-8">
+        {event.mapsUrl ? (
+          <a href={event.mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-32 w-32 items-center justify-center rounded-full border-[10px] text-center transition-transform hover:scale-105" style={{ backgroundColor: C.sage, borderColor: "#d6d0bf", color: C.cream }}>
+            <div>
+              <MapPin size={18} className="mx-auto mb-2" />
+              <span className="text-[11px] uppercase tracking-[0.16em]">Plan Route</span>
+            </div>
+          </a>
+        ) : (
+          <div className="inline-flex h-32 w-32 items-center justify-center rounded-full border-[10px] text-center" style={{ backgroundColor: C.sage, borderColor: "#d6d0bf", color: C.cream }}>
+            <div>
+              <MapPin size={18} className="mx-auto mb-2" />
+              <span className="text-[11px] uppercase tracking-[0.16em]">Plan Route</span>
+            </div>
+          </div>
+        )}
+      </motion.div>
+    </div>
+    <motion.div initial={{ opacity: 0, scale: 1.04 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.9 }} className="relative overflow-hidden">
+      <img src={DEFAULT_VENUE_PHOTO} alt="Wedding Venue" className="h-[360px] w-full object-cover md:h-[460px]" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
+      <PaperDivider className="absolute inset-x-0 -bottom-8 z-20" />
+    </motion.div>
+  </section>
+);
+
+const EditorialDressCodeSection = () => (
+  <section className="relative z-20 -mt-10 overflow-hidden px-0 pt-28 pb-16 md:-mt-12 md:pt-32 md:pb-20" style={{ backgroundColor: C.cream }}>
+    <div className="mx-auto max-w-md px-6 text-center">
+      <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-4 text-5xl md:text-6xl" style={{ fontFamily: FONTS.script, color: C.text }}>
+        Dress Code
+      </motion.h2>
+      <motion.p initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.15 }} className="mb-8 text-lg leading-relaxed" style={{ color: C.textMuted }}>
+        We would be grateful if you could follow the colour palette of our wedding.
+      </motion.p>
+      <div className="flex justify-center gap-2 md:gap-3">
+        {DRESS_COLORS.map((c, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 18, rotate: -3 }}
+            whileInView={{ opacity: 1, y: 0, rotate: 0 }}
+            whileHover={{ y: -6, scale: 1.04 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.22 + i * 0.08, duration: 0.45 }}
+            className="h-14 w-11 rounded-sm shadow-[0_10px_20px_rgba(64,68,49,0.12)] md:h-[76px] md:w-14"
+            style={{ backgroundColor: c.hex, border: c.hex === "#f0ebe2" ? `1px solid ${C.textLight}40` : "none" }}
+            title={c.name}
+          />
+        ))}
+      </div>
+    </div>
+  </section>
+);
+
+const EditorialDetailsSection = () => (
+  <section style={{ backgroundColor: C.cream }}>
+    <PaperDivider flip />
+    <motion.div initial={{ opacity: 0, scale: 1.03 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.8 }} className="relative overflow-hidden">
+      <img src={DEFAULT_DETAIL_PHOTO} alt="Wedding Details" className="h-[420px] w-full object-cover md:h-[520px]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(31,31,24,0.08),rgba(31,31,24,0.48))]" />
+      <div className="absolute inset-0 flex items-center justify-center px-6">
+        <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.15 }} className="max-w-md rounded-[2rem] border border-white/20 bg-black/20 px-8 py-10 text-center backdrop-blur-sm">
+          <h2 className="mb-4 text-5xl text-white md:text-6xl" style={{ fontFamily: FONTS.script }}>
+            Details
+          </h2>
+          <p className="text-lg leading-relaxed text-white/90">
+            Please bring your warm wishes and love in your hearts. If you wish to bless us with a gift, we would be grateful for an envelope.
+          </p>
+          <p className="mt-5 text-sm uppercase tracking-[0.24em] text-white/75">
+            Your presence will mean the most
+          </p>
+        </motion.div>
+      </div>
+    </motion.div>
+  </section>
+);
 
 export default BlossomDateTemplate;

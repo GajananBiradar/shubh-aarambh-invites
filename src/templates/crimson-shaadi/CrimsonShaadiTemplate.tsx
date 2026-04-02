@@ -1,6 +1,6 @@
-import { useMemo, useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Heart, MapPin, Check, X, Copy, Eye } from "lucide-react";
+import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { ChevronDown, Heart, MapPin } from "lucide-react";
 import { TemplateProps, EventData } from "@/templates/types";
 import {
   EditableText,
@@ -12,23 +12,274 @@ import {
   EditModeToolbar,
 } from "@/components/inline-editor";
 import FloatingMusicPlayer from "@/components/invitation/FloatingMusicPlayer";
-import {
-  formatWeddingDate,
-  formatEventDate,
-  formatTime,
-} from "@/utils/formatDate";
+import { formatWeddingDate, formatEventDate } from "@/utils/formatDate";
 import { cn } from "@/lib/utils";
+import { submitRsvp } from "@/api/rsvp";
+import toast from "react-hot-toast";
 
-// Event icons mapping
-const eventIcons: Record<string, string> = {
-  Haldi: "🌼",
-  Mehendi: "🌿",
-  Sangeet: "🎵",
-  Wedding: "💒",
-  Reception: "🥂",
-  Engagement: "💍",
+/* --------------------------------------------------------------------------
+   Crimson Shaadi Template
+   Royal Indian wedding – warm maroon & gold, bokeh particles,
+   golden floral mandala frame, grid event cards
+   -------------------------------------------------------------------------- */
+
+const C = {
+  bg: "#1a0808",
+  bgLight: "#2e1111",
+  bgCard: "#3a1414",
+  bgWarm: "#321010",
+  text: "#f5e6d0",
+  textMuted: "#c9a87c",
+  gold: "#d4af37",
+  goldLight: "#f6d776",
+  goldDark: "#b8962e",
+  cream: "#f5e6d0",
+  maroon: "#4a1818",
+  maroonDark: "#2a0c0c",
+  maroonMid: "#5a2020",
+  red: "#8b2020",
+  white: "#ffffff",
+  cardGold: "#c69c2f",
+  cardBg: "linear-gradient(145deg, #4a2a10, #3a1808, #2a0c04)",
 };
 
+const goldGradient = {
+  background: "linear-gradient(135deg, #d4af37, #f6d776, #b8962e)",
+  WebkitBackgroundClip: "text",
+  WebkitTextFillColor: "transparent",
+} as const;
+
+const FONTS = {
+  script: "'Great Vibes', cursive",
+  heading: "'Cinzel', serif",
+  body: "'Cormorant Garamond', serif",
+};
+
+/* Gold SVG icon components for events instead of emojis */
+const GoldIcon = ({ d, size = 20 }: { d: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <path d={d} fill="url(#goldGrad)" />
+    <defs>
+      <linearGradient id="goldGrad" x1="0" y1="0" x2="24" y2="24">
+        <stop offset="0%" stopColor="#f6d776" />
+        <stop offset="50%" stopColor="#d4af37" />
+        <stop offset="100%" stopColor="#b8962e" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+const eventIconSVG: Record<string, string> = {
+  Mehndi:
+    "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z",
+  Mehendi:
+    "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z",
+  Haldi:
+    "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z",
+  Sangeet:
+    "M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z",
+  Wedding: "M12 2L14.5 9.5 22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5L12 2z",
+  Reception:
+    "M8 5h2v2H8V5zm0 4h2v2H8V9zm0 4h2v2H8v-2zm6-8h-2v2h2V5zm0 4h-2v2h2V9zm0 4h-2v2h2v-2zM6 1v2H4v16h6v2h4v-2h6V3h-2V1H6zm12 16H6V3h12v14z",
+  Engagement:
+    "M12 4a5 5 0 1 0 0 10a5 5 0 0 0 0-10Zm0 1.8a3.2 3.2 0 1 1 0 6.4a3.2 3.2 0 0 1 0-6.4ZM12 15.5c-3.4 0-6.5 1.35-8.8 3.55l1.3 1.35A10.72 10.72 0 0 1 12 17.3a10.72 10.72 0 0 1 7.5 3.1l1.3-1.35A12.53 12.53 0 0 0 12 15.5Zm6.3-9.8l.95 1.75l1.95.35l-1.4 1.4l.28 1.96l-1.78-.85l-1.78.85l.28-1.96l-1.4-1.4l1.95-.35l.95-1.75Z",
+};
+
+/* Bokeh-style particles - larger, warmer, like light bokeh */
+const generateBokeh = (count: number) =>
+  Array.from({ length: count }, (_, i) => ({
+    id: i,
+    left: `${Math.random() * 100}%`,
+    top: `${Math.random() * 100}%`,
+    size: 4 + Math.random() * 12,
+    opacity: 0.15 + Math.random() * 0.45,
+    duration: 3 + Math.random() * 5,
+    delay: Math.random() * 6,
+    blur: 1 + Math.random() * 3,
+  }));
+
+/* Floating gold hearts */
+const generateHearts = (count: number) =>
+  Array.from({ length: count }, (_, i) => ({
+    id: i,
+    left: `${10 + Math.random() * 80}%`,
+    size: 8 + Math.random() * 10,
+    duration: 4 + Math.random() * 6,
+    delay: Math.random() * 8,
+    drift: -20 + Math.random() * 40,
+  }));
+
+const getDisplayPhotos = (data: TemplateProps["data"]) =>
+  data.galleryPhotos.length > 0
+    ? data.galleryPhotos
+    : data.templateDefaults.defaultPhotos.map((photo, index) => ({
+        photoUrl: photo.photoUrl,
+        sortOrder: index,
+        isDefault: true,
+      }));
+
+const getHeroPhoto = (data: TemplateProps["data"]) =>
+  data.couplePhotoUrl ||
+  data.bridePhotoUrl ||
+  data.groomPhotoUrl ||
+  getDisplayPhotos(data)[0]?.photoUrl ||
+  null;
+
+const getPortraitPhoto = (data: TemplateProps["data"]) =>
+  data.bridePhotoUrl || data.couplePhotoUrl || getDisplayPhotos(data)[0]?.photoUrl || null;
+
+const SectionTitle = ({
+  title,
+  subtitle,
+}: {
+  title: string;
+  subtitle?: string;
+}) => (
+  <div className="text-center">
+    <div className="flex items-center justify-center gap-3 opacity-90 sm:gap-4">
+      <div
+        className="h-px w-20 sm:w-28"
+        style={{
+          background: `linear-gradient(to right, transparent, ${C.gold}, transparent)`,
+        }}
+      />
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path
+          d="M9 1L10.9 7.1L17 9L10.9 10.9L9 17L7.1 10.9L1 9L7.1 7.1L9 1Z"
+          fill={C.goldLight}
+          opacity="0.95"
+        />
+      </svg>
+      <div
+        className="h-px w-28"
+        style={{
+          background: `linear-gradient(to right, transparent, ${C.gold}, transparent)`,
+        }}
+      />
+    </div>
+    <h2
+      className="mt-4 text-[2.7rem] sm:text-5xl md:text-6xl"
+      style={{ fontFamily: FONTS.script, ...goldGradient }}
+    >
+      {title}
+    </h2>
+    {subtitle && (
+      <p
+        className="mt-3 text-sm sm:text-base"
+        style={{ color: C.textMuted, fontFamily: FONTS.body }}
+      >
+        {subtitle}
+      </p>
+    )}
+  </div>
+);
+
+const FloralBurst = () => (
+  <svg width="360" height="160" viewBox="0 0 360 160" fill="none">
+    <g opacity="0.9">
+      <path
+        d="M12 80H148"
+        stroke="url(#burstGrad)"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+      <path
+        d="M212 80H348"
+        stroke="url(#burstGrad)"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+      <path
+        d="M70 80L126 54L148 80L126 106L70 80Z"
+        stroke="url(#burstGrad)"
+        strokeWidth="1"
+        fill="rgba(212,175,55,0.05)"
+      />
+      <path
+        d="M290 80L234 54L212 80L234 106L290 80Z"
+        stroke="url(#burstGrad)"
+        strokeWidth="1"
+        fill="rgba(212,175,55,0.05)"
+      />
+      <path
+        d="M148 80C136 66 120 58 104 58C122 72 126 86 104 102C122 102 136 94 148 80Z"
+        stroke="url(#burstGrad)"
+        strokeWidth="1"
+        fill="rgba(212,175,55,0.03)"
+      />
+      <path
+        d="M212 80C224 66 240 58 256 58C238 72 234 86 256 102C238 102 224 94 212 80Z"
+        stroke="url(#burstGrad)"
+        strokeWidth="1"
+        fill="rgba(212,175,55,0.03)"
+      />
+      <circle cx="180" cy="80" r="6" fill="url(#burstGrad)" opacity="0.9" />
+      <circle cx="180" cy="80" r="16" stroke="url(#burstGrad)" strokeOpacity="0.35" />
+      <circle cx="88" cy="80" r="2" fill={C.gold} opacity="0.55" />
+      <circle cx="272" cy="80" r="2" fill={C.gold} opacity="0.55" />
+    </g>
+    <defs>
+      <linearGradient id="burstGrad" x1="12" y1="20" x2="348" y2="140">
+        <stop offset="0%" stopColor="#8a6020" />
+        <stop offset="50%" stopColor="#f6d776" />
+        <stop offset="100%" stopColor="#8a6020" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+const HeroRingOrnaments = () => (
+  <svg width="420" height="220" viewBox="0 0 420 220" fill="none">
+    <g opacity="0.88">
+      <path d="M18 110H112" stroke="url(#heroRingGrad)" strokeWidth="1.2" />
+      <path d="M308 110H402" stroke="url(#heroRingGrad)" strokeWidth="1.2" />
+      <path
+        d="M62 110L112 82L130 110L112 138L62 110Z"
+        stroke="url(#heroRingGrad)"
+        strokeWidth="1"
+        fill="rgba(212,175,55,0.04)"
+      />
+      <path
+        d="M358 110L308 82L290 110L308 138L358 110Z"
+        stroke="url(#heroRingGrad)"
+        strokeWidth="1"
+        fill="rgba(212,175,55,0.04)"
+      />
+      <path
+        d="M130 110C150 94 162 84 174 68"
+        stroke="url(#heroRingGrad)"
+        strokeWidth="1"
+      />
+      <path
+        d="M290 110C270 94 258 84 246 68"
+        stroke="url(#heroRingGrad)"
+        strokeWidth="1"
+      />
+      <path
+        d="M130 110C150 126 162 136 174 152"
+        stroke="url(#heroRingGrad)"
+        strokeWidth="1"
+      />
+      <path
+        d="M290 110C270 126 258 136 246 152"
+        stroke="url(#heroRingGrad)"
+        strokeWidth="1"
+      />
+      <circle cx="210" cy="110" r="4" fill="url(#heroRingGrad)" />
+      <circle cx="80" cy="110" r="2.5" fill={C.goldLight} opacity="0.65" />
+      <circle cx="340" cy="110" r="2.5" fill={C.goldLight} opacity="0.65" />
+    </g>
+    <defs>
+      <linearGradient id="heroRingGrad" x1="18" y1="38" x2="402" y2="182">
+        <stop offset="0%" stopColor="#8a6020" />
+        <stop offset="50%" stopColor="#f6d776" />
+        <stop offset="100%" stopColor="#8a6020" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+/* ====== MAIN ====== */
 const CrimsonShaadiTemplate = ({
   mode,
   data,
@@ -41,24 +292,6 @@ const CrimsonShaadiTemplate = ({
   sessionUUID,
   uploadStage = "temp",
 }: TemplateProps) => {
-  const [copiedLink, setCopiedLink] = useState(false);
-
-  // Generate petals for hero animation
-  const petals = useMemo(
-    () =>
-      Array.from({ length: 14 }, (_, i) => ({
-        id: i,
-        left: `${Math.random() * 100}%`,
-        size: 8 + Math.random() * 12,
-        opacity: 0.3 + Math.random() * 0.5,
-        duration: 7 + Math.random() * 8,
-        delay: Math.random() * 10,
-        drift: -80 + Math.random() * 160,
-      })),
-    [],
-  );
-
-  // Effective music URL
   const effectiveMusicUrl =
     data.musicUrl ||
     data.effectiveMusicUrl ||
@@ -68,496 +301,50 @@ const CrimsonShaadiTemplate = ({
     data.effectiveMusicName ||
     data.templateDefaults.defaultMusicName;
 
-  // Calculate countdown
-  const getCountdown = () => {
-    if (!data.weddingDate) return null;
-    const wedding = new Date(data.weddingDate);
-    const now = new Date();
-    const diff = wedding.getTime() - now.getTime();
-    if (diff <= 0) return null;
-
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-    return { days, hours, minutes, seconds };
-  };
-
-  // Copy invite link
-  const handleCopyLink = () => {
-    if (data.accessCode && data.slug) {
-      const url = `${window.location.origin}/${data.accessCode}/invite/${data.slug}`;
-      navigator.clipboard.writeText(url);
-      setCopiedLink(true);
-      setTimeout(() => setCopiedLink(false), 2000);
-    }
-  };
-
   return (
     <div
       data-theme="crimson"
-      className="min-h-screen bg-background text-foreground"
+      className="min-h-screen"
+      style={{
+        backgroundColor: C.bg,
+        color: C.text,
+        fontFamily: FONTS.body,
+        backgroundImage: `
+          radial-gradient(circle at 18% 20%, rgba(212,175,55,0.08), transparent 28%),
+          radial-gradient(circle at 82% 12%, rgba(212,175,55,0.06), transparent 24%),
+          radial-gradient(circle at 50% 110%, rgba(120,32,24,0.45), transparent 34%),
+          linear-gradient(180deg, #220909 0%, #3b100f 22%, #521715 46%, #421211 72%, #210808 100%)
+        `,
+      }}
     >
-      {/* ═══════════════════════════════════════
-          HERO SECTION
-          ═══════════════════════════════════════ */}
-      <section className="relative min-h-[100dvh] flex flex-col items-center justify-center overflow-hidden">
-        {/* Background Photo */}
-        <div className="absolute inset-0">
-          {mode === "edit" ? (
-            <EditablePhoto
-              photoUrl={data.couplePhotoUrl}
-              onSave={(url) => onUpdate({ couplePhotoUrl: url })}
-              mode={mode}
-              className="w-full h-full"
-              placeholderText="Add Couple Photo"
-              templateId={templateId}
-              sessionUUID={sessionUUID}
-              uploadStage={uploadStage}
-              invitationId={data.invitationId ?? undefined}
-              oldPublicUrl={data.couplePhotoUrl || undefined}
-            />
-          ) : (
-            data.couplePhotoUrl && (
-              <img
-                src={data.couplePhotoUrl}
-                alt={`${data.groomName} & ${data.brideName}`}
-                className="w-full h-full object-cover"
-              />
-            )
-          )}
-          <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/20 to-background/80" />
-        </div>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&family=Great+Vibes&display=swap');`}</style>
+      <HeroSection
+        mode={mode}
+        data={data}
+        onUpdate={onUpdate}
+        templateId={templateId}
+        sessionUUID={sessionUUID}
+        uploadStage={uploadStage}
+      />
 
-        {/* Floating Petals */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {petals.map((p) => (
-            <div
-              key={p.id}
-              className="absolute rounded-full animate-petal"
-              style={
-                {
-                  left: p.left,
-                  width: p.size,
-                  height: p.size,
-                  background: `radial-gradient(circle, hsl(var(--primary) / 0.6), hsl(var(--accent) / 0.4))`,
-                  "--petal-opacity": p.opacity,
-                  "--fall-duration": `${p.duration}s`,
-                  "--fall-delay": `${p.delay}s`,
-                  "--drift": `${p.drift}px`,
-                } as React.CSSProperties
-              }
-            />
-          ))}
-        </div>
+      <OurStorySection mode={mode} data={data} onUpdate={onUpdate} />
 
-        {/* Hero Content */}
-        <div className="relative z-10 text-center px-4">
-          {/* Floral ornament */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1 }}
-            className="text-accent text-4xl mb-4"
-          >
-            ✿
-          </motion.div>
+      <WeddingEventsSection mode={mode} data={data} onUpdate={onUpdate} />
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            className="font-body italic text-sm text-card-foreground/80 mb-4"
-          >
-            Together with our families
-          </motion.p>
+      <GallerySection
+        mode={mode}
+        data={data}
+        onUpdate={onUpdate}
+        templateId={templateId}
+        sessionUUID={sessionUUID}
+        uploadStage={uploadStage}
+      />
 
-          {/* Bride Name */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.8 }}
-          >
-            <EditableText
-              value={data.brideName}
-              onSave={(val) => onUpdate({ brideName: val })}
-              mode={mode}
-              placeholder="Bride's Name"
-              className="font-script text-5xl sm:text-6xl md:text-7xl text-card-foreground"
-              as="h1"
-            />
-          </motion.div>
+      <FamiliesSection mode={mode} data={data} onUpdate={onUpdate} />
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.9 }}
-            className="text-accent text-2xl my-2"
-          >
-            ✦
-          </motion.p>
-
-          {/* Groom Name */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1, duration: 0.8 }}
-          >
-            <EditableText
-              value={data.groomName}
-              onSave={(val) => onUpdate({ groomName: val })}
-              mode={mode}
-              placeholder="Groom's Name"
-              className="font-script text-5xl sm:text-6xl md:text-7xl text-card-foreground"
-              as="h1"
-            />
-          </motion.div>
-
-          {/* Gold line */}
-          <motion.div
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ delay: 1.3, duration: 0.8 }}
-            className="w-32 h-px bg-accent mx-auto my-6 origin-left"
-          />
-
-          {/* Wedding Date */}
-          {mode === "edit" ? (
-            <div className="mt-4">
-              <label className="font-body text-xs text-card-foreground/70 block mb-1">
-                Wedding Date
-              </label>
-              <input
-                type="date"
-                value={data.weddingDate}
-                onChange={(e) => onUpdate({ weddingDate: e.target.value })}
-                className="bg-card/50 backdrop-blur border border-border rounded-lg px-4 py-2 font-body text-sm text-foreground"
-              />
-            </div>
-          ) : (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1.5 }}
-              className="font-heading text-sm md:text-base text-card-foreground/90"
-            >
-              {formatWeddingDate(data.weddingDate)}
-            </motion.p>
-          )}
-        </div>
-
-        {/* Scroll indicator */}
-        <motion.div
-          animate={{ y: [0, 10, 0] }}
-          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 text-center"
-        >
-          <p className="font-body text-xs text-card-foreground/70 mb-2">
-            Open Invitation
-          </p>
-          <ChevronDown className="w-6 h-6 text-card-foreground/70 mx-auto" />
-        </motion.div>
-      </section>
-
-      {/* ═══════════════════════════════════════
-          COUPLE SECTION
-          ═══════════════════════════════════════ */}
-      <motion.section
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="py-16 bg-background"
-      >
-        <div className="container mx-auto px-4 max-w-2xl">
-          {/* Decorative divider */}
-          <div className="text-center text-accent text-2xl mb-8">❀ ─── ❀</div>
-
-          <div className="flex flex-col sm:flex-row items-center gap-8 justify-center">
-            {/* Bride */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2, duration: 0.6 }}
-              className="text-center"
-            >
-              <EditablePhoto
-                photoUrl={data.bridePhotoUrl || data.couplePhotoUrl}
-                onSave={(url) => onUpdate({ bridePhotoUrl: url })}
-                mode={mode}
-                className="w-32 h-32 mx-auto mb-3 ring-4 ring-accent/30 hover:ring-accent/60 transition-all"
-                shape="circle"
-                alt={data.brideName}
-                invitationId={data.invitationId ?? undefined}
-                templateId={templateId}
-                sessionUUID={sessionUUID}
-                uploadStage={uploadStage}
-                oldPublicUrl={data.bridePhotoUrl || undefined}
-              />
-              <h3 className="font-heading text-lg font-semibold">
-                {data.brideName || "Bride"}
-              </h3>
-              <EditableText
-                value={data.brideBio}
-                onSave={(val) => onUpdate({ brideBio: val })}
-                mode={mode}
-                placeholder="Add a short bio..."
-                className="font-body text-sm text-muted-foreground italic mt-1"
-                maxLength={100}
-                as="p"
-              />
-            </motion.div>
-
-            {/* Heart & Hashtag */}
-            <motion.div
-              animate={{ scale: [1, 1.15, 1] }}
-              transition={{
-                repeat: Infinity,
-                duration: 1.5,
-                ease: "easeInOut",
-              }}
-              className="text-center"
-            >
-              <Heart className="w-8 h-8 text-primary fill-primary mx-auto" />
-              <EditableText
-                value={data.hashtag}
-                onSave={(val) => onUpdate({ hashtag: val })}
-                mode={mode}
-                placeholder="#YourHashtag"
-                className="font-script text-lg text-accent mt-2"
-                as="p"
-              />
-            </motion.div>
-
-            {/* Groom */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.4, duration: 0.6 }}
-              className="text-center"
-            >
-              <EditablePhoto
-                photoUrl={data.groomPhotoUrl || data.couplePhotoUrl}
-                onSave={(url) => onUpdate({ groomPhotoUrl: url })}
-                mode={mode}
-                className="w-32 h-32 mx-auto mb-3 ring-4 ring-accent/30 hover:ring-accent/60 transition-all"
-                shape="circle"
-                alt={data.groomName}
-                invitationId={data.invitationId ?? undefined}
-                templateId={templateId}
-                sessionUUID={sessionUUID}
-                uploadStage={uploadStage}
-                oldPublicUrl={data.groomPhotoUrl || undefined}
-              />
-              <h3 className="font-heading text-lg font-semibold">
-                {data.groomName || "Groom"}
-              </h3>
-              <EditableText
-                value={data.groomBio}
-                onSave={(val) => onUpdate({ groomBio: val })}
-                mode={mode}
-                placeholder="Add a short bio..."
-                className="font-body text-sm text-muted-foreground italic mt-1"
-                maxLength={100}
-                as="p"
-              />
-            </motion.div>
-          </div>
-
-          {/* Welcome Message */}
-          <div className="mt-12 text-center">
-            <EditableText
-              value={data.welcomeMessage}
-              onSave={(val) => onUpdate({ welcomeMessage: val })}
-              mode={mode}
-              placeholder="Add a welcome message for your guests..."
-              className="font-body text-base text-foreground/80 max-w-xl mx-auto"
-              multiline
-              as="p"
-            />
-          </div>
-        </div>
-      </motion.section>
-
-      {/* ═══════════════════════════════════════
-          COUNTDOWN SECTION
-          ═══════════════════════════════════════ */}
-      {(data.showCountdown || mode === "edit") && (
-        <motion.section
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="py-16 bg-muted/30"
-        >
-          <div className="container mx-auto px-4 max-w-2xl text-center">
-            {mode === "edit" && (
-              <div className="mb-4 flex items-center justify-center gap-2">
-                <label className="font-body text-sm">Show Countdown</label>
-                <button
-                  onClick={() =>
-                    onUpdate({ showCountdown: !data.showCountdown })
-                  }
-                  className={cn(
-                    "w-10 h-6 rounded-full transition-colors",
-                    data.showCountdown ? "bg-primary" : "bg-muted",
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "w-4 h-4 rounded-full bg-white transition-transform mx-1",
-                      data.showCountdown && "translate-x-4",
-                    )}
-                  />
-                </button>
-              </div>
-            )}
-
-            {data.showCountdown && (
-              <>
-                <h2 className="font-heading text-2xl font-bold mb-8">
-                  Counting Down To Our Big Day
-                </h2>
-                <CountdownDisplay weddingDate={data.weddingDate} />
-              </>
-            )}
-          </div>
-        </motion.section>
-      )}
-
-      {/* ═══════════════════════════════════════
-          EVENTS SECTION
-          ═══════════════════════════════════════ */}
-      <motion.section
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: 0.8 }}
-        className="py-16 bg-background"
-      >
-        <div className="container mx-auto px-4 max-w-3xl">
-          <h2 className="font-heading text-3xl font-bold text-center mb-10">
-            Join Us For Our Celebrations
-          </h2>
-
-          {mode === "edit" ? (
-            <div className="space-y-4">
-              {data.events.map((event, i) => (
-                <EditableEventCard
-                  key={event.id || i}
-                  event={event}
-                  onUpdate={(updates) => {
-                    const newEvents = [...data.events];
-                    newEvents[i] = { ...newEvents[i], ...updates };
-                    onUpdate({ events: newEvents });
-                  }}
-                  onDelete={() => {
-                    const newEvents = data.events.filter((_, idx) => idx !== i);
-                    onUpdate({ events: newEvents });
-                  }}
-                  mode={mode}
-                  index={i}
-                />
-              ))}
-              <AddEventButton
-                onAdd={() => {
-                  const newEvent: EventData = {
-                    id: null,
-                    eventName: "New Event",
-                    eventDate: "",
-                    eventTime: "",
-                    venueName: "",
-                    venueAddress: "",
-                    mapsUrl: null,
-                  };
-                  onUpdate({ events: [...data.events, newEvent] });
-                }}
-                mode={mode}
-                maxEvents={8}
-                currentCount={data.events.length}
-              />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {data.events.map((event, i) => (
-                <motion.div
-                  key={event.id || i}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.2 }}
-                  transition={{ delay: i * 0.15, duration: 0.6 }}
-                  className="card-hover bg-card rounded-2xl p-6 border border-border"
-                >
-                  <div className="text-3xl mb-3">
-                    {eventIcons[event.eventName] || "✨"}
-                  </div>
-                  <h3 className="font-heading text-xl font-semibold mb-2">
-                    {event.eventName}
-                  </h3>
-                  <p className="font-body text-sm text-muted-foreground mb-1">
-                    {formatEventDate(event.eventDate)} ·{" "}
-                    {formatTime(event.eventTime)}
-                  </p>
-                  <p className="font-body text-sm font-medium mt-3">
-                    {event.venueName}
-                  </p>
-                  <p className="font-body text-xs text-muted-foreground">
-                    {event.venueAddress}
-                  </p>
-                  {event.mapsUrl && (
-                    <a
-                      href={event.mapsUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 mt-3 font-body text-xs text-primary hover:underline"
-                    >
-                      <MapPin size={14} /> View on Map
-                    </a>
-                  )}
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
-      </motion.section>
-
-      {/* ═══════════════════════════════════════
-          GALLERY SECTION
-          ═══════════════════════════════════════ */}
-      <motion.section
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-        className="py-16 bg-muted/30"
-      >
-        <div className="container mx-auto px-4 max-w-4xl">
-          <h2 className="font-heading text-3xl font-bold text-center mb-10">
-            Our Gallery
-          </h2>
-          <EditablePhotoGallery
-            photos={data.galleryPhotos}
-            defaultPhotos={data.templateDefaults.defaultPhotos}
-            onUpdate={(photos) => onUpdate({ galleryPhotos: photos })}
-            mode={mode}
-            maxPhotos={10}
-            invitationId={data.invitationId ?? undefined}
-            templateId={templateId}
-            sessionUUID={sessionUUID}
-            uploadStage={uploadStage}
-          />
-        </div>
-      </motion.section>
-
-      {/* ═══════════════════════════════════════
-          MUSIC SECTION (Edit mode only)
-          ═══════════════════════════════════════ */}
       {mode === "edit" && (
-        <section className="py-16 bg-background">
-          <div className="container mx-auto px-4 max-w-xl">
+        <section className="py-16" style={{ backgroundColor: C.bg }}>
+          <div className="max-w-xl mx-auto px-6">
             <EditableMusicPlayer
               musicUrl={data.musicUrl}
               musicName={data.musicName}
@@ -576,46 +363,46 @@ const CrimsonShaadiTemplate = ({
         </section>
       )}
 
-      {/* ═══════════════════════════════════════
-          RSVP SECTION (View/Demo only)
-          ═══════════════════════════════════════ */}
-      {mode !== "edit" && (
+      {mode !== "edit" && data.rsvpEnabled !== false && (
         <RsvpSection
           invitationId={data.invitationId}
           isDemo={mode === "demo"}
         />
       )}
 
-      {/* ═══════════════════════════════════════
-          FOOTER
-          ═══════════════════════════════════════ */}
       <footer
         className={cn(
-          "py-16 bg-background text-center",
-          mode === "edit" && "pb-32", // Extra padding for toolbar
+          "relative overflow-hidden py-14 text-center sm:py-20",
+          mode === "edit" && "pb-32",
         )}
+        style={{
+          background: `linear-gradient(to bottom, ${C.bg}, ${C.maroonDark})`,
+        }}
       >
-        <div className="container mx-auto px-4">
-          <div className="text-accent text-3xl mb-4">✿</div>
-          <p className="font-script text-3xl text-primary">
+        <BokehOverlay count={15} />
+        <GoldDivider />
+        <div className="relative z-10 mx-auto mt-6 max-w-md px-6 sm:mt-8">
+          <p
+            className="mb-2 text-3xl sm:text-4xl"
+            style={{ fontFamily: FONTS.script, color: C.gold }}
+          >
             {data.brideName?.split(" ")[0] || "Bride"} &{" "}
             {data.groomName?.split(" ")[0] || "Groom"}
           </p>
-          <p className="font-body text-sm text-muted-foreground mt-2">
+          <p className="text-sm mt-3" style={{ color: C.textMuted }}>
             {formatWeddingDate(data.weddingDate)}
           </p>
           {data.hashtag && (
-            <p className="font-body text-sm text-accent mt-4">{data.hashtag}</p>
+            <p className="text-sm mt-4" style={{ color: C.gold }}>
+              {data.hashtag}
+            </p>
           )}
-          <p className="font-body text-[10px] text-muted-foreground/50 mt-8">
+          <p className="text-[10px] mt-8" style={{ color: `${C.textMuted}80` }}>
             Made with love on ShubhAarambh
           </p>
         </div>
       </footer>
 
-      {/* ═══════════════════════════════════════
-          EDIT MODE TOOLBAR
-          ═══════════════════════════════════════ */}
       {mode === "edit" && (
         <EditModeToolbar
           onSaveDraft={onSaveDraft}
@@ -623,13 +410,10 @@ const CrimsonShaadiTemplate = ({
           isSaving={isSaving}
           isPublishing={isPublishing}
           invitationId={data.invitationId}
-          hasUnsavedChanges={true} // TODO: Track actual dirty state
+          hasUnsavedChanges={true}
         />
       )}
 
-      {/* ═══════════════════════════════════════
-          FLOATING MUSIC PLAYER (View/Demo only)
-          ═══════════════════════════════════════ */}
       {mode !== "edit" && effectiveMusicUrl && (
         <FloatingMusicPlayer
           musicUrl={effectiveMusicUrl}
@@ -640,73 +424,1115 @@ const CrimsonShaadiTemplate = ({
   );
 };
 
-// Countdown display component
-const CountdownDisplay = ({ weddingDate }: { weddingDate: string }) => {
-  const [countdown, setCountdown] = useState<{
-    days: number;
-    hours: number;
-    minutes: number;
-    seconds: number;
-  } | null>(null);
+/* ====== GOLD DIVIDER ====== */
+const GoldDivider = ({ className = "" }: { className?: string }) => (
+  <div className={cn("flex items-center justify-center gap-3 my-6", className)}>
+    <div
+      className="h-px flex-1 max-w-[100px]"
+      style={{
+        background: `linear-gradient(to right, transparent, ${C.gold})`,
+      }}
+    />
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
+        fill="url(#divGrad)"
+      />
+      <defs>
+        <linearGradient id="divGrad" x1="2" y1="2" x2="22" y2="22">
+          <stop offset="0%" stopColor="#f6d776" />
+          <stop offset="50%" stopColor="#d4af37" />
+          <stop offset="100%" stopColor="#b8962e" />
+        </linearGradient>
+      </defs>
+    </svg>
+    <div
+      className="h-px flex-1 max-w-[100px]"
+      style={{ background: `linear-gradient(to left, transparent, ${C.gold})` }}
+    />
+  </div>
+);
 
-  useEffect(() => {
-    const update = () => {
-      if (!weddingDate) {
-        setCountdown(null);
-        return;
-      }
-      const wedding = new Date(weddingDate);
-      const now = new Date();
-      const diff = wedding.getTime() - now.getTime();
-      if (diff <= 0) {
-        setCountdown(null);
-        return;
-      }
+/* ====== GOLDEN FLORAL ORNAMENT (flanks the mandala) ====== */
+const GoldenFloral = ({ flip = false }: { flip?: boolean }) => (
+  <motion.svg
+    initial={{ opacity: 0, scale: 0.5 }}
+    animate={{ opacity: 1, scale: 1 }}
+    transition={{ delay: 0.6, duration: 1, ease: "easeOut" }}
+    width="80"
+    height="180"
+    viewBox="0 0 80 180"
+    fill="none"
+    style={{ transform: flip ? "scaleX(-1)" : "none" }}
+  >
+    {/* Main stem */}
+    <path
+      d="M40 170 C40 130, 20 100, 40 70 C60 40, 40 20, 40 10"
+      stroke="url(#floralGrad)"
+      strokeWidth="1.5"
+      fill="none"
+    />
+    {/* Petals left */}
+    <ellipse
+      cx="25"
+      cy="50"
+      rx="18"
+      ry="8"
+      fill="url(#floralGrad)"
+      opacity="0.3"
+      transform="rotate(-30 25 50)"
+    />
+    <ellipse
+      cx="20"
+      cy="80"
+      rx="16"
+      ry="7"
+      fill="url(#floralGrad)"
+      opacity="0.25"
+      transform="rotate(-20 20 80)"
+    />
+    <ellipse
+      cx="22"
+      cy="110"
+      rx="15"
+      ry="7"
+      fill="url(#floralGrad)"
+      opacity="0.2"
+      transform="rotate(-25 22 110)"
+    />
+    {/* Petals right */}
+    <ellipse
+      cx="55"
+      cy="60"
+      rx="16"
+      ry="7"
+      fill="url(#floralGrad)"
+      opacity="0.3"
+      transform="rotate(25 55 60)"
+    />
+    <ellipse
+      cx="58"
+      cy="90"
+      rx="15"
+      ry="7"
+      fill="url(#floralGrad)"
+      opacity="0.25"
+      transform="rotate(20 58 90)"
+    />
+    <ellipse
+      cx="55"
+      cy="120"
+      rx="14"
+      ry="6"
+      fill="url(#floralGrad)"
+      opacity="0.2"
+      transform="rotate(30 55 120)"
+    />
+    {/* Flower at top */}
+    <circle cx="40" cy="15" r="6" fill="url(#floralGrad)" opacity="0.5" />
+    {[0, 60, 120, 180, 240, 300].map((a, i) => (
+      <ellipse
+        key={i}
+        cx={40 + 10 * Math.cos((a * Math.PI) / 180)}
+        cy={15 + 10 * Math.sin((a * Math.PI) / 180)}
+        rx="5"
+        ry="3"
+        fill="url(#floralGrad)"
+        opacity="0.35"
+        transform={`rotate(${a} ${40 + 10 * Math.cos((a * Math.PI) / 180)} ${15 + 10 * Math.sin((a * Math.PI) / 180)})`}
+      />
+    ))}
+    {/* Small dots */}
+    <circle cx="15" cy="60" r="2" fill={C.gold} opacity="0.4" />
+    <circle cx="65" cy="70" r="2" fill={C.gold} opacity="0.4" />
+    <circle cx="18" cy="130" r="1.5" fill={C.gold} opacity="0.3" />
+    <circle cx="62" cy="140" r="1.5" fill={C.gold} opacity="0.3" />
+    <circle cx="40" cy="155" r="2" fill={C.gold} opacity="0.3" />
+    <defs>
+      <linearGradient id="floralGrad" x1="0" y1="0" x2="80" y2="180">
+        <stop offset="0%" stopColor="#f6d776" />
+        <stop offset="50%" stopColor="#d4af37" />
+        <stop offset="100%" stopColor="#b8962e" />
+      </linearGradient>
+    </defs>
+  </motion.svg>
+);
 
-      setCountdown({
-        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-        minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
-        seconds: Math.floor((diff % (1000 * 60)) / 1000),
-      });
-    };
+/* ====== MANDALA FRAME ====== */
+const MandalaFrame = ({
+  children,
+  size = 240,
+}: {
+  children: React.ReactNode;
+  size?: number;
+}) => (
+  <div
+    className="relative inline-flex items-center justify-center"
+    style={{ width: size, height: size }}
+  >
+    <svg
+      className="absolute inset-0"
+      viewBox="0 0 240 240"
+      fill="none"
+      style={{ width: size, height: size }}
+    >
+      {/* Outer decorative ring */}
+      <circle
+        cx="120"
+        cy="120"
+        r="118"
+        stroke="url(#mandalaGrad)"
+        strokeWidth="2"
+        opacity="0.7"
+      />
+      <circle
+        cx="120"
+        cy="120"
+        r="108"
+        stroke="url(#mandalaGrad)"
+        strokeWidth="1"
+        opacity="0.4"
+      />
+      {Array.from({ length: 28 }).map((_, i) => {
+        const angle = (i * 360) / 28;
+        const rad = (angle * Math.PI) / 180;
+        const cx = 120 + 118 * Math.cos(rad);
+        const cy = 120 + 118 * Math.sin(rad);
+        return (
+          <ellipse
+            key={i}
+            cx={cx}
+            cy={cy}
+            rx="6"
+            ry="3"
+            fill="url(#mandalaGrad)"
+            opacity={i % 2 === 0 ? "0.5" : "0.3"}
+            transform={`rotate(${angle} ${cx} ${cy})`}
+          />
+        );
+      })}
+      {Array.from({ length: 14 }).map((_, i) => {
+        const angle = (i * 360) / 14;
+        const rad = (angle * Math.PI) / 180;
+        return (
+          <circle
+            key={`d${i}`}
+            cx={120 + 112 * Math.cos(rad)}
+            cy={120 + 112 * Math.sin(rad)}
+            r="2.5"
+            fill="url(#mandalaGrad)"
+            opacity="0.6"
+          />
+        );
+      })}
+      <defs>
+        <linearGradient id="mandalaGrad" x1="0" y1="0" x2="240" y2="240">
+          <stop offset="0%" stopColor="#f6d776" />
+          <stop offset="50%" stopColor="#d4af37" />
+          <stop offset="100%" stopColor="#b8962e" />
+        </linearGradient>
+      </defs>
+    </svg>
+    <div
+      className="rounded-full overflow-hidden relative z-10"
+      style={{
+        width: size * 0.82,
+        height: size * 0.82,
+        border: `3px solid ${C.gold}`,
+        boxShadow: `0 0 40px ${C.gold}45, 0 0 80px ${C.gold}16`,
+        background:
+          "radial-gradient(circle at 50% 40%, rgba(95,26,22,0.9), rgba(50,12,12,0.98))",
+      }}
+    >
+      {children}
+    </div>
+  </div>
+);
 
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
-  }, [weddingDate]);
-
-  if (!countdown)
-    return (
-      <p className="font-body text-muted-foreground">
-        Set wedding date to see countdown
-      </p>
-    );
-
+/* ====== BOKEH OVERLAY (warm golden light particles) ====== */
+const BokehOverlay = ({ count = 30 }: { count?: number }) => {
+  const particles = useMemo(() => generateBokeh(count), [count]);
   return (
-    <div className="flex justify-center gap-4 sm:gap-8">
-      {[
-        { value: countdown.days, label: "Days" },
-        { value: countdown.hours, label: "Hours" },
-        { value: countdown.minutes, label: "Minutes" },
-        { value: countdown.seconds, label: "Seconds" },
-      ].map((item, i) => (
-        <div key={i} className="text-center">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-card border border-border flex items-center justify-center mb-2">
-            <span className="font-heading text-2xl sm:text-3xl font-bold text-primary">
-              {String(item.value).padStart(2, "0")}
-            </span>
-          </div>
-          <span className="font-body text-xs text-muted-foreground">
-            {item.label}
-          </span>
-        </div>
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {particles.map((p) => (
+        <motion.div
+          key={p.id}
+          className="absolute rounded-full"
+          style={{
+            left: p.left,
+            top: p.top,
+            width: p.size,
+            height: p.size,
+            background: `radial-gradient(circle, rgba(244,210,100,${p.opacity}) 0%, rgba(212,175,55,${p.opacity * 0.3}) 60%, transparent 100%)`,
+            filter: `blur(${p.blur}px)`,
+          }}
+          animate={{
+            opacity: [0, p.opacity, p.opacity * 0.5, p.opacity, 0],
+            scale: [0.6, 1, 1.1, 1, 0.6],
+          }}
+          transition={{
+            duration: p.duration,
+            repeat: Infinity,
+            delay: p.delay,
+            ease: "easeInOut",
+          }}
+        />
       ))}
     </div>
   );
 };
 
-// RSVP Section component
+/* ====== FLOATING HEARTS ====== */
+const FloatingHearts = ({ count = 6 }: { count?: number }) => {
+  const hearts = useMemo(() => generateHearts(count), [count]);
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {hearts.map((h) => (
+        <motion.div
+          key={h.id}
+          className="absolute"
+          style={{ left: h.left, bottom: "-20px" }}
+          animate={{
+            y: [0, -600],
+            x: [0, h.drift],
+            opacity: [0, 0.6, 0.4, 0],
+            rotate: [0, h.drift > 0 ? 15 : -15],
+          }}
+          transition={{
+            duration: h.duration,
+            repeat: Infinity,
+            delay: h.delay,
+            ease: "easeOut",
+          }}
+        >
+          <Heart size={h.size} fill={C.gold} color={C.gold} opacity={0.5} />
+        </motion.div>
+      ))}
+    </div>
+  );
+};
+
+/* ====== GOLD ORNAMENT TOP ====== */
+const GoldOrnamentTop = () => (
+  <svg width="240" height="50" viewBox="0 0 240 50" fill="none">
+    <path
+      d="M20 25 Q45 5 70 25 Q95 45 120 25 Q145 5 170 25 Q195 45 220 25"
+      stroke="url(#ornGrad)"
+      strokeWidth="1.2"
+      fill="none"
+      opacity="0.8"
+    />
+    <path
+      d="M50 25 Q75 12 100 25 Q125 38 150 25 Q175 12 200 25"
+      stroke="url(#ornGrad)"
+      strokeWidth="0.8"
+      fill="none"
+      opacity="0.5"
+    />
+    {/* Center diamond */}
+    <path d="M120 8L124 16L120 24L116 16Z" fill="url(#ornGrad)" opacity="0.7" />
+    <circle cx="95" cy="18" r="2" fill={C.gold} opacity="0.5" />
+    <circle cx="145" cy="18" r="2" fill={C.gold} opacity="0.5" />
+    <circle cx="70" cy="22" r="1.5" fill={C.gold} opacity="0.3" />
+    <circle cx="170" cy="22" r="1.5" fill={C.gold} opacity="0.3" />
+    <defs>
+      <linearGradient id="ornGrad" x1="20" y1="0" x2="220" y2="50">
+        <stop offset="0%" stopColor="#b8962e" />
+        <stop offset="50%" stopColor="#f6d776" />
+        <stop offset="100%" stopColor="#b8962e" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+/* ====== HERO SECTION ====== */
+const HeroSection = ({
+  mode,
+  data,
+  onUpdate,
+  templateId,
+  sessionUUID,
+  uploadStage,
+}: {
+  mode: TemplateProps["mode"];
+  data: TemplateProps["data"];
+  onUpdate: TemplateProps["onUpdate"];
+  templateId?: number;
+  sessionUUID?: string;
+  uploadStage?: "temp" | "draft" | "published";
+}) => {
+  const heroPhoto = getHeroPhoto(data);
+  const portraitPhoto = getPortraitPhoto(data);
+
+  return (
+    <section
+      className="relative min-h-[100dvh] overflow-hidden"
+      style={{
+        background: `
+          radial-gradient(circle at 50% 0%, rgba(255,198,120,0.18), transparent 26%),
+          linear-gradient(180deg, rgba(42,10,10,0.78) 0%, rgba(58,16,16,0.82) 32%, rgba(64,18,18,0.9) 55%, rgba(34,8,8,0.98) 100%)
+        `,
+      }}
+    >
+      <div className="absolute inset-0">
+        {mode === "edit" ? (
+          <EditablePhoto
+            photoUrl={data.couplePhotoUrl}
+            onSave={(url) => onUpdate({ couplePhotoUrl: url })}
+            mode={mode}
+            className="w-full h-full"
+            placeholderText="Add Couple Photo"
+            templateId={templateId}
+            sessionUUID={sessionUUID}
+            uploadStage={uploadStage}
+            invitationId={data.invitationId ?? undefined}
+            oldPublicUrl={data.couplePhotoUrl || undefined}
+          />
+        ) : (
+          heroPhoto && (
+            <img
+              src={heroPhoto}
+              alt={`${data.groomName} & ${data.brideName}`}
+              className="w-full h-full object-cover object-top"
+            />
+          )
+        )}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `
+              linear-gradient(180deg, rgba(35,10,10,0.18) 0%, rgba(56,20,18,0.34) 28%, rgba(58,16,16,0.74) 54%, rgba(31,8,8,0.98) 100%),
+              radial-gradient(circle at 50% 28%, transparent 0%, rgba(30,8,8,0.12) 34%, rgba(24,6,6,0.8) 78%),
+              linear-gradient(0deg, rgba(23,7,7,0.95) 0%, rgba(23,7,7,0) 36%)
+            `,
+          }}
+        />
+        <div
+          className="absolute inset-x-0 bottom-0 h-[48%]"
+          style={{
+            background: `
+              radial-gradient(circle at 50% 0%, rgba(255,218,145,0.12), transparent 20%),
+              linear-gradient(180deg, rgba(70,22,18,0) 0%, rgba(70,22,18,0.62) 20%, rgba(44,12,12,0.96) 100%)
+            `,
+          }}
+        />
+      </div>
+
+      <BokehOverlay count={42} />
+      <FloatingHearts count={7} />
+
+      <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-5xl flex-col items-center justify-end px-4 pb-12 pt-10 text-center sm:px-6 sm:pb-16 sm:pt-12">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+          className="mb-6 sm:mb-10"
+        >
+          <GoldOrnamentTop />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.9 }}
+          className="relative w-full max-w-2xl rounded-[1.6rem] border px-4 pb-24 pt-8 sm:rounded-[2rem] sm:px-10 sm:pb-32 sm:pt-12"
+          style={{
+            background: `
+              linear-gradient(180deg, rgba(86,32,26,0.36) 0%, rgba(64,20,18,0.48) 38%, rgba(48,14,14,0.74) 100%),
+              radial-gradient(circle at 50% 22%, rgba(255,220,145,0.08), transparent 30%)
+            `,
+            borderColor: "rgba(212,175,55,0.28)",
+            boxShadow:
+              "0 28px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,235,190,0.16), 0 0 0 1px rgba(111,51,25,0.18)",
+            backdropFilter: "blur(6px)",
+          }}
+        >
+          <div
+            className="absolute inset-3 rounded-[1.25rem] border sm:inset-4 sm:rounded-[1.5rem]"
+            style={{ borderColor: "rgba(212,175,55,0.14)" }}
+          />
+          <div className="relative z-10">
+            <div
+              className="mx-auto mb-4 h-px w-28 sm:mb-6 sm:w-44"
+              style={{
+                background: `linear-gradient(to right, transparent, ${C.gold}, transparent)`,
+              }}
+            />
+            <motion.h1
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35, duration: 0.9 }}
+              className="text-[2.6rem] leading-none sm:text-6xl md:text-7xl"
+              style={{
+                fontFamily: FONTS.script,
+                color: C.gold,
+                textShadow:
+                  "0 0 40px rgba(212,175,55,0.2), 0 2px 12px rgba(0,0,0,0.45)",
+              }}
+            >
+              Wedding Invitation
+            </motion.h1>
+            <p
+              className="mt-2 text-[11px] uppercase tracking-[0.34em] sm:text-xs"
+              style={{ color: `${C.goldLight}d5` }}
+            >
+              Together with our families
+            </p>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.55, duration: 0.75 }}
+              className="mx-auto mt-4 max-w-lg text-[1.1rem] leading-relaxed sm:text-[1.45rem]"
+              style={{ color: C.cream, fontFamily: FONTS.body }}
+            >
+              <EditableText
+                value={
+                  data.welcomeMessage ||
+                  "Request the honor of your presence as we celebrate our wedding with love, blessings, and joy."
+                }
+                onSave={(val) => onUpdate({ welcomeMessage: val })}
+                mode={mode}
+                placeholder="Request the honor of your presence..."
+                className="italic"
+                as="span"
+              />
+            </motion.p>
+            <div
+              className="mx-auto mt-6 h-px w-28"
+              style={{
+                background: `linear-gradient(to right, transparent, ${C.gold}90, transparent)`,
+              }}
+            />
+          </div>
+
+          <div className="absolute inset-x-0 -bottom-[6.3rem] flex justify-center sm:-bottom-[7.4rem]">
+            <div className="relative">
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[0.66] sm:scale-100">
+                <HeroRingOrnaments />
+              </div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.75 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.8, duration: 0.9, ease: "easeOut" }}
+                className="relative z-10"
+              >
+                <MandalaFrame size={190}>
+                  {mode === "edit" ? (
+                    <EditablePhoto
+                      photoUrl={data.bridePhotoUrl || data.couplePhotoUrl}
+                      onSave={(url) => onUpdate({ bridePhotoUrl: url })}
+                      mode={mode}
+                      className="w-full h-full"
+                      placeholderText="Couple Photo"
+                      templateId={templateId}
+                      sessionUUID={sessionUUID}
+                      uploadStage={uploadStage}
+                      invitationId={data.invitationId ?? undefined}
+                      oldPublicUrl={data.bridePhotoUrl || undefined}
+                    />
+                  ) : (
+                    portraitPhoto ? (
+                      <img
+                        src={portraitPhoto}
+                        alt="Couple"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center px-6 text-center">
+                        <span
+                          className="text-sm uppercase tracking-[0.28em]"
+                          style={{ color: `${C.goldLight}cc` }}
+                        >
+                          Couple Photo
+                        </span>
+                      </div>
+                    )
+                  )}
+                </MandalaFrame>
+              </motion.div>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.1, duration: 0.8 }}
+          className="mt-28 flex flex-col items-center sm:mt-36"
+        >
+          <p
+            className="text-[10px] uppercase tracking-[0.38em] sm:text-xs sm:tracking-[0.5em]"
+            style={{ color: `${C.goldLight}cc` }}
+          >
+            A Celebration of Marriage
+          </p>
+          <div className="mt-3 flex flex-col items-center gap-1 sm:flex-row sm:gap-5">
+            <EditableText
+              value={data.brideName}
+              onSave={(val) => onUpdate({ brideName: val })}
+              mode={mode}
+              placeholder="Bride's Name"
+              className="text-3xl sm:text-5xl md:text-6xl"
+              as="h2"
+            />
+            <span
+              className="text-2xl sm:text-4xl"
+              style={{ color: C.goldLight, fontFamily: FONTS.script }}
+            >
+              &
+            </span>
+            <EditableText
+              value={data.groomName}
+              onSave={(val) => onUpdate({ groomName: val })}
+              mode={mode}
+              placeholder="Groom's Name"
+              className="text-3xl sm:text-5xl md:text-6xl"
+              as="h2"
+            />
+          </div>
+
+          {mode === "edit" ? (
+            <div className="mt-5">
+              <label className="mb-1 block text-xs" style={{ color: C.textMuted }}>
+                Wedding Date
+              </label>
+              <input
+                type="date"
+                value={data.weddingDate}
+                onChange={(e) => onUpdate({ weddingDate: e.target.value })}
+                className="rounded-full border px-5 py-2 text-sm"
+                style={{
+                  backgroundColor: "rgba(58,20,20,0.78)",
+                  borderColor: `${C.gold}66`,
+                  color: C.cream,
+                }}
+              />
+            </div>
+          ) : (
+            <p
+              className="mt-4 text-xs uppercase tracking-[0.28em] sm:mt-5 sm:text-base sm:tracking-[0.38em]"
+              style={{ color: `${C.goldLight}c7` }}
+            >
+              {formatWeddingDate(data.weddingDate)}
+            </p>
+          )}
+        </motion.div>
+      </div>
+
+      <motion.div
+        animate={{ y: [0, 10, 0] }}
+        transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+        className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 text-center"
+      >
+        <ChevronDown className="mx-auto h-6 w-6" style={{ color: C.goldLight }} />
+      </motion.div>
+    </section>
+  );
+};
+
+/* ====== OUR STORY TIMELINE ====== */
+const OurStorySection = ({
+  mode,
+  data,
+  onUpdate,
+}: {
+  mode: TemplateProps["mode"];
+  data: TemplateProps["data"];
+  onUpdate: TemplateProps["onUpdate"];
+}) => {
+  const milestones = [
+    {
+      year: "2018",
+      icon: "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z",
+      title: "First Meet",
+      venue: "Royale Resort",
+    },
+    {
+      year: "2021",
+      icon: eventIconSVG.Engagement,
+      title: "Engagement",
+      venue: "Family Villa",
+    },
+    {
+      year: new Date(data.weddingDate).getFullYear().toString() || "2026",
+      icon: "M12 2L14.5 9.5 22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5L12 2z",
+      title: "Wedding",
+      venue: data.events[0]?.venueName || "Grand Ballroom",
+    },
+  ];
+
+  return (
+    <section
+      className="relative overflow-hidden py-24 sm:py-28"
+      style={{
+        background: `
+          radial-gradient(circle at 50% 0%, rgba(255,198,120,0.08), transparent 24%),
+          linear-gradient(180deg, rgba(58,16,16,0.84) 0%, rgba(72,22,20,0.9) 35%, rgba(40,10,10,0.98) 100%)
+        `,
+      }}
+    >
+      <BokehOverlay count={20} />
+      <FloatingHearts count={3} />
+      <div className="relative z-10 mx-auto max-w-5xl px-6">
+        <SectionTitle title="Our Story" />
+        <motion.div
+          initial={{ opacity: 0, scale: 0 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3, duration: 0.6, type: "spring" }}
+          className="mb-10 mt-8 flex justify-center"
+        >
+          <Heart
+            size={28}
+            fill={C.gold}
+            color={C.gold}
+            style={{ filter: "drop-shadow(0 0 8px rgba(212,175,55,0.5))" }}
+          />
+        </motion.div>
+
+        <div
+          className="relative rounded-[2rem] border px-4 py-8 sm:px-8 sm:py-10"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(91,32,30,0.2) 0%, rgba(52,14,14,0.38) 100%)",
+            borderColor: "rgba(212,175,55,0.14)",
+            boxShadow: "inset 0 1px 0 rgba(255,230,186,0.08)",
+          }}
+        >
+          <div
+            className="absolute left-8 right-8 top-[4.65rem] hidden h-px sm:block"
+            style={{
+              background: `linear-gradient(to right, transparent, ${C.gold}88 12%, ${C.goldLight}, ${C.gold}88 88%, transparent)`,
+            }}
+          />
+          <div
+            className="absolute bottom-8 left-1/2 top-8 w-px -translate-x-1/2 sm:hidden"
+            style={{
+              background: `linear-gradient(to bottom, transparent, ${C.gold}88 12%, ${C.goldLight}, ${C.gold}88 88%, transparent)`,
+            }}
+          />
+          <div className="relative grid gap-10 sm:grid-cols-3 sm:gap-6">
+          {milestones.map((m, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.2, duration: 0.7, ease: "easeOut" }}
+              className="text-center relative"
+            >
+              <motion.div
+                className="mb-4 flex justify-center"
+                whileInView={{ rotate: [0, 10, -10, 0] }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.5 + i * 0.2, duration: 0.6 }}
+              >
+                <div
+                  className="flex h-14 w-14 items-center justify-center rounded-full border"
+                  style={{
+                    borderColor: `${C.gold}66`,
+                    background:
+                      "radial-gradient(circle at 50% 30%, rgba(255,223,157,0.18), rgba(91,32,30,0.72))",
+                    boxShadow: "0 0 28px rgba(212,175,55,0.12)",
+                  }}
+                >
+                  <GoldIcon d={m.icon} size={24} />
+                </div>
+              </motion.div>
+              <p
+                className="text-3xl sm:text-4xl font-bold"
+                style={{ fontFamily: FONTS.heading, color: C.cream }}
+              >
+                {m.year}
+              </p>
+              <p
+                className="mt-2 text-xl"
+                style={{ color: C.cream, fontFamily: FONTS.body }}
+              >
+                {m.title}
+              </p>
+              <p
+                className="mt-2 flex items-center justify-center gap-1 text-xs sm:text-sm"
+                style={{ color: C.textMuted }}
+              >
+                <MapPin size={10} style={{ color: C.gold }} /> {m.venue}
+              </p>
+            </motion.div>
+          ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+/* ====== WEDDING EVENTS (GRID, not scroll) ====== */
+const WeddingEventsSection = ({
+  mode,
+  data,
+  onUpdate,
+}: {
+  mode: TemplateProps["mode"];
+  data: TemplateProps["data"];
+  onUpdate: TemplateProps["onUpdate"];
+}) => (
+  <section
+    className="relative overflow-hidden py-24 sm:py-28"
+    style={{
+      background: `
+        radial-gradient(circle at 50% 0%, rgba(255,205,130,0.08), transparent 22%),
+        linear-gradient(180deg, rgba(58,16,16,0.95) 0%, rgba(76,22,20,0.98) 42%, rgba(35,9,9,1) 100%)
+      `,
+    }}
+  >
+    <BokehOverlay count={18} />
+    <div className="relative z-10 mx-auto max-w-6xl px-6">
+      <SectionTitle title="Wedding Events" />
+
+      {mode === "edit" ? (
+        <div className="space-y-4 mt-10">
+          {data.events.map((event, i) => (
+            <EditableEventCard
+              key={event.id || i}
+              event={event}
+              onUpdate={(updates) => {
+                const newEvents = [...data.events];
+                newEvents[i] = { ...newEvents[i], ...updates };
+                onUpdate({ events: newEvents });
+              }}
+              onDelete={() => {
+                const newEvents = data.events.filter((_, idx) => idx !== i);
+                onUpdate({ events: newEvents });
+              }}
+              mode={mode}
+              index={i}
+            />
+          ))}
+          <AddEventButton
+            onAdd={() => {
+              const newEvent: EventData = {
+                id: null,
+                eventName: "New Event",
+                eventDate: "",
+                eventTime: "",
+                venueName: "",
+                venueAddress: "",
+                mapsUrl: null,
+              };
+              onUpdate({ events: [...data.events, newEvent] });
+            }}
+            mode={mode}
+            maxEvents={8}
+            currentCount={data.events.length}
+          />
+        </div>
+      ) : (
+        <div className="mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
+          {data.events.map((event, i) => (
+            <motion.div
+              key={event.id || i}
+              initial={{ opacity: 0, scale: 0.8, y: 30 }}
+              whileInView={{ opacity: 1, scale: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ delay: i * 0.1, duration: 0.6, ease: "easeOut" }}
+              whileHover={{
+                scale: 1.05,
+                y: -5,
+                boxShadow: "0 8px 40px rgba(212,175,55,0.4)",
+              }}
+              className="relative min-h-[158px] overflow-hidden rounded-[1.25rem] p-3 text-center sm:min-h-[170px] sm:rounded-2xl sm:p-5"
+              style={{
+                background:
+                  "radial-gradient(circle at 50% 18%, rgba(255,219,141,0.16), transparent 36%), linear-gradient(145deg, rgba(106,56,24,0.95), rgba(82,30,14,0.96) 45%, rgba(56,16,12,0.96) 100%)",
+                border: `1.6px solid ${C.gold}75`,
+                boxShadow: `0 18px 32px rgba(0,0,0,0.28), 0 0 20px ${C.gold}1f, inset 0 1px 0 rgba(255,233,185,0.18)`,
+                cursor: "default",
+              }}
+            >
+              <div
+                className="pointer-events-none absolute inset-2 rounded-[1.1rem] border"
+                style={{ borderColor: "rgba(246,215,118,0.16)" }}
+              />
+              <div
+                className="absolute left-2 top-2 h-6 w-6 rounded-tl-xl border-l border-t"
+                style={{ borderColor: `${C.gold}80` }}
+              />
+              <div
+                className="absolute right-2 top-2 h-6 w-6 rounded-tr-xl border-r border-t"
+                style={{ borderColor: `${C.gold}80` }}
+              />
+              <div
+                className="absolute bottom-2 left-2 h-6 w-6 rounded-bl-xl border-b border-l"
+                style={{ borderColor: `${C.gold}80` }}
+              />
+              <div
+                className="absolute bottom-2 right-2 h-6 w-6 rounded-br-xl border-b border-r"
+                style={{ borderColor: `${C.gold}80` }}
+              />
+              <div className="relative z-10 flex h-full flex-col items-center justify-center">
+              <motion.div
+                whileInView={{ rotate: [0, 360] }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3 + i * 0.1, duration: 0.8 }}
+                className="mb-2"
+              >
+                <GoldIcon
+                  d={eventIconSVG[event.eventName] || eventIconSVG.Wedding}
+                  size={20}
+                />
+              </motion.div>
+              <h3
+                className="text-[11px] font-bold uppercase sm:text-sm"
+                style={{
+                  fontFamily: FONTS.heading,
+                  color: C.cream,
+                  letterSpacing: "0.05em",
+                }}
+              >
+                {event.eventName}
+              </h3>
+              <p
+                className="mt-2 text-xs font-semibold sm:mt-3 sm:text-sm"
+                style={{ color: C.gold }}
+              >
+                {formatEventDate(event.eventDate)}
+              </p>
+              <p
+                className="mt-2 flex items-center justify-center gap-1 text-[10px] sm:text-xs"
+                style={{ color: C.textMuted }}
+              >
+                <MapPin size={9} style={{ color: C.gold }} /> {event.venueName}
+              </p>
+              {event.mapsUrl && (
+                <a
+                  href={event.mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 mt-1 text-[10px] hover:underline"
+                  style={{ color: C.goldLight }}
+                >
+                  Map
+                </a>
+              )}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+);
+
+/* ====== GALLERY ====== */
+const GallerySection = ({
+  mode,
+  data,
+  onUpdate,
+  templateId,
+  sessionUUID,
+  uploadStage,
+}: {
+  mode: TemplateProps["mode"];
+  data: TemplateProps["data"];
+  onUpdate: TemplateProps["onUpdate"];
+  templateId?: number;
+  sessionUUID?: string;
+  uploadStage?: "temp" | "draft" | "published";
+}) => {
+  const displayPhotos = getDisplayPhotos(data);
+  const collagePhotos = displayPhotos.slice(0, 7);
+
+  return (
+    <section
+      className="relative overflow-hidden py-24 sm:py-28"
+      style={{
+        background: `
+          radial-gradient(circle at 50% 0%, rgba(255,205,130,0.08), transparent 24%),
+          linear-gradient(180deg, rgba(72,22,20,0.98) 0%, rgba(62,18,18,0.96) 44%, rgba(34,8,8,1) 100%)
+        `,
+      }}
+    >
+      <BokehOverlay count={20} />
+      <div className="relative z-10 mx-auto max-w-6xl px-6">
+        <SectionTitle title="Gallery" subtitle="Our Beautiful Moments" />
+        <motion.div
+          className="mt-12"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        >
+          {mode === "edit" ? (
+            <EditablePhotoGallery
+              photos={data.galleryPhotos}
+              defaultPhotos={data.templateDefaults.defaultPhotos}
+              onUpdate={(photos) => onUpdate({ galleryPhotos: photos })}
+              mode={mode}
+              maxPhotos={10}
+              invitationId={data.invitationId ?? undefined}
+              templateId={templateId}
+              sessionUUID={sessionUUID}
+              uploadStage={uploadStage}
+            />
+          ) : collagePhotos.length > 0 ? (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-12 sm:grid-rows-2">
+              {collagePhotos.map((photo, i) => {
+                const layoutMap = [
+                  "sm:col-span-2 sm:row-span-2",
+                  "sm:col-span-2 sm:row-span-1",
+                  "sm:col-span-3 sm:row-span-2",
+                  "sm:col-span-2 sm:row-span-1",
+                  "sm:col-span-3 sm:row-span-2",
+                  "sm:col-span-2 sm:row-span-1",
+                  "sm:col-span-2 sm:row-span-1",
+                ];
+
+                return (
+                  <motion.div
+                    key={`${photo.photoUrl}-${i}`}
+                    initial={{ opacity: 0, scale: 0.94 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.08, duration: 0.45 }}
+                    className={cn(
+                      "group relative min-h-[220px] overflow-hidden rounded-[1.4rem] border",
+                      layoutMap[i] || "sm:col-span-3 sm:row-span-1",
+                    )}
+                    style={{
+                      borderColor: "rgba(212,175,55,0.18)",
+                      boxShadow: "0 20px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,233,185,0.12)",
+                    }}
+                  >
+                    <img
+                      src={photo.photoUrl}
+                      alt={`Gallery photo ${i + 1}`}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        background:
+                          "linear-gradient(180deg, rgba(34,8,8,0.05) 0%, rgba(34,8,8,0.15) 50%, rgba(34,8,8,0.42) 100%)",
+                      }}
+                    />
+                    <div
+                      className="pointer-events-none absolute inset-3 rounded-[1rem] border"
+                      style={{ borderColor: "rgba(246,215,118,0.16)" }}
+                    />
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : null}
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+/* ====== OUR FAMILIES ====== */
+const FamiliesSection = ({
+  mode,
+  data,
+  onUpdate,
+}: {
+  mode: TemplateProps["mode"];
+  data: TemplateProps["data"];
+  onUpdate: TemplateProps["onUpdate"];
+}) => (
+  <section
+    className="relative overflow-hidden py-24 sm:py-28"
+    style={{
+      background: `
+        radial-gradient(circle at 50% 0%, rgba(255,205,130,0.06), transparent 20%),
+        linear-gradient(180deg, rgba(64,18,18,0.96) 0%, rgba(78,24,22,0.98) 38%, rgba(30,8,8,1) 100%)
+      `,
+    }}
+  >
+    <BokehOverlay count={12} />
+    <div className="relative z-10 mx-auto max-w-5xl px-6">
+      <SectionTitle title="Our Families" />
+
+      <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2">
+        <motion.div
+          initial={{ opacity: 0, x: -40 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7 }}
+          whileHover={{ y: -4, boxShadow: `0 8px 30px ${C.gold}25` }}
+          className="text-center rounded-[1.75rem] p-8"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 18%, rgba(255,223,157,0.08), transparent 28%), linear-gradient(160deg, rgba(74,24,20,0.88), rgba(46,12,12,0.92))",
+            border: `1.5px solid ${C.gold}35`,
+            boxShadow: `0 18px 35px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,233,185,0.12)`,
+          }}
+        >
+          <div
+            className="mx-auto mb-5 h-px w-40"
+            style={{
+              background: `linear-gradient(to right, transparent, ${C.gold}, transparent)`,
+            }}
+          />
+          <h3
+            className="mb-4 text-2xl font-bold"
+            style={{ fontFamily: FONTS.heading, ...goldGradient }}
+          >
+            Bride's Family
+          </h3>
+          <EditableText
+            value={data.brideBio}
+            onSave={(val) => onUpdate({ brideBio: val })}
+            mode={mode}
+            placeholder="Mother & Father of the Bride..."
+            className="text-lg leading-relaxed"
+            multiline
+            as="p"
+          />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, x: 40 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7 }}
+          whileHover={{ y: -4, boxShadow: `0 8px 30px ${C.gold}25` }}
+          className="text-center rounded-[1.75rem] p-8"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 18%, rgba(255,223,157,0.08), transparent 28%), linear-gradient(160deg, rgba(74,24,20,0.88), rgba(46,12,12,0.92))",
+            border: `1.5px solid ${C.gold}35`,
+            boxShadow: `0 18px 35px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,233,185,0.12)`,
+          }}
+        >
+          <div
+            className="mx-auto mb-5 h-px w-40"
+            style={{
+              background: `linear-gradient(to right, transparent, ${C.gold}, transparent)`,
+            }}
+          />
+          <h3
+            className="mb-4 text-2xl font-bold"
+            style={{ fontFamily: FONTS.heading, ...goldGradient }}
+          >
+            Groom's Family
+          </h3>
+          <EditableText
+            value={data.groomBio}
+            onSave={(val) => onUpdate({ groomBio: val })}
+            mode={mode}
+            placeholder="Mother & Father of the Groom..."
+            className="text-lg leading-relaxed"
+            multiline
+            as="p"
+          />
+        </motion.div>
+      </div>
+    </div>
+  </section>
+);
+
+/* ====== RSVP ====== */
 const RsvpSection = ({
   invitationId,
   isDemo,
@@ -721,6 +1547,7 @@ const RsvpSection = ({
   const [phone, setPhone] = useState("");
   const [guestCount, setGuestCount] = useState(1);
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -728,21 +1555,60 @@ const RsvpSection = ({
       setSubmitted(true);
       return;
     }
-    // TODO: Implement actual RSVP submission
-    setSubmitted(true);
+    if (!invitationId || !attending) return;
+    setIsSubmitting(true);
+    try {
+      await submitRsvp(String(invitationId), {
+        guestName: name,
+        guestPhone: phone,
+        attending: attending === "yes" ? "yes" : "no",
+        guestCount: attending === "no" ? 0 : guestCount,
+      });
+      setSubmitted(true);
+      toast.success("RSVP submitted!");
+    } catch {
+      toast.error("Failed to submit RSVP");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (submitted) {
     return (
-      <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4 max-w-md text-center">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-            <Heart className="w-8 h-8 text-primary fill-primary" />
-          </div>
-          <h3 className="font-heading text-xl font-semibold mb-2">
+      <section
+        className="relative py-16 overflow-hidden"
+        style={{
+          background: `linear-gradient(to bottom, ${C.bg}, ${C.maroonDark})`,
+        }}
+      >
+        <BokehOverlay count={10} />
+        <div className="max-w-md mx-auto px-6 text-center relative z-10">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", duration: 0.6 }}
+          >
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{
+                backgroundColor: `${C.gold}20`,
+                boxShadow: `0 0 30px ${C.gold}30`,
+              }}
+            >
+              <Heart
+                className="w-8 h-8"
+                style={{ color: C.gold }}
+                fill={C.gold}
+              />
+            </div>
+          </motion.div>
+          <h3
+            className="text-xl font-semibold"
+            style={{ color: C.cream, fontFamily: FONTS.heading }}
+          >
             Thank You!
           </h3>
-          <p className="font-body text-sm text-muted-foreground">
+          <p className="text-sm mt-2" style={{ color: C.textMuted }}>
             Your response has been recorded.
           </p>
         </div>
@@ -751,58 +1617,99 @@ const RsvpSection = ({
   }
 
   return (
-    <section className="py-16 bg-muted/30">
-      <div className="container mx-auto px-4 max-w-md">
-        <h2 className="font-heading text-3xl font-bold text-center mb-8">
-          RSVP
-        </h2>
+    <section
+      className="relative overflow-hidden py-20"
+      style={{
+        background: `
+          radial-gradient(circle at 50% 0%, rgba(255,205,130,0.06), transparent 20%),
+          linear-gradient(to bottom, ${C.bg}, ${C.maroonDark})
+        `,
+      }}
+    >
+      <BokehOverlay count={12} />
+      <div className="max-w-md mx-auto px-4 sm:px-6 relative z-10">
+        <SectionTitle title="RSVP" />
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Attendance buttons */}
-          <div className="flex justify-center gap-3">
+        <motion.form
+          onSubmit={handleSubmit}
+          className="mt-8 space-y-5 rounded-[1.5rem] border p-4 sm:mt-10 sm:rounded-[1.8rem] sm:p-8"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7 }}
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(77,22,22,0.5) 0%, rgba(45,12,12,0.72) 100%)",
+            borderColor: "rgba(212,175,55,0.16)",
+            boxShadow: "0 20px 38px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,233,185,0.1)",
+          }}
+        >
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
             {[
-              { value: "yes", label: "Attending", icon: "🎉" },
-              { value: "maybe", label: "Maybe", icon: "🤔" },
-              { value: "no", label: "Cannot Attend", icon: "😢" },
+              { value: "yes" as const, label: "Attending", icon: "\u{1F389}" },
+              { value: "maybe" as const, label: "Maybe", icon: "\u{1F914}" },
+              { value: "no" as const, label: "Cannot", icon: "\u{1F622}" },
             ].map((opt) => (
-              <button
+              <motion.button
                 key={opt.value}
                 type="button"
-                onClick={() => setAttending(opt.value as any)}
-                className={cn(
-                  "px-4 py-3 rounded-xl font-body text-sm transition-all",
-                  attending === opt.value
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-card border border-border hover:border-primary/50",
-                )}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setAttending(opt.value)}
+                className="min-w-[96px] px-3 py-3 rounded-xl text-sm transition-all sm:min-w-0 sm:px-4"
+                style={{
+                  background:
+                    attending === opt.value
+                      ? "linear-gradient(135deg, #d4af37, #f6d776)"
+                      : "linear-gradient(145deg, #3a1a10, #2a0c06)",
+                  color: attending === opt.value ? C.bg : C.cream,
+                  border: `1.5px solid ${attending === opt.value ? C.gold : C.gold + "40"}`,
+                  boxShadow:
+                    attending === opt.value ? `0 0 20px ${C.gold}40` : "none",
+                }}
               >
                 <span className="text-lg mb-1 block">{opt.icon}</span>
                 {opt.label}
-              </button>
+              </motion.button>
             ))}
           </div>
 
           {attending && attending !== "no" && (
-            <>
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              className="space-y-4"
+            >
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Your Name"
                 required
-                className="w-full px-4 py-3 rounded-xl border border-border bg-card font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
+                style={{
+                  background: "linear-gradient(145deg, #3a1a10, #2a0c06)",
+                  border: `1px solid ${C.gold}40`,
+                  color: C.cream,
+                }}
               />
-
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="Phone Number"
-                className="w-full px-4 py-3 rounded-xl border border-border bg-card font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
+                style={{
+                  background: "linear-gradient(145deg, #3a1a10, #2a0c06)",
+                  border: `1px solid ${C.gold}40`,
+                  color: C.cream,
+                }}
               />
-
               <div>
-                <label className="font-body text-sm text-muted-foreground block mb-2">
+                <label
+                  className="text-sm block mb-2"
+                  style={{ color: C.textMuted }}
+                >
                   Number of Guests
                 </label>
                 <input
@@ -811,25 +1718,41 @@ const RsvpSection = ({
                   max={10}
                   value={guestCount}
                   onChange={(e) => setGuestCount(Number(e.target.value))}
-                  className="w-full px-4 py-3 rounded-xl border border-border bg-card font-body text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all"
+                  style={{
+                    background: "linear-gradient(145deg, #3a1a10, #2a0c06)",
+                    border: `1px solid ${C.gold}40`,
+                    color: C.cream,
+                  }}
                 />
               </div>
-            </>
+            </motion.div>
           )}
 
-          <button
+          <motion.button
             type="submit"
-            disabled={!attending}
-            className={cn(
-              "w-full py-3 rounded-xl font-body font-medium text-sm transition-all",
+            disabled={!attending || isSubmitting}
+            whileHover={
               attending
-                ? "btn-gold"
-                : "bg-muted text-muted-foreground cursor-not-allowed",
-            )}
+                ? { scale: 1.02, boxShadow: "0 0 30px rgba(212,175,55,0.5)" }
+                : {}
+            }
+            whileTap={attending ? { scale: 0.98 } : {}}
+            className="w-full py-3 rounded-xl font-medium text-sm transition-all"
+            style={{
+              background: attending
+                ? "linear-gradient(135deg, #d4af37, #f6d776)"
+                : `${C.bgCard}cc`,
+              color: attending ? C.bg : C.textMuted,
+              cursor: attending ? "pointer" : "not-allowed",
+              boxShadow: attending ? "0 0 25px rgba(212,175,55,0.4)" : "none",
+              fontFamily: FONTS.heading,
+              letterSpacing: "0.1em",
+            }}
           >
-            Confirm RSVP
-          </button>
-        </form>
+            {isSubmitting ? "Submitting..." : "Confirm RSVP"}
+          </motion.button>
+        </motion.form>
       </div>
     </section>
   );

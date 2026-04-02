@@ -47,19 +47,19 @@
    ═══════════════════════════════════════ */
 
 [data-theme="crimson"] {
-  --background: 350 40% 96%;
-  --foreground: 350 30% 18%;
-  --primary: 348 75% 35%;
-  --primary-foreground: 0 0% 100%;
-  --accent: 38 72% 50%;
-  --accent-foreground: 0 0% 100%;
-  --card: 0 0% 100%;
-  --card-foreground: 350 30% 18%;
-  --muted: 350 20% 92%;
-  --muted-foreground: 350 10% 45%;
-  --border: 350 20% 88%;
-  --gold: 38 72% 50%;
-  --accent-rgb: 168, 36, 62;
+  --background: 0 60% 10%;
+  --foreground: 35 40% 90%;
+  --primary: 42 70% 45%;
+  --primary-foreground: 0 60% 10%;
+  --accent: 42 70% 45%;
+  --accent-foreground: 0 60% 10%;
+  --card: 0 40% 15%;
+  --card-foreground: 35 40% 90%;
+  --muted: 0 30% 18%;
+  --muted-foreground: 35 25% 55%;
+  --border: 0 25% 22%;
+  --gold: 42 70% 45%;
+  --accent-rgb: 212, 163, 64;
 }
 
 [data-theme="ivory"] {
@@ -239,25 +239,30 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Jost', sans-serif;
+    font-family: "Jost", sans-serif;
   }
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Cormorant Garamond', serif;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Cormorant Garamond", serif;
   }
 }
 
 @layer components {
   .font-script {
-    font-family: 'Great Vibes', cursive;
+    font-family: "Great Vibes", cursive;
   }
   .font-display {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: "Cormorant Garamond", serif;
   }
   .font-heading {
-    font-family: 'Playfair Display', serif;
+    font-family: "Playfair Display", serif;
   }
   .font-body {
-    font-family: 'Jost', sans-serif;
+    font-family: "Jost", sans-serif;
   }
 }
 
@@ -265,10 +270,15 @@
 @layer components {
   .btn-gold {
     @apply relative overflow-hidden font-body font-semibold tracking-wide;
-    background: linear-gradient(135deg, hsl(var(--gold)) 0%, hsl(var(--gold-light)) 50%, hsl(var(--gold)) 100%);
+    background: linear-gradient(
+      135deg,
+      hsl(var(--gold)) 0%,
+      hsl(var(--gold-light)) 50%,
+      hsl(var(--gold)) 100%
+    );
     background-size: 200% 200%;
     color: hsl(var(--background));
-    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .btn-gold:hover {
@@ -282,7 +292,12 @@
 
   .btn-emerald {
     @apply relative overflow-hidden font-body font-semibold tracking-wide;
-    background: linear-gradient(135deg, hsl(var(--emerald)) 0%, hsl(152, 65%, 50%) 50%, hsl(var(--emerald)) 100%);
+    background: linear-gradient(
+      135deg,
+      hsl(var(--emerald)) 0%,
+      hsl(152, 65%, 50%) 50%,
+      hsl(var(--emerald)) 100%
+    );
     background-size: 200% 200%;
     color: #fff;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -307,15 +322,23 @@
   }
   .card-hover:hover {
     transform: translateY(-6px);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2), 0 0 20px rgba(var(--accent-rgb), 0.1);
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.2),
+      0 0 20px rgba(var(--accent-rgb), 0.1);
   }
 }
 
 /* ═══════ KEYFRAMES ═══════ */
 @keyframes shimmer {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 @keyframes petalFall {
@@ -323,8 +346,12 @@
     transform: translateY(-20px) rotate(0deg);
     opacity: 0;
   }
-  10% { opacity: var(--petal-opacity, 0.5); }
-  90% { opacity: var(--petal-opacity, 0.5); }
+  10% {
+    opacity: var(--petal-opacity, 0.5);
+  }
+  90% {
+    opacity: var(--petal-opacity, 0.5);
+  }
   100% {
     transform: translateY(110vh) rotate(720deg) translateX(var(--drift, 40px));
     opacity: 0;
@@ -332,35 +359,67 @@
 }
 
 @keyframes autoScroll {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-60%); }
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-60%);
+  }
 }
 
 @keyframes flipDigit {
-  0% { transform: rotateX(0deg); }
-  50% { transform: rotateX(-90deg); }
-  100% { transform: rotateX(0deg); }
+  0% {
+    transform: rotateX(0deg);
+  }
+  50% {
+    transform: rotateX(-90deg);
+  }
+  100% {
+    transform: rotateX(0deg);
+  }
 }
 
 @keyframes soundWave {
-  0%, 100% { height: 4px; }
-  50% { height: 16px; }
+  0%,
+  100% {
+    height: 4px;
+  }
+  50% {
+    height: 16px;
+  }
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 @keyframes countUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-petal {
@@ -386,13 +445,13 @@
   overflow: hidden;
 }
 .demo-watermark::before {
-  content: 'DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW';
+  content: "DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW  ·  DEMO PREVIEW";
   position: absolute;
   top: -50%;
   left: -50%;
   right: -50%;
   bottom: -50%;
-  font-family: 'Jost', sans-serif;
+  font-family: "Jost", sans-serif;
   font-size: 24px;
   font-weight: 600;
   letter-spacing: 8px;

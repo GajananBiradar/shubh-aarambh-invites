@@ -17,6 +17,7 @@ import {
   EditableText,
   AddEventButton,
   EditablePhotoGallery,
+  EditablePhoto,
   EditableMusicPlayer,
   EditModeToolbar,
 } from "@/components/inline-editor";
@@ -60,6 +61,102 @@ const FONTS = {
 // SVG noise texture for paper/linen effect (matching reference)
 const NOISE_BG = `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`;
 
+const SECTION_REVEAL = {
+  initial: { opacity: 0, y: 24 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, amount: 0.25 },
+};
+
+const PremiumBackground = () => (
+  <>
+    <div
+      className="pointer-events-none absolute inset-0 opacity-[0.05]"
+      style={{
+        backgroundImage:
+          "radial-gradient(circle at 20% 20%, rgba(197,164,109,0.18), transparent 28%), radial-gradient(circle at 80% 0%, rgba(139,112,64,0.12), transparent 24%), radial-gradient(circle at 50% 55%, rgba(255,255,255,0.5), transparent 32%)",
+      }}
+    />
+    <div
+      className="pointer-events-none absolute inset-x-0 top-0 h-40 opacity-60"
+      style={{
+        background:
+          "linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 100%)",
+      }}
+    />
+    <motion.div
+      aria-hidden
+      className="pointer-events-none absolute -left-16 top-[18rem] h-56 w-56 rounded-full blur-3xl"
+      style={{ backgroundColor: `${C.gold}18` }}
+      animate={{ y: [0, 20, -8, 0], x: [0, 8, -6, 0] }}
+      transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+    />
+    <motion.div
+      aria-hidden
+      className="pointer-events-none absolute -right-20 top-[52rem] h-72 w-72 rounded-full blur-3xl"
+      style={{ backgroundColor: `${C.ornament}10` }}
+      animate={{ y: [0, -24, 10, 0], x: [0, -12, 8, 0] }}
+      transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+    />
+  </>
+);
+
+const SectionFlourish = ({
+  invert = false,
+  tone = "gold",
+}: {
+  invert?: boolean;
+  tone?: "gold" | "light";
+}) => (
+  <motion.div
+    {...SECTION_REVEAL}
+    transition={{ duration: 0.65 }}
+    className={cn(
+      "mb-6 flex items-center justify-center gap-3",
+      invert && "flex-row-reverse",
+    )}
+  >
+    <div
+      className="h-px w-12 md:w-16"
+      style={{
+        backgroundColor:
+          tone === "light" ? "rgba(255,255,255,0.55)" : `${C.gold}70`,
+      }}
+    />
+    <span
+      className="text-xs tracking-[0.45em] uppercase"
+      style={{
+        color: tone === "light" ? C.whiteWarm : C.gold,
+        fontFamily: FONTS.body,
+      }}
+    >
+      Aureate
+    </span>
+    <div
+      className="h-px w-12 md:w-16"
+      style={{
+        backgroundColor:
+          tone === "light" ? "rgba(255,255,255,0.55)" : `${C.gold}70`,
+      }}
+    />
+  </motion.div>
+);
+
+const getPremiumDisplayPhotos = (data: TemplateProps["data"]) =>
+  data.galleryPhotos.length > 0
+    ? data.galleryPhotos
+    : data.templateDefaults.defaultPhotos.map((photo, index) => ({
+        photoUrl: photo.photoUrl,
+        sortOrder: index,
+        isDefault: true,
+      }));
+
+const getPremiumHeroPhoto = (data: TemplateProps["data"]) =>
+  data.couplePhotoUrl ||
+  data.bridePhotoUrl ||
+  data.groomPhotoUrl ||
+  getPremiumDisplayPhotos(data)[0]?.photoUrl ||
+  null;
+
 const PremiumEleganteTemplate = ({
   mode,
   data,
@@ -84,7 +181,7 @@ const PremiumEleganteTemplate = ({
   return (
     <div
       data-theme="premium"
-      className="min-h-screen"
+      className="relative min-h-screen overflow-hidden"
       style={{
         backgroundColor: C.bg,
         color: C.text,
@@ -93,6 +190,7 @@ const PremiumEleganteTemplate = ({
         backgroundSize: "200px",
       }}
     >
+      <PremiumBackground />
       {/* ═══════════ HERO SECTION (Video background with names) ═══════════ */}
       <HeroSection
         mode={mode}
@@ -373,9 +471,6 @@ const PremiumEleganteTemplate = ({
 /* ══════════════════════════════════════════════════════════
    HERO SECTION — Video background with names overlay
    ══════════════════════════════════════════════════════════ */
-const VIDEO_URL =
-  "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/7/video/header%20video.mp4";
-
 const HeroSection = ({
   mode,
   data,
@@ -390,39 +485,96 @@ const HeroSection = ({
   templateId?: number;
   sessionUUID?: string;
   uploadStage?: "temp" | "draft" | "published";
-}) => (
-  <section className="relative min-h-[100dvh] flex flex-col items-center justify-center overflow-hidden">
+}) => {
+  const heroPhoto = getPremiumHeroPhoto(data);
+
+  return (
+    <section className="relative min-h-[100dvh] flex flex-col items-center justify-center overflow-hidden px-4 py-16">
     {/* Video background */}
     <div className="absolute inset-0">
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-        preload="metadata"
-      >
-        <source src={VIDEO_URL} type="video/mp4" />
-      </video>
+      {mode === "edit" ? (
+        <EditablePhoto
+          photoUrl={data.couplePhotoUrl}
+          onSave={(url) => onUpdate({ couplePhotoUrl: url })}
+          mode={mode}
+          className="h-full w-full"
+          alt="Hero image"
+          placeholderText="Add Hero Image"
+          templateId={templateId}
+          sessionUUID={sessionUUID}
+          uploadStage={uploadStage}
+          invitationId={data.invitationId ?? undefined}
+          oldPublicUrl={data.couplePhotoUrl || undefined}
+        />
+      ) : heroPhoto ? (
+        <motion.img
+          src={heroPhoto}
+          alt={`${data.brideName} and ${data.groomName}`}
+          className="absolute inset-0 h-full w-full object-cover"
+          initial={{ scale: 1.05 }}
+          animate={{ scale: 1.12 }}
+          transition={{ duration: 12, ease: "easeInOut" }}
+        />
+      ) : (
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 25%, rgba(255,255,255,0.24), transparent 24%), linear-gradient(180deg, rgba(243,237,227,1) 0%, rgba(228,216,198,1) 100%)",
+          }}
+        />
+      )}
       {/* Warm vignette overlay */}
       <div
         className="absolute inset-0"
         style={{
-          background: `linear-gradient(180deg, rgba(92,74,50,0.45) 0%, rgba(92,74,50,0.15) 40%, rgba(92,74,50,0.5) 100%)`,
+          background: `linear-gradient(180deg, rgba(56,40,24,0.28) 0%, rgba(92,74,50,0.2) 30%, rgba(92,74,50,0.56) 100%)`,
+        }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(circle at 50% 35%, rgba(255,255,255,0.16), transparent 28%), radial-gradient(circle at 20% 80%, rgba(197,164,109,0.16), transparent 26%), radial-gradient(circle at 82% 18%, rgba(255,255,255,0.1), transparent 22%)",
         }}
       />
     </div>
 
     {/* Content */}
-    <div className="relative z-10 text-center px-6 max-w-2xl">
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.9, ease: "easeOut" }}
+      className="relative z-10 mx-auto w-full max-w-4xl overflow-hidden rounded-[2rem] border px-6 py-12 text-center shadow-2xl backdrop-blur-[2px] md:px-12 md:py-16"
+      style={{
+        background:
+          "linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.06) 100%)",
+        borderColor: "rgba(255,255,255,0.18)",
+        boxShadow: "0 30px 80px rgba(34, 24, 14, 0.22)",
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.15, duration: 0.7 }}
+        className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-full border text-xl tracking-[0.35em] text-white/90"
+        style={{
+          borderColor: "rgba(255,255,255,0.35)",
+          backgroundColor: "rgba(255,255,255,0.08)",
+          fontFamily: FONTS.body,
+        }}
+      >
+        {(data.brideName?.trim()?.charAt(0)?.toUpperCase() || "B") +
+          (data.groomName?.trim()?.charAt(0)?.toUpperCase() || "G")}
+      </motion.div>
       <motion.p
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.8 }}
-        className="text-sm md:text-base tracking-[0.35em] uppercase mb-10"
+        className="mb-8 text-[11px] uppercase tracking-[0.45em] md:text-sm"
         style={{ color: C.white, fontFamily: FONTS.body }}
       >
-        We&apos;re Getting Married
+        A Celebration of Love and New Beginnings
       </motion.p>
 
       <motion.div
@@ -477,20 +629,28 @@ const HeroSection = ({
             type="date"
             value={data.weddingDate}
             onChange={(e) => onUpdate({ weddingDate: e.target.value })}
-            className="bg-white/30 backdrop-blur border border-white/40 rounded-lg px-4 py-2 text-sm text-white"
+            className="rounded-full border border-white/40 bg-white/20 px-5 py-2 text-sm text-white backdrop-blur"
             style={{ fontFamily: FONTS.body }}
           />
         </div>
       ) : (
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.1 }}
-          className="text-base md:text-lg tracking-[0.25em] uppercase text-white/90 drop-shadow"
-          style={{ fontFamily: FONTS.serif }}
+          transition={{ delay: 1 }}
+          className="inline-flex rounded-full border px-6 py-3"
+          style={{
+            borderColor: "rgba(255,255,255,0.32)",
+            backgroundColor: "rgba(255,255,255,0.08)",
+          }}
         >
-          {formatWeddingDate(data.weddingDate)}
-        </motion.p>
+          <p
+            className="text-sm uppercase tracking-[0.3em] text-white/90 md:text-base"
+            style={{ fontFamily: FONTS.serif }}
+          >
+            {formatWeddingDate(data.weddingDate)}
+          </p>
+        </motion.div>
       )}
 
       {/* RSVP scroll hint */}
@@ -498,14 +658,14 @@ const HeroSection = ({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.4 }}
+          transition={{ delay: 1.25 }}
           className="mt-12"
         >
           <p
-            className="text-xs tracking-[0.3em] uppercase mb-2 text-white/70"
+            className="mb-2 text-[10px] uppercase tracking-[0.38em] text-white/70"
             style={{ fontFamily: FONTS.body }}
           >
-            RSVP
+            Scroll to discover
           </p>
           <motion.div
             animate={{ y: [0, 6, 0] }}
@@ -515,9 +675,10 @@ const HeroSection = ({
           </motion.div>
         </motion.div>
       )}
-    </div>
-  </section>
-);
+    </motion.div>
+    </section>
+  );
+};
 
 /* ══════════════════════════════════════════════════════════
    COUNTDOWN SECTION
@@ -668,31 +829,40 @@ const WelcomeSection = ({
   onUpdate: TemplateProps["onUpdate"];
 }) => (
   <section className="py-20 md:py-28" style={{ backgroundColor: C.cream }}>
-    <div className="max-w-3xl mx-auto text-center px-6">
-      <motion.h2
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="font-script text-4xl md:text-7xl mb-8"
-        style={{ color: C.text }}
-      >
-        Welcome!
-      </motion.h2>
+    <div className="mx-auto max-w-4xl px-6 text-center">
+      <SectionFlourish />
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.15 }}
+        {...SECTION_REVEAL}
+        transition={{ duration: 0.65 }}
+        className="rounded-[2rem] border px-6 py-10 md:px-12"
+        style={{
+          backgroundColor: "rgba(255,255,255,0.45)",
+          borderColor: `${C.gold}25`,
+          boxShadow: "0 24px 60px rgba(92,74,50,0.08)",
+        }}
       >
+        <motion.h2
+          {...SECTION_REVEAL}
+          transition={{ duration: 0.7 }}
+          className="mb-6 font-script text-4xl md:text-7xl"
+          style={{ color: C.text }}
+        >
+          Welcome!
+        </motion.h2>
+        <motion.div
+          {...SECTION_REVEAL}
+          transition={{ delay: 0.15, duration: 0.7 }}
+        >
         <EditableText
           value={welcomeMessage}
           onSave={(val) => onUpdate({ welcomeMessage: val })}
           mode={mode}
           placeholder="We warmly welcome you to celebrate our union of love and togetherness..."
-          className="text-lg leading-relaxed italic"
+          className="mx-auto max-w-2xl text-lg leading-relaxed italic md:text-[1.35rem]"
           multiline
           as="p"
         />
+        </motion.div>
       </motion.div>
     </div>
   </section>
@@ -774,29 +944,59 @@ const HorizontalGalleryStrip = ({
 
   return (
     <>
-      <div className="w-full overflow-hidden">
+      <div className="relative w-full overflow-hidden py-10">
+        <div
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 md:w-24"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(243,237,227,0.98) 0%, rgba(243,237,227,0) 100%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 md:w-24"
+          style={{
+            background:
+              "linear-gradient(270deg, rgba(243,237,227,0.98) 0%, rgba(243,237,227,0) 100%)",
+          }}
+        />
         <div
           ref={scrollRef}
-          className="flex gap-3 md:gap-4"
+          className="premium-gallery-track flex gap-4 md:gap-5"
           style={{
             width: "max-content",
             animation: `premium-marquee ${displayPhotos.length * 5}s linear infinite`,
           }}
         >
           {allPhotos.map((photo, i) => (
-            <div
+            <motion.div
               key={`gallery-${i}`}
-              className="flex-shrink-0 overflow-hidden cursor-pointer rounded-lg"
-              style={{ height: "340px", width: "240px" }}
+              className="group relative flex-shrink-0 cursor-pointer overflow-hidden rounded-[1.75rem] border"
+              style={{
+                height: "360px",
+                width: "250px",
+                borderColor: `${C.gold}30`,
+                boxShadow: "0 18px 45px rgba(92,74,50,0.12)",
+              }}
               onClick={() => setLightboxUrl(photo.photoUrl)}
             >
+              <div
+                className="absolute inset-x-4 top-4 z-10 rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.35em]"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.68)",
+                  color: C.text,
+                  fontFamily: FONTS.body,
+                }}
+              >
+                Moments
+              </div>
               <img
                 src={photo.photoUrl}
                 alt={`Gallery ${(i % displayPhotos.length) + 1}`}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                 draggable={false}
               />
-            </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-white/10 opacity-80" />
+            </motion.div>
           ))}
         </div>
       </div>
@@ -806,6 +1006,9 @@ const HorizontalGalleryStrip = ({
         @keyframes premium-marquee {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
+        }
+        .premium-gallery-track:hover {
+          animation-play-state: paused;
         }
       `}</style>
 
@@ -1016,20 +1219,18 @@ const DayProgrammeSection = ({
 
     <div className="max-w-3xl mx-auto px-6 relative z-10">
       <div className="text-center mb-16">
+        <SectionFlourish invert />
         <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          {...SECTION_REVEAL}
+          transition={{ duration: 0.7 }}
           className="font-script text-5xl md:text-6xl mb-3"
           style={{ color: C.text }}
         >
           Day Programme
         </motion.h2>
         <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.2 }}
+          {...SECTION_REVEAL}
+          transition={{ delay: 0.15, duration: 0.7 }}
           className="italic text-base"
           style={{ color: C.textMuted, fontFamily: FONTS.serif }}
         >
@@ -1179,15 +1380,13 @@ const AlternatingTimeline = ({
           return (
             <motion.div
               key={event.id || i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              {...SECTION_REVEAL}
               transition={{ delay: i * 0.1 }}
               className="relative grid grid-cols-2 py-8"
             >
               {/* Dot on timeline */}
               <div
-                className="absolute left-1/2 top-1/2 w-3 h-3 rounded-full -translate-x-1/2 -translate-y-1/2 z-10"
+                className="absolute left-1/2 top-1/2 z-10 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full"
                 style={{ backgroundColor: C.gold }}
               />
 
@@ -1331,10 +1530,10 @@ const PreWeddingEventsSection = ({
   return (
     <section className="py-20 md:py-28" style={{ backgroundColor: C.gold }}>
       <div className="max-w-3xl mx-auto px-6 text-center">
+        <SectionFlourish tone="light" />
         <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
+          {...SECTION_REVEAL}
+          transition={{ duration: 0.65 }}
           className="text-xs tracking-[0.35em] uppercase mb-4"
           style={{ color: C.whiteWarm, fontFamily: FONTS.body }}
         >
@@ -1342,9 +1541,8 @@ const PreWeddingEventsSection = ({
         </motion.p>
 
         <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          {...SECTION_REVEAL}
+          transition={{ duration: 0.7 }}
           className="font-script text-4xl md:text-7xl mb-4"
           style={{ color: C.white }}
         >
@@ -1352,10 +1550,8 @@ const PreWeddingEventsSection = ({
         </motion.h2>
 
         <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.2 }}
+          {...SECTION_REVEAL}
+          transition={{ delay: 0.15, duration: 0.7 }}
           className="italic text-sm mb-14 max-w-lg mx-auto"
           style={{ color: C.whiteWarm, fontFamily: FONTS.serif }}
         >
@@ -1367,13 +1563,23 @@ const PreWeddingEventsSection = ({
           {subEvents.map((event, i) => (
             <motion.div
               key={event.id || i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              {...SECTION_REVEAL}
               transition={{ delay: i * 0.15 }}
-              className="rounded-2xl p-8 md:p-10 relative group"
-              style={{ backgroundColor: C.cream }}
+              whileHover={{ y: -6 }}
+              className="group relative rounded-[2rem] border p-8 md:p-10"
+              style={{
+                backgroundColor: C.cream,
+                borderColor: "rgba(255,255,255,0.28)",
+                boxShadow: "0 22px 50px rgba(92,74,50,0.12)",
+              }}
             >
+              <div
+                className="absolute inset-x-10 top-0 h-px"
+                style={{
+                  background:
+                    "linear-gradient(90deg, rgba(197,164,109,0) 0%, rgba(197,164,109,0.85) 50%, rgba(197,164,109,0) 100%)",
+                }}
+              />
               {isEdit && (
                 <button
                   onClick={() => {
@@ -1719,6 +1925,147 @@ const IndianEventIcon = ({ eventName }: { eventName: string }) => {
             <path d="M25 25 Q25 18 25 15" />
             <path d="M22 15 Q25 8 28 15" />
             <circle cx="25" cy="10" r="2" fill="currentColor" opacity="0.5" />
+          </g>
+        </svg>
+      </div>
+    );
+  }
+
+  // Wedding / Pheras / Shaadi — mandap
+  if (
+    name.includes("wedding") ||
+    name.includes("shaadi") ||
+    name.includes("phere") ||
+    name.includes("phera") ||
+    name.includes("ceremony")
+  ) {
+    return (
+      <div className="flex justify-center mb-3 opacity-70">
+        <svg
+          width="50"
+          height="50"
+          viewBox="0 0 50 50"
+          fill="none"
+          style={{ color: C.ornament }}
+        >
+          <g stroke="currentColor" strokeWidth="1" fill="none">
+            <path d="M10 18 H40" />
+            <path d="M13 18 L18 10 H32 L37 18" />
+            <line x1="15" y1="18" x2="15" y2="38" />
+            <line x1="35" y1="18" x2="35" y2="38" />
+            <path d="M18 38 H32" />
+            <path d="M25 21 Q21 25 25 29 Q29 25 25 21Z" />
+            <circle cx="25" cy="14" r="2" fill="currentColor" opacity="0.5" />
+          </g>
+        </svg>
+      </div>
+    );
+  }
+
+  // Reception / Cocktail / Party — glasses
+  if (
+    name.includes("reception") ||
+    name.includes("cocktail") ||
+    name.includes("party")
+  ) {
+    return (
+      <div className="flex justify-center mb-3 opacity-70">
+        <svg
+          width="50"
+          height="50"
+          viewBox="0 0 50 50"
+          fill="none"
+          style={{ color: C.ornament }}
+        >
+          <g stroke="currentColor" strokeWidth="1" fill="none">
+            <path d="M16 12 H24 L22 22 H18 Z" />
+            <line x1="20" y1="22" x2="20" y2="34" />
+            <line x1="16" y1="34" x2="24" y2="34" />
+            <path d="M26 12 H34 L32 22 H28 Z" />
+            <line x1="30" y1="22" x2="30" y2="34" />
+            <line x1="26" y1="34" x2="34" y2="34" />
+            <path d="M21 14 L29 8" />
+          </g>
+        </svg>
+      </div>
+    );
+  }
+
+  // Engagement / Ring ceremony
+  if (
+    name.includes("engagement") ||
+    name.includes("ring") ||
+    name.includes("sagai")
+  ) {
+    return (
+      <div className="flex justify-center mb-3 opacity-70">
+        <svg
+          width="50"
+          height="50"
+          viewBox="0 0 50 50"
+          fill="none"
+          style={{ color: C.ornament }}
+        >
+          <g stroke="currentColor" strokeWidth="1" fill="none">
+            <circle cx="21" cy="28" r="7" />
+            <circle cx="29" cy="28" r="7" />
+            <path d="M21 21 L24 15 L27 21" />
+            <path d="M29 21 L32 15 L35 21" />
+          </g>
+        </svg>
+      </div>
+    );
+  }
+
+  // Vidai / Bidaai — doli
+  if (
+    name.includes("vidai") ||
+    name.includes("vidaai") ||
+    name.includes("bidaai") ||
+    name.includes("bidai")
+  ) {
+    return (
+      <div className="flex justify-center mb-3 opacity-70">
+        <svg
+          width="50"
+          height="50"
+          viewBox="0 0 50 50"
+          fill="none"
+          style={{ color: C.ornament }}
+        >
+          <g stroke="currentColor" strokeWidth="1" fill="none">
+            <path d="M12 32 Q25 18 38 32" />
+            <path d="M16 32 V24 H34 V32" />
+            <path d="M10 35 H40" />
+            <circle cx="18" cy="38" r="2.5" />
+            <circle cx="32" cy="38" r="2.5" />
+          </g>
+        </svg>
+      </div>
+    );
+  }
+
+  // Welcome / Tilak / Milni — floral thali
+  if (
+    name.includes("welcome") ||
+    name.includes("tilak") ||
+    name.includes("milni")
+  ) {
+    return (
+      <div className="flex justify-center mb-3 opacity-70">
+        <svg
+          width="50"
+          height="50"
+          viewBox="0 0 50 50"
+          fill="none"
+          style={{ color: C.ornament }}
+        >
+          <g stroke="currentColor" strokeWidth="1" fill="none">
+            <ellipse cx="25" cy="33" rx="13" ry="5" />
+            <path d="M14 33 Q18 24 25 24 Q32 24 36 33" />
+            <circle cx="25" cy="28" r="3" />
+            <circle cx="18" cy="28" r="1.5" />
+            <circle cx="32" cy="28" r="1.5" />
           </g>
         </svg>
       </div>

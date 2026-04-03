@@ -31,7 +31,7 @@ export type DemoDataOverrides = Partial<
 const demoDataLoaders: Record<string, () => Promise<{ default: DemoDataOverrides }>> = {
   premium: () => import('./premium-elegante/demoData'),
   blossom: () => import('./blossom-date/demoData'),
-  blush: () => import('./blush-affair/editorialDemoData'),
+  blush: () => import('./blush-affair/demoData'),
   midnight: () => import('./midnight-nawab/demoData'),
   golden: () => import('./golden-memo/demoData'),
 };

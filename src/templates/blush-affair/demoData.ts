@@ -1,70 +1,37 @@
-import { DemoDataOverrides } from '../demoData';
-
-const R2_BASE = 'https://pub-ae188d768af94d25a7750692051dfeea.r2.dev';
+import { DemoDataOverrides } from "../demoData";
 
 const galleryPhotos = [
-  `${R2_BASE}/templates/7/photos/Dance.png`,
-  `${R2_BASE}/templates/7/photos/Phere.png`,
-  `${R2_BASE}/templates/7/photos/Pose.png`,
-  `${R2_BASE}/templates/7/photos/haldi.png`,
-  `${R2_BASE}/templates/7/photos/marriage.png`,
-  `${R2_BASE}/templates/7/photos/mehandi.png`,
+  "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=900&q=80",
+  "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=900&q=80",
 ];
 
 const demoData: DemoDataOverrides = {
+  brideName: "Isabella",
+  groomName: "Aarav",
+  brideBio: "Curator of beautiful details, linen stationery, and golden-hour plans.",
+  groomBio: "Architect of calm spaces, long dinners, and a very good old-fashioned.",
   welcomeMessage:
-    'With the blessings of our elders and the grace of the Almighty, we joyfully invite you to celebrate the sacred union of our families.',
-  couplePhotoUrl: `${R2_BASE}/templates/7/photos/marriage.png`,
-  weddingDate: '2027-03-15',
+    "Together with our families, we invite you to a wedding weekend of candlelight, conversation, vows, and dancing beneath the Tuscan sky.",
+  hashtag: "#IsabellaAndAarav",
+  weddingDate: "2027-06-14",
+  couplePhotoUrl: galleryPhotos[0],
+  bridePhotoUrl: galleryPhotos[1],
+  groomPhotoUrl: galleryPhotos[2],
   events: [
-    {
-      id: 0,
-      eventName: 'Haldi',
-      eventDate: '2027-03-13',
-      eventTime: '10:00:00',
-      venueName: 'Sharma Residence',
-      venueAddress: 'Banjara Hills, Hyderabad',
-      mapsUrl: 'https://maps.google.com',
-    },
-    {
-      id: 1,
-      eventName: 'Mehendi',
-      eventDate: '2027-03-13',
-      eventTime: '16:00:00',
-      venueName: 'The Garden Club',
-      venueAddress: 'Jubilee Hills, Hyderabad',
-      mapsUrl: 'https://maps.google.com',
-    },
-    {
-      id: 2,
-      eventName: 'Sangeet',
-      eventDate: '2027-03-14',
-      eventTime: '19:00:00',
-      venueName: 'Taj Falaknuma Palace',
-      venueAddress: 'Engine Bowli, Hyderabad',
-      mapsUrl: 'https://maps.google.com',
-    },
-    {
-      id: 3,
-      eventName: 'Wedding',
-      eventDate: '2027-03-15',
-      eventTime: '09:00:00',
-      venueName: 'Chowmahalla Palace',
-      venueAddress: 'Motigalli, Hyderabad',
-      mapsUrl: 'https://maps.google.com',
-    },
+    { id: 0, eventName: "Welcome Dinner", eventDate: "2027-06-13", eventTime: "19:30:00", venueName: "Villa Aurelia", venueAddress: "Florence, Italy", mapsUrl: "https://maps.google.com" },
+    { id: 1, eventName: "Wedding Ceremony", eventDate: "2027-06-14", eventTime: "16:00:00", venueName: "San Galgano Abbey", venueAddress: "Tuscany, Italy", mapsUrl: "https://maps.google.com" },
+    { id: 2, eventName: "Moonlight Reception", eventDate: "2027-06-14", eventTime: "20:30:00", venueName: "Cypress Courtyard", venueAddress: "Tuscany, Italy", mapsUrl: "https://maps.google.com" },
   ],
-  galleryPhotos: galleryPhotos.map((url, i) => ({
-    photoUrl: url,
-    sortOrder: i,
-    isDefault: true,
-  })),
-  musicUrl: `${R2_BASE}/templates/7/music/elegant-piano-bgm.mp3`,
-  musicName: 'Royal Haveli BGM',
+  galleryPhotos: galleryPhotos.map((url, i) => ({ photoUrl: url, sortOrder: i, isDefault: true })),
+  musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
+  musicName: "Editorial Piano BGM",
   templateDefaults: {
     defaultPhotos: galleryPhotos.map((url, i) => ({ photoUrl: url, sortOrder: i })),
-    defaultMusicUrl: `${R2_BASE}/templates/7/music/elegant-piano-bgm.mp3`,
-    defaultMusicName: 'Royal Haveli BGM',
+    defaultMusicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
+    defaultMusicName: "Editorial Piano BGM",
     defaultVideoUrl: null,
   },
 };

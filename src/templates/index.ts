@@ -4,9 +4,9 @@ import { TemplateComponent, TemplateRegistryEntry } from './types';
 const CrimsonShaadiTemplate = () => import('./crimson-shaadi/CrimsonShaadiTemplate');
 const IvoryGardenTemplate = () => import('./ivory-garden/IvoryGardenTemplate');
 const BlossomDateTemplate = () => import('./blossom-date/BlossomDateTemplate');
-const MidnightNawabTemplate = () => import('./midnight-nawab/MidnightNawabTemplate');
+const MidnightNawabTemplate = () => import('./midnight-nawab/MidnightMoonlitTemplate');
 const GoldenMemoTemplate = () => import('./golden-memo/GoldenMemoTemplate');
-const BlushAffairTemplate = () => import('./blush-affair/BlushAffairTemplate');
+const BlushAffairTemplate = () => import('./blush-affair/BlushEditorialTemplate');
 const FincaOliveTemplate = () => import('./finca-olive/FincaOliveTemplate');
 const PremiumEleganteTemplate = () => import('./premium-elegante/PremiumEleganteTemplate');
 
@@ -57,14 +57,14 @@ const templateRegistry: Record<string, TemplateRegistryEntry & { loader: () => P
   'midnight': {
     loader: MidnightNawabTemplate,
     component: null as unknown as TemplateComponent,
-    name: 'Midnight Nawab',
+    name: 'Midnight Reverie',
     theme: 'midnight',
     category: 'Wedding',
   },
   'midnight-nawab': {
     loader: MidnightNawabTemplate,
     component: null as unknown as TemplateComponent,
-    name: 'Midnight Nawab',
+    name: 'Midnight Reverie',
     theme: 'midnight',
     category: 'Wedding',
   },

@@ -250,7 +250,7 @@ const MidnightMoonlitTemplate = ({
           </div>
 
           <div className="mx-auto mt-10 max-w-4xl rounded-[28px] border p-6 text-center" style={{ borderColor: C.line, background: C.card }}>
-            <EditableText value={data.welcomeMessage} onSave={(val) => onUpdate({ welcomeMessage: val })} mode={mode} placeholder="Share your night-wedding story..." className="text-lg leading-8" multiline as="p" style={{ fontFamily: FONTS.serif, color: C.text } as React.CSSProperties} />
+            <EditableText value={data.welcomeMessage} onSave={(val) => onUpdate({ welcomeMessage: val })} mode={mode} placeholder="Share your night-wedding story..." className="text-lg leading-8" inputClassName="text-lg" multiline as="p" />
           </div>
         </div>
       </section>

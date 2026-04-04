@@ -1,84 +1,175 @@
-/**
- * Golden Memo Template — "Champagne Save The Date"
- * Elegant champagne & gold minimalist wedding invitation.
- * Features: Warm champagne backgrounds, gold foil accents,
- * big serif typography, editorial photo layout, elegant timeline.
- */
-import { useState, useRef } from "react";
-import { motion, useInView } from "framer-motion";
-import { Heart, MapPin, Clock, Send, Minus, Plus, Check } from "lucide-react";
-import { TemplateProps, EventData } from "@/templates/types";
+import { useMemo, useRef, useState } from "react";
 import {
-  EditableText,
-  EditablePhoto,
-  EditableEventCard,
+  AnimatePresence,
+  motion,
+  useMotionValueEvent,
+  useScroll,
+  useTransform,
+} from "framer-motion";
+import {
+  CalendarDays,
+  Check,
+  ChevronDown,
+  Clock3,
+  Gift,
+  Heart,
+  MapPin,
+  Sparkle,
+  Send,
+  Sparkles,
+} from "lucide-react";
+import { submitRsvp } from "@/api/rsvp";
+import {
   AddEventButton,
-  EditablePhotoGallery,
+  EditableEventCard,
   EditableMusicPlayer,
+  EditablePhoto,
+  EditablePhotoGallery,
+  EditableText,
   EditModeToolbar,
 } from "@/components/inline-editor";
 import FloatingMusicPlayer from "@/components/invitation/FloatingMusicPlayer";
+import { cn } from "@/lib/utils";
 import {
-  formatWeddingDate,
   formatEventDate,
   formatTime,
+  formatWeddingDate,
 } from "@/utils/formatDate";
-import { cn } from "@/lib/utils";
-import { submitRsvp } from "@/api/rsvp";
+import { createEmptyEvent, EventData, TemplateProps } from "@/templates/types";
 import toast from "react-hot-toast";
 
-/* ────────────────────────────────────────────
-   Color Palette — Champagne & Gold
-   ──────────────────────────────────────────── */
+const R2_BASE = "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev";
+const DEFAULT_COUPLE_PHOTO = `${R2_BASE}/templates/7/photos/Pose.png`;
+
 const C = {
-  bg: "#faf6ef",
-  bgWarm: "#f5ede0",
-  bgDark: "#1c1914",
-  bgCard: "#fff9f0",
-  text: "#2c2418",
-  textMuted: "#7a6e5d",
-  textLight: "#b0a490",
-  gold: "#c5a355",
-  goldLight: "#dbc17a",
-  goldDark: "#a88b3d",
-  goldAccent: "#d4b064",
-  champagne: "#e8dcc8",
-  cream: "#faf6ef",
-  white: "#ffffff",
+  blush: "#f6eee5",
+  paper: "#fffaf2",
+  ink: "#241b17",
+  inkMuted: "#6c584d",
+  plum: "#381a1d",
+  plumSoft: "#5b3230",
+  plumDeep: "#241011",
+  gold: "#b6813f",
+  goldSoft: "#e6c48e",
+  mist: "#efe2d3",
+  border: "rgba(120, 87, 62, 0.17)",
+  white: "#fffdf9",
+  shadow: "0 28px 80px rgba(43, 23, 24, 0.14)",
 };
 
 const FONTS = {
-  script: "'Great Vibes', cursive",
-  heading: "'Playfair Display', serif",
-  body: "'Cormorant Garamond', serif",
+  display: "'Bodoni Moda', serif",
+  serif: "'Cormorant Garamond', serif",
+  sans: "'Sora', sans-serif",
+  script: "'Parisienne', cursive",
 };
 
-const R2_BASE = "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev";
-const DEFAULT_COUPLE_PHOTO = `${R2_BASE}/templates/5/photos/couple.jpg`;
+const sectionReveal = {
+  initial: { opacity: 0, y: 40 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: "-10% 0px" },
+  transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
+} as const;
 
-/* ────────────────────────────────────────────
-   DECORATIVE COMPONENTS
-   ──────────────────────────────────────────── */
-const GoldDivider = ({ className = "" }: { className?: string }) => (
-  <div className={cn("flex items-center justify-center gap-4", className)}>
-    <div className="h-px w-16 bg-gradient-to-r from-transparent to-[#c5a355]/50" />
-    <div className="h-1.5 w-1.5 rotate-45 bg-[#c5a355]/60" />
-    <div className="h-px w-16 bg-gradient-to-l from-transparent to-[#c5a355]/50" />
-  </div>
-);
+const faqItems = [
+  {
+    q: "What should I wear?",
+    a: "Think regal, festive, and camera-ready. Jewel tones, embroidered looks, and soft glam fit the mood beautifully.",
+  },
+  {
+    q: "Can I bring family?",
+    a: "Yes, if your invitation mentions guest count. We want every seat, meal, and welcome prepared with care.",
+  },
+  {
+    q: "Will accommodation details be shared?",
+    a: "Yes. Nearby stay suggestions and travel pointers can be added here for guests coming from outside the city.",
+  },
+  {
+    q: "Is there a gift option?",
+    a: "Your blessings matter most, but a payment or bank transfer option is included below if you want to contribute with love.",
+  },
+];
 
-const GoldLine = ({ width = "w-16" }: { width?: string }) => (
-  <div
+const eventNotes: Record<string, string> = {
+  Haldi:
+    "Sunlit rituals, marigold tones, and joyful family chaos in the best way.",
+  Mehndi: "Henna, laughter, chai, and a courtyard filled with music and color.",
+  Mehendi:
+    "Henna, laughter, chai, and a courtyard filled with music and color.",
+  Sangeet:
+    "An evening of dancing, live performances, and a room full of sparkle.",
+  Wedding: "The vows, the pheras, and the moment everything becomes forever.",
+  Reception:
+    "A dressed-up dinner celebration to greet everyone with warmth and style.",
+  Engagement:
+    "A graceful beginning to the celebrations with the people closest to us.",
+};
+
+const getDisplayPhotos = (data: TemplateProps["data"]) =>
+  (data.galleryPhotos.length > 0
+    ? data.galleryPhotos
+    : data.templateDefaults.defaultPhotos.map((photo, index) => ({
+        photoUrl: photo.photoUrl,
+        sortOrder: index,
+        isDefault: true,
+      }))
+  ).sort((a, b) => a.sortOrder - b.sortOrder);
+
+const updateGalleryPhotoAtIndex = (
+  photos: ReturnType<typeof getDisplayPhotos>,
+  index: number,
+  url: string,
+) => {
+  const next = [...photos];
+  if (next[index]) {
+    next[index] = { ...next[index], photoUrl: url, isDefault: false };
+  } else {
+    next[index] = { photoUrl: url, sortOrder: index, isDefault: false };
+  }
+  return next.map((photo, sortOrder) => ({ ...photo, sortOrder }));
+};
+
+const SectionIntro = ({
+  kicker,
+  title,
+  body,
+  align = "center",
+}: {
+  kicker: string;
+  title: string;
+  body?: string;
+  align?: "left" | "center";
+}) => (
+  <motion.div
+    {...sectionReveal}
     className={cn(
-      "mx-auto h-px bg-gradient-to-r from-transparent via-[#c5a355]/40 to-transparent",
-      width,
+      "mx-auto mb-12 max-w-3xl",
+      align === "center" ? "text-center" : "text-left",
     )}
-  />
+  >
+    <p
+      className="mb-3 text-[11px] uppercase tracking-[0.42em]"
+      style={{ color: C.gold, fontFamily: FONTS.sans }}
+    >
+      {kicker}
+    </p>
+    <h2
+      className="text-5xl leading-[0.95] sm:text-6xl md:text-7xl"
+      style={{ color: C.ink, fontFamily: FONTS.display }}
+    >
+      {title}
+    </h2>
+    {body && (
+      <p
+        className="mx-auto mt-5 max-w-2xl text-base leading-7 sm:text-lg"
+        style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+      >
+        {body}
+      </p>
+    )}
+  </motion.div>
 );
 
-/* ════════════════════════════════════════════
-   MAIN TEMPLATE COMPONENT
-   ════════════════════════════════════════════ */
 const GoldenMemoTemplate = ({
   mode,
   data,
@@ -99,14 +190,20 @@ const GoldenMemoTemplate = ({
     data.musicName ||
     data.effectiveMusicName ||
     data.templateDefaults.defaultMusicName;
+  const displayPhotos = useMemo(() => getDisplayPhotos(data), [data]);
 
   return (
     <div
       data-theme="golden"
-      className="min-h-screen"
-      style={{ backgroundColor: C.bg, fontFamily: FONTS.body }}
+      className="min-h-screen overflow-x-hidden"
+      style={{
+        background:
+          "radial-gradient(circle at top, rgba(255,252,247,0.96), rgba(248,241,231,1) 38%, rgba(242,232,218,1) 100%)",
+        color: C.ink,
+        fontFamily: FONTS.serif,
+      }}
     >
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,600;6..96,700&family=Cormorant+Garamond:wght@400;500;600;700&family=Parisienne&family=Sora:wght@300;400;500;600&display=swap');`}</style>
 
       {mode !== "edit" && effectiveMusicUrl && (
         <FloatingMusicPlayer
@@ -116,33 +213,43 @@ const GoldenMemoTemplate = ({
       )}
 
       <HeroSection
-        mode={mode}
         data={data}
+        mode={mode}
         onUpdate={onUpdate}
+        photos={displayPhotos}
         templateId={templateId}
         sessionUUID={sessionUUID}
         uploadStage={uploadStage}
       />
-      <SaveTheDateBanner
-        weddingDate={data.weddingDate}
+      <StorySection
         mode={mode}
+        data={data}
         onUpdate={onUpdate}
+        photos={displayPhotos}
+        templateId={templateId}
+        sessionUUID={sessionUUID}
+        uploadStage={uploadStage}
       />
-      <WelcomeSection mode={mode} data={data} onUpdate={onUpdate} />
       <EventsSection mode={mode} data={data} onUpdate={onUpdate} />
-      {data.events[0] && <VenueSection event={data.events[0]} />}
-      <GallerySection
-        mode={mode}
-        data={data}
-        onUpdate={onUpdate}
-        templateId={templateId}
-        sessionUUID={sessionUUID}
-        uploadStage={uploadStage}
-      />
+      <VenueSection event={data.events[0] ?? null} />
+      <FaqSection />
+      <GiftsSection />
 
       {mode === "edit" && (
-        <section className="py-16" style={{ backgroundColor: C.bg }}>
-          <div className="mx-auto max-w-xl px-6">
+        <section className="px-4 pb-12">
+          <div
+            className="mx-auto max-w-3xl rounded-[32px] border px-5 py-8 sm:px-8"
+            style={{
+              backgroundColor: "rgba(255,253,249,0.86)",
+              borderColor: C.border,
+              boxShadow: C.shadow,
+            }}
+          >
+            <SectionIntro
+              kicker="Soundtrack"
+              title="Set the Mood"
+              body="Upload or switch the music that should start floating with the invitation."
+            />
             <EditableMusicPlayer
               musicUrl={data.musicUrl}
               musicName={data.musicName}
@@ -169,46 +276,46 @@ const GoldenMemoTemplate = ({
       )}
 
       <footer
-        className={cn("relative py-20 text-center", mode === "edit" && "pb-36")}
-        style={{ backgroundColor: C.bgDark }}
+        className={cn("px-4 pb-20 pt-16", mode === "edit" && "pb-36")}
+        style={{
+          background: `linear-gradient(180deg, rgba(247,238,224,1), rgba(237,224,206,1))`,
+        }}
       >
-        <div className="mx-auto max-w-md px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+        <motion.div
+          {...sectionReveal}
+          className="mx-auto max-w-5xl rounded-[36px] border px-6 py-12 text-center sm:px-10"
+          style={{
+            borderColor: C.border,
+            background:
+              "linear-gradient(180deg, rgba(255,253,249,0.96), rgba(249,241,230,0.88))",
+            boxShadow: C.shadow,
+          }}
+        >
+          <p
+            className="mb-3 text-[11px] uppercase tracking-[0.45em]"
+            style={{ color: C.gold, fontFamily: FONTS.sans }}
           >
-            <GoldDivider className="mb-8" />
-            <p
-              className="text-4xl md:text-5xl"
-              style={{ fontFamily: FONTS.script, color: C.goldLight }}
-            >
-              {data.brideName?.split(" ")[0] || "Bride"} &amp;{" "}
-              {data.groomName?.split(" ")[0] || "Groom"}
-            </p>
-            <p
-              className="mt-4 text-xs uppercase tracking-[0.3em]"
-              style={{ color: C.textLight }}
-            >
-              {formatWeddingDate(data.weddingDate)}
-            </p>
-            {data.hashtag && (
-              <p
-                className="mt-4 text-sm italic"
-                style={{ color: C.goldAccent }}
-              >
-                {data.hashtag}
-              </p>
-            )}
-            <GoldDivider className="mt-8" />
-            <p
-              className="mt-8 text-[10px] tracking-[0.15em]"
-              style={{ color: "#665e52" }}
-            >
-              Made with love on ShubhAarambh
-            </p>
-          </motion.div>
-        </div>
+            Made for Celebration
+          </p>
+          <h2
+            className="text-4xl sm:text-5xl"
+            style={{ color: C.ink, fontFamily: FONTS.display }}
+          >
+            {data.brideName || "Bride"} &amp; {data.groomName || "Groom"}
+          </h2>
+          <p
+            className="mt-4 text-lg"
+            style={{ color: C.inkMuted, fontFamily: FONTS.serif }}
+          >
+            {formatWeddingDate(data.weddingDate)}
+          </p>
+          <p
+            className="mt-5 text-sm uppercase tracking-[0.25em]"
+            style={{ color: "rgba(108,88,77,0.5)", fontFamily: FONTS.sans }}
+          >
+            Shubh Aarambh Invitation
+          </p>
+        </motion.div>
       </footer>
 
       {mode === "edit" && (
@@ -224,14 +331,199 @@ const GoldenMemoTemplate = ({
     </div>
   );
 };
-
-/* ══════════════════════════════════════════════════════════
-   HERO — Split layout: typography left, photo right
-   ══════════════════════════════════════════════════════════ */
 const HeroSection = ({
+  data,
+  mode,
+  onUpdate,
+  photos,
+  templateId,
+  sessionUUID,
+  uploadStage,
+}: {
+  data: TemplateProps["data"];
+  mode: TemplateProps["mode"];
+  onUpdate: TemplateProps["onUpdate"];
+  photos: ReturnType<typeof getDisplayPhotos>;
+  templateId?: number;
+  sessionUUID?: string;
+  uploadStage: "temp" | "draft" | "published";
+}) => {
+  const heroRef = useRef<HTMLElement | null>(null);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end end"],
+  });
+  const heroScale = useTransform(scrollYProgress, [0, 0.42], [1, 0.78]);
+  const heroRadius = useTransform(scrollYProgress, [0, 0.42], [0, 42]);
+  const namesOpacity = useTransform(scrollYProgress, [0, 0.18, 0.28], [1, 1, 0]);
+  const detailsOpacity = useTransform(scrollYProgress, [0.2, 0.38], [0, 1]);
+  const detailsY = useTransform(scrollYProgress, [0.2, 0.38], [24, 0]);
+  const mainPhoto =
+    data.couplePhotoUrl || photos[0]?.photoUrl || DEFAULT_COUPLE_PHOTO;
+  const floatingPhotos = [
+    photos[1]?.photoUrl,
+    photos[2]?.photoUrl,
+    photos[3]?.photoUrl,
+    photos[4]?.photoUrl,
+  ];
+
+  return (
+    <section ref={heroRef} className="relative h-[185vh]">
+      <div className="pointer-events-none absolute inset-0 opacity-60">
+        <div className="absolute left-[-12%] top-10 h-64 w-64 rounded-full bg-[#dba35c]/15 blur-3xl" />
+        <div className="absolute right-[-10%] top-40 h-80 w-80 rounded-full bg-[#7f2d2f]/10 blur-3xl" />
+      </div>
+
+      <div className="sticky top-0 h-screen overflow-hidden">
+        <div className="relative h-full">
+          <motion.div
+            style={{ scale: heroScale, borderRadius: heroRadius }}
+            className="absolute inset-0 z-20 origin-center overflow-hidden border bg-white shadow-[0_35px_90px_rgba(43,23,24,0.18)]"
+          >
+            <div className="relative h-full w-full p-0 sm:p-3">
+              <EditablePhoto
+                photoUrl={mainPhoto}
+                onSave={(url) => onUpdate({ couplePhotoUrl: url })}
+                mode={mode}
+                className="h-full w-full rounded-none sm:rounded-[32px]"
+                alt="Couple intro"
+                templateId={templateId}
+                sessionUUID={sessionUUID}
+                uploadStage={uploadStage}
+                invitationId={data.invitationId ?? undefined}
+                oldPublicUrl={data.couplePhotoUrl || undefined}
+              />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(24,9,10,0.7)] via-transparent to-transparent" />
+              <motion.div
+                style={{ opacity: namesOpacity }}
+                className="absolute inset-x-0 bottom-0 z-10 px-8 pb-10 text-center sm:px-14"
+              >
+                <p
+                  className="text-[11px] uppercase tracking-[0.45em]"
+                  style={{
+                    color: "rgba(255,241,219,0.76)",
+                    fontFamily: FONTS.sans,
+                  }}
+                >
+                  Save The Date
+                </p>
+                <div className="mt-3 flex flex-col items-center gap-1">
+                  <EditableText
+                    value={data.brideName}
+                    onSave={(value) => onUpdate({ brideName: value })}
+                    mode={mode}
+                    className="block text-5xl leading-none text-white sm:text-7xl md:text-8xl"
+                    inputClassName="text-5xl sm:text-7xl md:text-8xl text-white"
+                    as="h1"
+                    placeholder="Bride Name"
+                  />
+                  <p
+                    className="text-3xl sm:text-4xl"
+                    style={{ color: C.goldSoft, fontFamily: FONTS.script }}
+                  >
+                    &amp;
+                  </p>
+                  <EditableText
+                    value={data.groomName}
+                    onSave={(value) => onUpdate({ groomName: value })}
+                    mode={mode}
+                    className="block text-5xl leading-none text-white sm:text-7xl md:text-8xl"
+                    inputClassName="text-5xl sm:text-7xl md:text-8xl text-white"
+                    as="h1"
+                    placeholder="Groom Name"
+                  />
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            style={{ opacity: detailsOpacity, y: detailsY }}
+            className="pointer-events-none absolute inset-0 z-30"
+          >
+            <div className="mx-auto flex h-full w-full max-w-6xl items-start px-4 pt-10 sm:px-6 sm:pt-12">
+              <div className="w-full">
+                <div className="mb-6 flex items-center justify-center">
+                  <div
+                    className="rounded-full border px-5 py-2 text-[11px] uppercase tracking-[0.38em]"
+                    style={{
+                      borderColor: "rgba(255,247,233,0.34)",
+                      backgroundColor: "rgba(27,12,13,0.45)",
+                      color: "rgba(255,242,222,0.92)",
+                      fontFamily: FONTS.sans,
+                      backdropFilter: "blur(8px)",
+                    }}
+                  >
+                    We're Getting Married
+                  </div>
+                </div>
+                <p
+                  className="text-center text-sm uppercase tracking-[0.44em]"
+                  style={{ color: "rgba(255,241,219,0.88)", fontFamily: FONTS.sans }}
+                >
+                  {formatWeddingDate(data.weddingDate)}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          {floatingPhotos.map((photoUrl, index) => {
+            const positions = [
+              "left-[4%] top-[8%] w-[22%] md:w-[18%]",
+              "right-[4%] top-[10%] w-[18%] md:w-[14%]",
+              "left-[8%] bottom-[9%] w-[20%] md:w-[16%]",
+              "right-[6%] bottom-[8%] w-[19%] md:w-[15%]",
+            ];
+            const startTransforms = [
+              { x: -180, y: -160, rotate: -14 },
+              { x: 180, y: -160, rotate: 14 },
+              { x: -180, y: 160, rotate: -14 },
+              { x: 180, y: 160, rotate: 14 },
+            ];
+            return (
+              <motion.div
+                key={`${photoUrl || "empty"}-${index}`}
+                initial={{ opacity: 0, scale: 0.72, ...startTransforms[index] }}
+                whileInView={{ opacity: 1, x: 0, y: 0, scale: 1, rotate: index % 2 === 0 ? -4 : 4 }}
+                viewport={{ once: true, margin: "-15% 0px" }}
+                transition={{
+                  duration: 0.85,
+                  delay: 0.12 + index * 0.08,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+                className={cn("pointer-events-auto absolute z-30 rounded-[24px] border bg-white p-2 shadow-[0_24px_48px_rgba(43,23,24,0.18)]", positions[index])}
+                style={{ opacity: detailsOpacity, borderColor: C.border }}
+              >
+                <EditablePhoto
+                  photoUrl={photoUrl || null}
+                  onSave={(url) =>
+                    onUpdate({
+                      galleryPhotos: updateGalleryPhotoAtIndex(photos, index + 1, url),
+                    })
+                  }
+                  mode={mode}
+                  className="h-28 w-full rounded-[18px] sm:h-36 md:h-44"
+                  alt={`Floating memory ${index + 1}`}
+                  templateId={templateId}
+                  sessionUUID={sessionUUID}
+                  uploadStage={uploadStage}
+                  invitationId={data.invitationId ?? undefined}
+                  oldPublicUrl={photoUrl || undefined}
+                />
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const StorySection = ({
   mode,
   data,
   onUpdate,
+  photos,
   templateId,
   sessionUUID,
   uploadStage,
@@ -239,330 +531,380 @@ const HeroSection = ({
   mode: TemplateProps["mode"];
   data: TemplateProps["data"];
   onUpdate: TemplateProps["onUpdate"];
+  photos: ReturnType<typeof getDisplayPhotos>;
   templateId?: number;
   sessionUUID?: string;
-  uploadStage?: "temp" | "draft" | "published";
+  uploadStage: "temp" | "draft" | "published";
 }) => {
-  const couplePhoto = data.couplePhotoUrl || DEFAULT_COUPLE_PHOTO;
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const cards = [
+    photos[1]?.photoUrl || photos[0]?.photoUrl || DEFAULT_COUPLE_PHOTO,
+    photos[2]?.photoUrl || photos[1]?.photoUrl || DEFAULT_COUPLE_PHOTO,
+    photos[3]?.photoUrl || photos[2]?.photoUrl || DEFAULT_COUPLE_PHOTO,
+  ];
+  const count = cards.length;
+
+  const storyTexts = [
+    "The first time we met, there was an unspoken warmth — like finding a melody you never knew you were humming.",
+    "Through late-night conversations and shared silences, we discovered that love isn't just found — it grows, gently and deeply.",
+    "And now, here we are — two stories becoming one, ready to write every chapter of forever together.",
+  ];
+
+  const rotations = [-3, 4, -2];
+  const revealPoints =
+    count <= 1
+      ? [0]
+      : Array.from({ length: count }, (_, index) => {
+          if (index === 0) return 0;
+          const spread = Math.max(count - 2, 1);
+          return 0.38 + ((index - 1) / spread) * 0.48;
+        });
+
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end end"],
+  });
+
+  const [activeIndex, setActiveIndex] = useState(0);
+  useMotionValueEvent(scrollYProgress, "change", (v) => {
+    let idx = 0;
+    for (let i = 0; i < revealPoints.length; i += 1) {
+      if (v >= revealPoints[i]) idx = i;
+    }
+    setActiveIndex((prev) => Math.max(prev, idx));
+  });
 
   return (
     <section
+      ref={sectionRef}
       className="relative overflow-hidden"
-      style={{ backgroundColor: C.bgDark }}
+      style={{ height: `${100 + (count - 1) * 92}vh` }}
     >
-      <div
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 20% 30%, rgba(197,163,85,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(197,163,85,0.2) 0%, transparent 50%)",
-        }}
-      />
+      <div className="sticky top-0 flex h-screen items-center px-4">
+        <div className="pointer-events-none absolute inset-0 opacity-70">
+          <div className="absolute left-[8%] top-[18%] h-48 w-48 rounded-full bg-[#b6813f]/8 blur-3xl" />
+          <div className="absolute right-[10%] bottom-[14%] h-60 w-60 rounded-full bg-[#7e4740]/10 blur-3xl" />
+        </div>
 
-      <div className="relative z-10 mx-auto grid min-h-[100dvh] max-w-7xl md:grid-cols-2">
-        {/* Left: Typography */}
-        <div className="flex flex-col items-center justify-center px-8 py-20 text-center md:items-start md:px-16 md:text-left">
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-xs uppercase tracking-[0.45em]"
-            style={{ color: C.goldAccent }}
-          >
-            Together with our families
-          </motion.p>
-
+        <div className="mx-auto w-full max-w-6xl">
+          {/* Section title */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="mt-8"
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+            className="mb-6 text-center"
           >
-            <div style={{ fontFamily: FONTS.script }}>
-              <EditableText
-                value={data.brideName}
-                onSave={(val) => onUpdate({ brideName: val })}
-                mode={mode}
-                placeholder="Bride's Name"
-                className="block text-5xl leading-[1.1] sm:text-6xl md:text-7xl"
-                style={{ color: C.cream }}
-                as="h1"
-              />
-            </div>
             <p
-              className="my-3 text-lg uppercase tracking-[0.3em]"
-              style={{ color: C.goldAccent, fontFamily: FONTS.heading }}
+              className="mb-2 text-[11px] uppercase tracking-[0.42em]"
+              style={{ color: C.gold, fontFamily: FONTS.sans }}
             >
-              &amp;
+              Our Love Story
             </p>
-            <div style={{ fontFamily: FONTS.script }}>
-              <EditableText
-                value={data.groomName}
-                onSave={(val) => onUpdate({ groomName: val })}
-                mode={mode}
-                placeholder="Groom's Name"
-                className="block text-5xl leading-[1.1] sm:text-6xl md:text-7xl"
-                style={{ color: C.cream }}
-                as="h1"
-              />
-            </div>
+            <h2
+              className="text-4xl leading-[0.95] sm:text-5xl md:text-6xl"
+              style={{ color: C.ink, fontFamily: FONTS.display }}
+            >
+              {data.brideName || "Bride"}{" "}
+              <span style={{ color: C.gold, fontFamily: FONTS.script }}>
+                &amp;
+              </span>{" "}
+              {data.groomName || "Groom"}
+            </h2>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6, duration: 0.8 }}
-            className="mt-10"
-          >
-            <GoldLine width="w-24" />
-            <p
-              className="mt-4 text-sm uppercase tracking-[0.25em]"
-              style={{ color: C.textLight }}
-            >
-              Are Getting Married
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8, duration: 0.8 }}
-            className="mt-8"
-          >
-            {mode === "edit" ? (
-              <div>
-                <label
-                  className="mb-2 block text-xs uppercase tracking-[0.2em]"
-                  style={{ color: C.textLight }}
+          {/* Main content: text + stacking image */}
+          <div className="grid items-center gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+            {/* Text — alternates side */}
+            <div className="flex min-h-[180px] items-center">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeIndex}
+                  initial={{ opacity: 0, x: -24, filter: "blur(6px)" }}
+                  animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, x: 24, filter: "blur(6px)" }}
+                  transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                  className="w-full max-w-lg lg:text-left"
                 >
-                  Wedding Date
-                </label>
-                <input
-                  type="date"
-                  value={data.weddingDate}
-                  onChange={(e) => onUpdate({ weddingDate: e.target.value })}
-                  className="rounded-lg border bg-white/10 px-5 py-3 text-sm backdrop-blur"
-                  style={{ borderColor: C.gold + "40", color: C.cream }}
-                />
-              </div>
-            ) : (
-              <p
-                className="text-2xl md:text-3xl"
-                style={{ fontFamily: FONTS.heading, color: C.champagne }}
-              >
-                {formatWeddingDate(data.weddingDate)}
-              </p>
-            )}
-          </motion.div>
-        </div>
+                  <div
+                    className="mb-4 inline-flex rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.3em]"
+                    style={{
+                      backgroundColor: "rgba(182,129,63,0.1)",
+                      color: C.gold,
+                      fontFamily: FONTS.sans,
+                      border: "1px solid rgba(182,129,63,0.18)",
+                    }}
+                  >
+                    Memory {String(activeIndex + 1).padStart(2, "0")}
+                  </div>
+                  <p
+                    className="text-xl leading-9 sm:text-2xl"
+                    style={{ color: C.ink, fontFamily: FONTS.serif }}
+                  >
+                    {storyTexts[activeIndex] ||
+                      "A moment that made everything feel right."}
+                  </p>
+                  {activeIndex === 0 && mode === "edit" && (
+                    <EditableText
+                      value={data.groomBio || ""}
+                      onSave={(value) => onUpdate({ groomBio: value })}
+                      mode={mode}
+                      multiline
+                      className="mt-4 block text-base leading-7"
+                      inputClassName="mt-4 text-base"
+                      as="p"
+                      placeholder="Add more to your story"
+                    />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
 
-        {/* Right: Photo */}
-        <div className="relative flex items-center justify-center p-6 md:p-12">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.3 }}
-            className="relative aspect-[3/4] w-full max-w-[420px] overflow-hidden rounded-[2rem]"
-            style={{
-              boxShadow:
-                "0 30px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(197,163,85,0.2)",
-            }}
-          >
+            {/* Image stack — in center / other side */}
             <div
-              className="absolute inset-0 z-10 rounded-[2rem]"
-              style={{
-                border: "1px solid rgba(197,163,85,0.25)",
-                pointerEvents: "none",
-              }}
-            />
-            {mode === "edit" ? (
-              <EditablePhoto
-                photoUrl={data.couplePhotoUrl}
-                onSave={(url) => onUpdate({ couplePhotoUrl: url })}
-                mode={mode}
-                className="h-full w-full object-cover"
-                alt="Couple Photo"
-                placeholderText="Add Couple Photo"
-                invitationId={data.invitationId ?? undefined}
-                templateId={templateId}
-                sessionUUID={sessionUUID}
-                uploadStage={uploadStage}
-                oldPublicUrl={data.couplePhotoUrl || undefined}
-              />
-            ) : (
-              <img
-                src={couplePhoto}
-                alt={`${data.brideName} & ${data.groomName}`}
-                className="h-full w-full object-cover"
-              />
-            )}
-          </motion.div>
+              className="relative mx-auto"
+              style={{ width: "min(420px, 80vw)", height: "min(520px, 72vw)" }}
+            >
+              {cards.map((photoUrl, index) => {
+                const isVisible = index <= activeIndex;
+                return (
+                  <motion.div
+                    key={`card-${index}`}
+                    initial={false}
+                    animate={{
+                      opacity: isVisible ? 1 : 0,
+                      scale: isVisible ? 1 : 0.75,
+                      y: isVisible ? index * 16 : 320,
+                      rotate: isVisible ? (rotations[index] ?? 0) : 0,
+                    }}
+                    transition={{
+                      duration: 1,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    className="absolute inset-0 rounded-[22px] bg-[#fffefb] p-3"
+                    style={{
+                      zIndex: 20 + index,
+                      boxShadow: isVisible
+                        ? `0 ${20 + index * 8}px ${60 + index * 20}px rgba(43,23,24,${0.12 + index * 0.04})`
+                        : "none",
+                      pointerEvents: index === activeIndex ? "auto" : "none",
+                    }}
+                  >
+                    <EditablePhoto
+                      photoUrl={photoUrl || null}
+                      onSave={(url) =>
+                        onUpdate({
+                          galleryPhotos: updateGalleryPhotoAtIndex(
+                            photos,
+                            index + 1,
+                            url,
+                          ),
+                        })
+                      }
+                      mode={mode}
+                      className="h-full w-full rounded-[14px]"
+                      alt={`Story frame ${index + 1}`}
+                      templateId={templateId}
+                      sessionUUID={sessionUUID}
+                      uploadStage={uploadStage}
+                      invitationId={data.invitationId ?? undefined}
+                      oldPublicUrl={photoUrl || undefined}
+                    />
+                    <div
+                      className="absolute bottom-5 left-5 right-5 flex items-center justify-between rounded-full px-4 py-2"
+                      style={{
+                        backgroundColor: "rgba(255,254,251,0.92)",
+                        backdropFilter: "blur(8px)",
+                      }}
+                    >
+                      <p
+                        className="text-xs uppercase tracking-[0.28em]"
+                        style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+                      >
+                        Chapter {index + 1}
+                      </p>
+                      <Sparkle size={14} style={{ color: C.gold }} />
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
   );
 };
-
-/* ══════════════════════════════════════════════════════════
-   SAVE THE DATE BANNER — Big date display
-   ══════════════════════════════════════════════════════════ */
-const SaveTheDateBanner = ({
-  weddingDate,
-  mode,
-  onUpdate,
-}: {
-  weddingDate: string;
-  mode: TemplateProps["mode"];
-  onUpdate: TemplateProps["onUpdate"];
-}) => {
-  const dateObj = weddingDate ? new Date(weddingDate) : null;
-  const day = dateObj ? String(dateObj.getDate()).padStart(2, "0") : "--";
-  const month = dateObj
-    ? dateObj.toLocaleDateString("en", { month: "long" }).toUpperCase()
-    : "MONTH";
-  const year = dateObj ? String(dateObj.getFullYear()) : "YEAR";
-  const dayName = dateObj
-    ? dateObj.toLocaleDateString("en", { weekday: "long" }).toUpperCase()
-    : "DAY";
-
-  return (
-    <section
-      className="relative overflow-hidden py-20 md:py-28"
-      style={{ backgroundColor: C.bg }}
-    >
-      <div
-        className="absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-[0.04]"
-        style={{
-          background: `radial-gradient(circle, ${C.gold}, transparent 70%)`,
-        }}
-      />
-      <div className="relative z-10 mx-auto max-w-2xl px-6 text-center">
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-2 text-xs uppercase tracking-[0.5em]"
-          style={{ color: C.gold }}
-        >
-          Save The Date
-        </motion.p>
-        <GoldDivider className="mb-10" />
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.15 }}
-          className="flex items-center justify-center gap-6 md:gap-10"
-        >
-          <div className="text-right">
-            <p
-              className="text-xs uppercase tracking-[0.3em]"
-              style={{ color: C.textMuted }}
-            >
-              {dayName}
-            </p>
-            <p
-              className="text-lg uppercase tracking-[0.2em] md:text-xl"
-              style={{ color: C.text, fontFamily: FONTS.heading }}
-            >
-              {month}
-            </p>
-          </div>
-          <div
-            className="flex h-28 w-28 items-center justify-center rounded-full border-2 md:h-36 md:w-36"
-            style={{ borderColor: C.gold, boxShadow: `0 0 40px ${C.gold}15` }}
-          >
-            <p
-              className="text-5xl font-light md:text-7xl"
-              style={{ color: C.text, fontFamily: FONTS.heading }}
-            >
-              {day}
-            </p>
-          </div>
-          <div className="text-left">
-            <p
-              className="text-xs uppercase tracking-[0.3em]"
-              style={{ color: C.textMuted }}
-            >
-              Year
-            </p>
-            <p
-              className="text-lg uppercase tracking-[0.2em] md:text-xl"
-              style={{ color: C.text, fontFamily: FONTS.heading }}
-            >
-              {year}
-            </p>
-          </div>
-        </motion.div>
-        <GoldDivider className="mt-10" />
-      </div>
-    </section>
-  );
-};
-
-/* ══════════════════════════════════════════════════════════
-   WELCOME MESSAGE
-   ══════════════════════════════════════════════════════════ */
-const WelcomeSection = ({
+const ScrollGallerySection = ({
   mode,
   data,
   onUpdate,
+  photos,
+  templateId,
+  sessionUUID,
+  uploadStage,
 }: {
   mode: TemplateProps["mode"];
   data: TemplateProps["data"];
   onUpdate: TemplateProps["onUpdate"];
-}) => (
-  <section className="py-16 md:py-24" style={{ backgroundColor: C.bgWarm }}>
-    <div className="mx-auto max-w-xl px-6 text-center">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-      >
-        <Heart
-          size={18}
-          className="mx-auto mb-6"
-          fill={C.gold}
-          style={{ color: C.gold }}
-        />
-        <h2
-          className="mb-8 text-4xl md:text-5xl"
-          style={{ fontFamily: FONTS.script, color: C.text }}
-        >
-          Dear Guests
-        </h2>
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.15 }}
-        className="rounded-2xl border px-8 py-10"
-        style={{
-          backgroundColor: C.white,
-          borderColor: `${C.gold}20`,
-          boxShadow: `0 16px 48px ${C.gold}08`,
-        }}
-      >
-        <div style={{ color: C.textMuted, fontFamily: FONTS.body }}>
-          <EditableText
-            value={data.welcomeMessage}
-            onSave={(val) => onUpdate({ welcomeMessage: val })}
-            mode={mode}
-            placeholder="Together with our families, we joyfully invite you to celebrate our union..."
-            className="text-lg leading-relaxed italic md:text-xl"
-            multiline
-            as="p"
-          />
-        </div>
-        <GoldDivider className="mt-8" />
-      </motion.div>
-    </div>
-  </section>
-);
+  photos: ReturnType<typeof getDisplayPhotos>;
+  templateId?: number;
+  sessionUUID?: string;
+  uploadStage: "temp" | "draft" | "published";
+}) => {
+  const galleryRef = useRef<HTMLElement | null>(null);
+  const { scrollYProgress } = useScroll({
+    target: galleryRef,
+    offset: ["start 90%", "end 20%"],
+  });
+  const leadImageLift = useTransform(scrollYProgress, [0, 1], [80, -20]);
+  const largePhoto =
+    photos[0]?.photoUrl || data.couplePhotoUrl || DEFAULT_COUPLE_PHOTO;
+  const smallPhotos = photos.slice(1, 7);
 
-/* ══════════════════════════════════════════════════════════
-   EVENTS — Elegant alternating timeline
-   ══════════════════════════════════════════════════════════ */
+  return (
+    <section
+      ref={galleryRef}
+      className="relative overflow-hidden px-4 py-24 sm:py-32"
+      style={{
+        background:
+          "linear-gradient(180deg, rgba(247,240,228,0.22), rgba(255,250,242,0.72) 20%, rgba(240,228,214,0.85) 100%)",
+      }}
+    >
+      <div className="mx-auto max-w-6xl">
+        <SectionIntro
+          kicker="Motion Gallery"
+          title="Images Rise, Overlap, and Reveal"
+          body="This section is built to echo the reference: a dominant image first, then surrounding frames and stacked overlaps appearing from below while you scroll."
+          align="left"
+        />
+
+        <motion.div
+          {...sectionReveal}
+          className="relative overflow-hidden rounded-[36px] border p-4 sm:p-6"
+          style={{
+            borderColor: C.border,
+            backgroundColor: "rgba(255,253,249,0.92)",
+            boxShadow: C.shadow,
+            y: leadImageLift,
+          }}
+        >
+          <EditablePhoto
+            photoUrl={largePhoto}
+            onSave={(url) => onUpdate({ couplePhotoUrl: url })}
+            mode={mode}
+            className="h-[420px] w-full rounded-[28px] sm:h-[560px]"
+            alt="Hero memory"
+            templateId={templateId}
+            sessionUUID={sessionUUID}
+            uploadStage={uploadStage}
+            invitationId={data.invitationId ?? undefined}
+            oldPublicUrl={data.couplePhotoUrl || undefined}
+          />
+          <div className="pointer-events-none absolute inset-x-0 bottom-10 flex justify-center px-8">
+            <div
+              className="max-w-xl rounded-full px-6 py-3 text-center"
+              style={{
+                backgroundColor: "rgba(33,16,17,0.54)",
+                backdropFilter: "blur(12px)",
+              }}
+            >
+              <p
+                className="text-sm sm:text-base"
+                style={{
+                  fontFamily: FONTS.sans,
+                  color: "rgba(255,250,242,0.88)",
+                }}
+              >
+                One big frame to hold the moment, then smaller memories drifting
+                in around it.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        <div className="mt-12 grid gap-6 md:grid-cols-2">
+          {smallPhotos.map((photo, index) => (
+            <motion.div
+              key={`${photo.photoUrl}-${index}`}
+              initial={{ opacity: 0, y: 180, scale: 0.9 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true, margin: "-10% 0px" }}
+              transition={{
+                duration: 0.95,
+                delay: index * 0.12,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className={cn(
+                "relative rounded-[30px] border bg-white p-3",
+                index > 0 && "md:-mt-12",
+                index % 2 === 1 && "md:translate-y-12",
+              )}
+              style={{
+                borderColor: C.border,
+                boxShadow: "0 28px 70px rgba(43, 23, 24, 0.13)",
+                zIndex: smallPhotos.length - index,
+              }}
+            >
+              <EditablePhoto
+                photoUrl={photo.photoUrl}
+                onSave={(url) =>
+                  onUpdate({
+                    galleryPhotos: updateGalleryPhotoAtIndex(
+                      photos,
+                      index + 1,
+                      url,
+                    ),
+                  })
+                }
+                mode={mode}
+                className="h-[260px] w-full rounded-[22px] sm:h-[320px]"
+                alt={`Rising gallery ${index + 1}`}
+                templateId={templateId}
+                sessionUUID={sessionUUID}
+                uploadStage={uploadStage}
+                invitationId={data.invitationId ?? undefined}
+                oldPublicUrl={photo.photoUrl}
+              />
+              <div className="px-3 pb-2 pt-4">
+                <p
+                  className="text-[11px] uppercase tracking-[0.36em]"
+                  style={{ color: C.gold, fontFamily: FONTS.sans }}
+                >
+                  Memory {String(index + 1).padStart(2, "0")}
+                </p>
+                <p
+                  className="mt-2 text-2xl"
+                  style={{ fontFamily: FONTS.display }}
+                >
+                  {index % 2 === 0
+                    ? "An in-between glance that said everything."
+                    : "Laughter you could feel across the room."}
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        <motion.div {...sectionReveal} className="mt-14">
+          <EditablePhotoGallery
+            photos={data.galleryPhotos}
+            defaultPhotos={data.templateDefaults.defaultPhotos}
+            onUpdate={(galleryPhotos) => onUpdate({ galleryPhotos })}
+            mode={mode}
+            maxPhotos={10}
+            invitationId={data.invitationId ?? undefined}
+            templateId={templateId}
+            sessionUUID={sessionUUID}
+            uploadStage={uploadStage}
+          />
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
 const EventsSection = ({
   mode,
   data,
@@ -572,356 +914,524 @@ const EventsSection = ({
   data: TemplateProps["data"];
   onUpdate: TemplateProps["onUpdate"];
 }) => {
-  const isEdit = mode === "edit";
-  const updateEvent = (index: number, updates: Partial<EventData>) => {
-    const newEvents = [...data.events];
-    newEvents[index] = { ...newEvents[index], ...updates };
-    onUpdate({ events: newEvents });
-  };
+  const events = data.events.length > 0 ? data.events : [createEmptyEvent()];
 
   return (
-    <section className="py-16 md:py-24" style={{ backgroundColor: C.bg }}>
-      <div className="mx-auto max-w-2xl px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-14 text-center"
-        >
-          <p
-            className="mb-2 text-xs uppercase tracking-[0.45em]"
-            style={{ color: C.gold }}
-          >
-            Celebration
-          </p>
-          <h2
-            className="text-4xl md:text-5xl"
-            style={{ fontFamily: FONTS.script, color: C.text }}
-          >
-            Wedding Events
-          </h2>
+    <section className="px-4 pb-24 pt-0 sm:pb-28 sm:pt-0">
+      <div className="mx-auto max-w-6xl">
+        <SectionIntro
+          kicker="Wedding Weekend"
+          title="Every Function, Beautifully Framed"
+          body="Refined event cards with real-looking copy, richer hierarchy, and softer motion so the section feels premium instead of generic."
+        />
+
+        <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-4">
+          {events.map((event, index) => (
+            <motion.div
+              key={`${event.id ?? "event"}-${index}`}
+              initial={{ opacity: 0, y: 80, scale: 0.95 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true, margin: "-8% 0px" }}
+              transition={{
+                duration: 0.8,
+                delay: index * 0.1,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+            >
+              {mode === "edit" ? (
+                <EditableEventCard
+                  event={event}
+                  onUpdate={(updates) => {
+                    const next = [...data.events];
+                    next[index] = { ...event, ...updates };
+                    onUpdate({ events: next });
+                  }}
+                  onDelete={() => {
+                    const next = data.events.filter((_, i) => i !== index);
+                    onUpdate({
+                      events: next.length > 0 ? next : [createEmptyEvent()],
+                    });
+                  }}
+                  mode={mode}
+                  index={index}
+                  className="h-full rounded-[28px] border-0 bg-[rgba(255,253,249,0.92)] p-7 shadow-[0_24px_70px_rgba(43,23,24,0.08)]"
+                />
+              ) : (
+                <div
+                  className="group relative h-full overflow-hidden rounded-[30px] border p-8 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_34px_90px_rgba(43,23,24,0.14)]"
+                  style={{
+                    background:
+                      "linear-gradient(168deg, rgba(255,253,249,0.98), rgba(249,241,230,0.92) 60%, rgba(240,228,210,0.85))",
+                    borderColor: C.border,
+                    boxShadow: "0 26px 70px rgba(43,23,24,0.08)",
+                  }}
+                >
+                  {/* Decorative gold accent line at top */}
+                  <div
+                    className="absolute inset-x-0 top-0 h-[3px]"
+                    style={{
+                      background: `linear-gradient(90deg, transparent, ${C.gold}, transparent)`,
+                    }}
+                  />
+
+                  {/* Subtle corner ornament */}
+                  <div className="absolute right-5 top-5 opacity-[0.06]">
+                    <Sparkle size={48} style={{ color: C.gold }} />
+                  </div>
+
+                  <div
+                    className="mb-5 inline-flex rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.3em]"
+                    style={{
+                      backgroundColor: "rgba(182,129,63,0.12)",
+                      color: C.gold,
+                      fontFamily: FONTS.sans,
+                      border: `1px solid rgba(182,129,63,0.18)`,
+                    }}
+                  >
+                    Event {String(index + 1).padStart(2, "0")}
+                  </div>
+                  <h3
+                    className="text-4xl leading-none"
+                    style={{ fontFamily: FONTS.display, color: C.ink }}
+                  >
+                    {event.eventName}
+                  </h3>
+                  <p
+                    className="mt-4 text-base leading-7"
+                    style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+                  >
+                    {eventNotes[event.eventName] ||
+                      "A meaningful gathering with the people we love most."}
+                  </p>
+
+                  {/* Divider */}
+                  <div
+                    className="my-6 h-[1px]"
+                    style={{
+                      background: `linear-gradient(90deg, ${C.gold}33, ${C.gold}66, ${C.gold}33)`,
+                    }}
+                  />
+
+                  <div className="space-y-3">
+                    <div
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors"
+                      style={{
+                        color: C.inkMuted,
+                        fontFamily: FONTS.sans,
+                        backgroundColor: "rgba(182,129,63,0.04)",
+                      }}
+                    >
+                      <div
+                        className="flex h-8 w-8 items-center justify-center rounded-full"
+                        style={{ backgroundColor: "rgba(182,129,63,0.1)" }}
+                      >
+                        <CalendarDays size={14} style={{ color: C.gold }} />
+                      </div>
+                      <span className="font-medium">
+                        {formatEventDate(event.eventDate)}
+                      </span>
+                    </div>
+                    <div
+                      className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors"
+                      style={{
+                        color: C.inkMuted,
+                        fontFamily: FONTS.sans,
+                        backgroundColor: "rgba(182,129,63,0.04)",
+                      }}
+                    >
+                      <div
+                        className="flex h-8 w-8 items-center justify-center rounded-full"
+                        style={{ backgroundColor: "rgba(182,129,63,0.1)" }}
+                      >
+                        <Clock3 size={14} style={{ color: C.gold }} />
+                      </div>
+                      <span className="font-medium">
+                        {formatTime(event.eventTime)}
+                      </span>
+                    </div>
+                    {event.venueName && (
+                      <div
+                        className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors"
+                        style={{
+                          color: C.inkMuted,
+                          fontFamily: FONTS.sans,
+                          backgroundColor: "rgba(182,129,63,0.04)",
+                        }}
+                      >
+                        <div
+                          className="flex h-8 w-8 items-center justify-center rounded-full"
+                          style={{ backgroundColor: "rgba(182,129,63,0.1)" }}
+                        >
+                          <MapPin size={14} style={{ color: C.gold }} />
+                        </div>
+                        <span className="font-medium">{event.venueName}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          ))}
+        </div>
+
+        <motion.div {...sectionReveal} className="mt-6">
+          <AddEventButton
+            mode={mode}
+            onAdd={() =>
+              onUpdate({ events: [...data.events, createEmptyEvent()] })
+            }
+            currentCount={data.events.length}
+            maxEvents={8}
+            className="rounded-[24px] bg-[rgba(255,253,249,0.56)]"
+          />
         </motion.div>
-        {isEdit ? (
-          <div className="mx-auto max-w-lg space-y-4">
-            {data.events.map((event, i) => (
-              <EditableEventCard
-                key={event.id || i}
-                event={event}
-                onUpdate={(updates) => updateEvent(i, updates)}
-                onDelete={() =>
-                  onUpdate({
-                    events: data.events.filter((_, idx) => idx !== i),
-                  })
-                }
-                mode={mode}
-                index={i}
-              />
-            ))}
-            <AddEventButton
-              onAdd={() =>
-                onUpdate({
-                  events: [
-                    ...data.events,
-                    {
-                      id: null,
-                      eventName: "New Event",
-                      eventDate: "",
-                      eventTime: "",
-                      venueName: "",
-                      venueAddress: "",
-                      mapsUrl: null,
-                    },
-                  ],
-                })
-              }
-              mode={mode}
-              maxEvents={8}
-              currentCount={data.events.length}
-            />
-          </div>
-        ) : (
-          <EventTimeline events={data.events} />
-        )}
       </div>
     </section>
   );
 };
 
-const EventTimeline = ({ events }: { events: EventData[] }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, amount: 0.2 });
-  if (events.length === 0) return null;
+const VenueSection = ({ event }: { event: EventData | null }) => {
+  if (!event) return null;
 
   return (
-    <div ref={ref} className="relative">
+    <section className="px-4 pb-24">
       <div
-        className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2"
-        style={{ backgroundColor: `${C.gold}30` }}
-      />
-      <div className="space-y-12">
-        {events.map((event, i) => {
-          const isLeft = i % 2 === 0;
-          return (
-            <motion.div
-              key={event.id || i}
-              initial={{ opacity: 0, x: isLeft ? -40 : 40 }}
-              animate={isInView ? { opacity: 1, x: 0 } : {}}
-              transition={{ delay: 0.2 + i * 0.15, duration: 0.5 }}
-              className="relative grid grid-cols-[1fr_40px_1fr] items-center gap-4"
+        className="mx-auto max-w-6xl overflow-hidden rounded-[38px] border"
+        style={{
+          borderColor: C.border,
+          background:
+            "linear-gradient(168deg, rgba(255,253,249,0.98), rgba(247,238,224,0.96) 50%, rgba(240,228,210,0.94))",
+          boxShadow: C.shadow,
+        }}
+      >
+        <div className="grid gap-8 px-6 py-12 sm:px-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <motion.div {...sectionReveal}>
+            <p
+              className="mb-3 text-[11px] uppercase tracking-[0.45em]"
+              style={{ color: C.gold, fontFamily: FONTS.sans }}
             >
-              <div className={cn("text-right", !isLeft && "order-1")}>
-                {isLeft ? <EventCard event={event} align="right" /> : <div />}
+              Venue Highlight
+            </p>
+            <h2
+              className="text-5xl leading-[0.98] sm:text-6xl"
+              style={{ color: C.ink, fontFamily: FONTS.display }}
+            >
+              {event.venueName}
+            </h2>
+            <p
+              className="mt-5 max-w-xl text-lg leading-8"
+              style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+            >
+              {event.venueAddress}
+            </p>
+            <div className="mt-8 flex flex-wrap gap-4">
+              <div
+                className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm"
+                style={{
+                  borderColor: C.border,
+                  backgroundColor: "rgba(182,129,63,0.08)",
+                  color: C.ink,
+                  fontFamily: FONTS.sans,
+                }}
+              >
+                <CalendarDays size={16} style={{ color: C.gold }} />
+                <span>{formatEventDate(event.eventDate)}</span>
               </div>
-              <div className="relative z-10 flex justify-center order-2">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={isInView ? { scale: 1 } : {}}
-                  transition={{
-                    delay: 0.3 + i * 0.15,
-                    type: "spring",
-                    stiffness: 300,
-                  }}
-                  className="flex h-8 w-8 items-center justify-center rounded-full"
-                  style={{
-                    backgroundColor: C.gold,
-                    boxShadow: `0 0 16px ${C.gold}30`,
-                  }}
+              <div
+                className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm"
+                style={{
+                  borderColor: C.border,
+                  backgroundColor: "rgba(182,129,63,0.08)",
+                  color: C.ink,
+                  fontFamily: FONTS.sans,
+                }}
+              >
+                <Clock3 size={16} style={{ color: C.gold }} />
+                <span>{formatTime(event.eventTime)}</span>
+              </div>
+              <div
+                className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm"
+                style={{
+                  borderColor: C.border,
+                  backgroundColor: "rgba(182,129,63,0.08)",
+                  color: C.ink,
+                  fontFamily: FONTS.sans,
+                }}
+              >
+                <MapPin size={16} style={{ color: C.gold }} />
+                <span>Location Ready</span>
+              </div>
+            </div>
+            {event.mapsUrl && (
+              <a
+                href={event.mapsUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-8 inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm"
+                style={{
+                  backgroundColor: C.gold,
+                  color: C.white,
+                  fontFamily: FONTS.sans,
+                }}
+              >
+                <MapPin size={16} />
+                Open in Maps
+              </a>
+            )}
+          </motion.div>
+
+          <motion.div {...sectionReveal} className="grid gap-4 sm:grid-cols-2">
+            {[
+              {
+                title: "Arrival",
+                text: "Guests are requested by 4:45 PM so welcome drinks and seating can begin smoothly before the main ceremony.",
+              },
+              {
+                title: "Photography",
+                text: "Family portraits will be guided right after the varmala, followed by open candid coverage through the evening.",
+              },
+              {
+                title: "Parking",
+                text: "Valet will be available at the main gate, with overflow parking directed by the hospitality desk.",
+              },
+              {
+                title: "Hospitality",
+                text: "For stay support, transport help, or room assistance, our guest relations team will be available throughout the event.",
+              },
+            ].map((item) => (
+              <motion.div
+                key={item.title}
+                whileHover={{ y: -6 }}
+                className="rounded-[28px] border p-6"
+                style={{
+                  borderColor: C.border,
+                  backgroundColor: "rgba(255,253,249,0.8)",
+                  boxShadow: "0 12px 40px rgba(43,23,24,0.06)",
+                }}
+              >
+                <p
+                  className="text-[11px] uppercase tracking-[0.34em]"
+                  style={{ color: C.gold, fontFamily: FONTS.sans }}
                 >
-                  <Heart size={12} fill={C.white} style={{ color: C.white }} />
-                </motion.div>
-              </div>
-              <div className={cn(!isLeft ? "order-3" : "order-3")}>
-                {!isLeft ? <EventCard event={event} align="left" /> : <div />}
-              </div>
-            </motion.div>
-          );
-        })}
+                  {item.title}
+                </p>
+                <p
+                  className="mt-3 text-lg leading-7"
+                  style={{ color: C.inkMuted }}
+                >
+                  {item.text}
+                </p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
       </div>
-    </div>
+    </section>
   );
 };
 
-const EventCard = ({
-  event,
-  align,
+const InfoPill = ({
+  icon,
+  label,
 }: {
-  event: EventData;
-  align: "left" | "right";
+  icon: React.ReactNode;
+  label: string;
 }) => (
   <div
-    className={cn(
-      "rounded-xl border p-5",
-      align === "right" ? "text-right" : "text-left",
-    )}
+    className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm"
     style={{
-      backgroundColor: C.bgCard,
-      borderColor: `${C.gold}18`,
-      boxShadow: `0 8px 30px ${C.gold}06`,
+      backgroundColor: "rgba(255,255,255,0.08)",
+      color: C.white,
+      fontFamily: FONTS.sans,
     }}
   >
-    <h3
-      className="text-xl md:text-2xl"
-      style={{ fontFamily: FONTS.heading, color: C.text }}
-    >
-      {event.eventName}
-    </h3>
-    {event.eventTime && (
-      <p
-        className="mt-1 flex items-center gap-1.5 text-sm"
-        style={{
-          color: C.gold,
-          justifyContent: align === "right" ? "flex-end" : "flex-start",
-        }}
-      >
-        <Clock size={12} />
-        {formatTime(event.eventTime)}
-      </p>
-    )}
-    {event.eventDate && (
-      <p className="mt-1 text-xs" style={{ color: C.textMuted }}>
-        {formatEventDate(event.eventDate)}
-      </p>
-    )}
-    {event.venueName && (
-      <p className="mt-2 text-sm" style={{ color: C.textMuted }}>
-        {event.venueName}
-      </p>
-    )}
-    {event.mapsUrl && (
-      <a
-        href={event.mapsUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-2 inline-flex items-center gap-1 text-xs hover:underline"
-        style={{ color: C.gold }}
-      >
-        <MapPin size={10} /> Directions
-      </a>
-    )}
+    {icon}
+    <span>{label}</span>
   </div>
 );
 
-/* ══════════════════════════════════════════════════════════
-   VENUE
-   ══════════════════════════════════════════════════════════ */
-const VenueSection = ({ event }: { event: EventData }) => (
-  <section
-    className="relative overflow-hidden py-24 md:py-32"
-    style={{ backgroundColor: C.bgDark }}
-  >
-    <div
-      className="absolute inset-0 opacity-[0.04]"
-      style={{
-        backgroundImage: `radial-gradient(circle at 50% 50%, ${C.gold}, transparent 60%)`,
-      }}
-    />
-    <div className="relative z-10 mx-auto max-w-xl px-6 text-center">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-      >
-        <MapPin
-          size={22}
-          className="mx-auto mb-4"
-          style={{ color: C.goldAccent }}
-        />
-        <h2
-          className="mb-6 text-4xl md:text-5xl"
-          style={{ fontFamily: FONTS.script, color: C.cream }}
-        >
-          Venue
-        </h2>
-        <p
-          className="text-xl md:text-2xl"
-          style={{ color: C.champagne, fontFamily: FONTS.heading }}
-        >
-          {event.venueName || "Venue Name"}
-        </p>
-        <p
-          className="mt-2 text-base leading-relaxed"
-          style={{ color: C.textLight }}
-        >
-          {event.venueAddress || "Venue Address"}
-        </p>
-        {event.mapsUrl && (
-          <motion.a
-            href={event.mapsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            whileHover={{ scale: 1.04 }}
-            className="mt-8 inline-flex items-center gap-2 rounded-full border px-8 py-3 text-sm uppercase tracking-[0.2em] transition-colors"
-            style={{ borderColor: C.gold, color: C.gold }}
-          >
-            <MapPin size={14} /> Get Directions
-          </motion.a>
-        )}
-      </motion.div>
-    </div>
-  </section>
-);
-
-/* ══════════════════════════════════════════════════════════
-   GALLERY
-   ══════════════════════════════════════════════════════════ */
-const GallerySection = ({
-  mode,
-  data,
-  onUpdate,
-  templateId,
-  sessionUUID,
-  uploadStage,
-}: {
-  mode: TemplateProps["mode"];
-  data: TemplateProps["data"];
-  onUpdate: TemplateProps["onUpdate"];
-  templateId?: number;
-  sessionUUID?: string;
-  uploadStage?: "temp" | "draft" | "published";
-}) => {
-  const displayPhotos =
-    data.galleryPhotos.length > 0
-      ? data.galleryPhotos
-      : data.templateDefaults.defaultPhotos.map((p, i) => ({
-          photoUrl: p.photoUrl,
-          sortOrder: i,
-          isDefault: true,
-        }));
+const FaqSection = () => {
+  const [openIndex, setOpenIndex] = useState(0);
 
   return (
-    <section className="py-16 md:py-24" style={{ backgroundColor: C.bg }}>
-      <div className="mx-auto max-w-5xl px-6">
+    <section className="px-4 py-24 sm:py-28">
+      <div className="mx-auto max-w-6xl">
+        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
+          <SectionIntro
+            kicker="Questions"
+            title="Questions and Answers"
+            body="A section like the one in your screenshot, designed to stay airy and premium instead of looking cramped."
+            align="left"
+          />
+
+          <motion.div {...sectionReveal} className="space-y-4">
+            {faqItems.map((item, index) => {
+              const isOpen = index === openIndex;
+              return (
+                <div
+                  key={item.q}
+                  className="overflow-hidden rounded-[28px] border"
+                  style={{
+                    borderColor: C.border,
+                    backgroundColor: isOpen
+                      ? "rgba(255,253,249,0.9)"
+                      : "rgba(255,253,249,0.62)",
+                    boxShadow: isOpen
+                      ? "0 20px 50px rgba(43, 23, 24, 0.08)"
+                      : "none",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenIndex(isOpen ? -1 : index)}
+                    className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
+                  >
+                    <span
+                      className="text-2xl sm:text-3xl"
+                      style={{ fontFamily: FONTS.display }}
+                    >
+                      {item.q}
+                    </span>
+                    <ChevronDown
+                      size={22}
+                      className={cn(
+                        "transition-transform",
+                        isOpen && "rotate-180",
+                      )}
+                    />
+                  </button>
+                  <motion.div
+                    initial={false}
+                    animate={{
+                      height: isOpen ? "auto" : 0,
+                      opacity: isOpen ? 1 : 0,
+                    }}
+                    transition={{ duration: 0.35 }}
+                    className="overflow-hidden"
+                  >
+                    <p
+                      className="px-6 pb-6 text-base leading-8"
+                      style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+                    >
+                      {item.a}
+                    </p>
+                  </motion.div>
+                </div>
+              );
+            })}
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+};
+const GiftsSection = () => {
+  const [revealed, setRevealed] = useState(false);
+
+  return (
+    <section className="px-4 pb-24">
+      <div className="mx-auto max-w-5xl">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-12 text-center"
+          {...sectionReveal}
+          className="overflow-hidden rounded-[40px] border px-6 py-12 text-center sm:px-10"
+          style={{
+            borderColor: C.border,
+            background:
+              "linear-gradient(180deg, rgba(255,253,249,0.96), rgba(249,241,230,0.86))",
+            boxShadow: C.shadow,
+          }}
         >
-          <p
-            className="mb-2 text-xs uppercase tracking-[0.45em]"
-            style={{ color: C.gold }}
+          <div
+            className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full"
+            style={{ backgroundColor: "rgba(184,138,65,0.12)" }}
           >
-            Moments
+            <Gift size={28} style={{ color: C.gold }} />
+          </div>
+          <p
+            className="text-[11px] uppercase tracking-[0.45em]"
+            style={{ color: C.gold, fontFamily: FONTS.sans }}
+          >
+            Gifts & Blessings
           </p>
           <h2
-            className="text-4xl md:text-5xl"
-            style={{ fontFamily: FONTS.script, color: C.text }}
+            className="mt-4 text-5xl sm:text-6xl"
+            style={{ fontFamily: FONTS.display }}
           >
-            Our Gallery
+            Your Presence Is The Real Gift
           </h2>
-        </motion.div>
-        {mode === "edit" ? (
-          <EditablePhotoGallery
-            photos={data.galleryPhotos}
-            defaultPhotos={data.templateDefaults.defaultPhotos}
-            onUpdate={(photos) => onUpdate({ galleryPhotos: photos })}
-            mode={mode}
-            maxPhotos={10}
-            invitationId={data.invitationId ?? undefined}
-            templateId={templateId}
-            sessionUUID={sessionUUID}
-            uploadStage={uploadStage}
-          />
-        ) : (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
-            {displayPhotos.slice(0, 6).map((photo, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className={cn(
-                  "overflow-hidden rounded-xl",
-                  i === 0 && "col-span-2 row-span-2",
-                )}
-                style={{
-                  boxShadow: `0 8px 30px ${C.gold}0a`,
-                  border: `1px solid ${C.gold}15`,
-                }}
-              >
-                <img
-                  src={photo.photoUrl}
-                  alt={`Gallery ${i + 1}`}
-                  className={cn(
-                    "w-full object-cover",
-                    i === 0
-                      ? "h-[300px] md:h-[460px]"
-                      : "h-[150px] md:h-[220px]",
-                  )}
-                />
-              </motion.div>
-            ))}
+          <p
+            className="mx-auto mt-5 max-w-3xl text-lg leading-8"
+            style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+          >
+            If you still wish to contribute to the couple's new beginning, this
+            section gives you the same kind of payment reveal interaction you
+            shared.
+          </p>
+
+          <div className="mt-10 flex justify-center">
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setRevealed((prev) => !prev)}
+              className="w-full max-w-sm rounded-[28px] border px-6 py-10"
+              style={{
+                borderColor: revealed ? "rgba(184,138,65,0.4)" : C.border,
+                backgroundColor: revealed
+                  ? "rgba(184,138,65,0.08)"
+                  : "rgba(255,255,255,0.7)",
+              }}
+            >
+              {!revealed ? (
+                <div className="space-y-4">
+                  <Gift
+                    className="mx-auto"
+                    size={28}
+                    style={{ color: C.gold }}
+                  />
+                  <p
+                    className="text-[11px] uppercase tracking-[0.34em]"
+                    style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+                  >
+                    Bank Details
+                  </p>
+                  <p className="text-2xl" style={{ fontFamily: FONTS.display }}>
+                    Tap to reveal
+                  </p>
+                </div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-3"
+                >
+                  <p
+                    className="text-[11px] uppercase tracking-[0.34em]"
+                    style={{ color: C.gold, fontFamily: FONTS.sans }}
+                  >
+                    Payment Option
+                  </p>
+                  <p className="text-2xl" style={{ fontFamily: FONTS.display }}>
+                    UPI / Bank Transfer
+                  </p>
+                  <div
+                    className="space-y-1 text-base"
+                    style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+                  >
+                    <p>UPI ID: weddingfamily@okaxis</p>
+                    <p>A/C Name: Shubh Aarambh Couple Fund</p>
+                    <p>A/C No: 1234 5678 9012</p>
+                    <p>IFSC: SBIN0001234</p>
+                  </div>
+                </motion.div>
+              )}
+            </motion.button>
           </div>
-        )}
+        </motion.div>
       </div>
     </section>
   );
 };
 
-/* ══════════════════════════════════════════════════════════
-   RSVP
-   ══════════════════════════════════════════════════════════ */
 const RsvpSection = ({
   invitationId,
   isDemo,
@@ -948,11 +1458,12 @@ const RsvpSection = ({
       return;
     }
     if (isDemo) {
-      toast("This is a demo — create your invitation to receive real RSVPs", {
+      toast("This is a demo - create your invitation to receive real RSVPs", {
         icon: "✨",
       });
       return;
     }
+
     setLoading(true);
     try {
       await submitRsvp(String(invitationId || ""), {
@@ -971,235 +1482,228 @@ const RsvpSection = ({
     }
   };
 
-  const attendOptions = [
-    { value: "yes" as const, label: "Joyfully Accept", icon: "✨" },
-    { value: "maybe" as const, label: "Yet to Decide", icon: "💭" },
-    { value: "no" as const, label: "Regretfully Decline", icon: "🙏" },
-  ];
-
   if (submitted) {
     return (
-      <section className="py-20" style={{ backgroundColor: C.bgWarm }}>
-        <div className="mx-auto max-w-md px-6">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="rounded-2xl border p-10 text-center"
-            style={{ backgroundColor: C.white, borderColor: `${C.gold}25` }}
+      <section className="px-4 pb-24">
+        <div
+          className="mx-auto max-w-3xl rounded-[40px] border px-6 py-16 text-center sm:px-10"
+          style={{
+            borderColor: C.border,
+            backgroundColor: "rgba(255,253,249,0.88)",
+            boxShadow: C.shadow,
+          }}
+        >
+          <div className="mx-auto mb-6 flex items-center justify-center rounded-full bg-[rgba(184,138,65,0.12)] p-5">
+            <Check size={30} style={{ color: C.gold }} />
+          </div>
+          <h2
+            className="text-5xl sm:text-6xl"
+            style={{ fontFamily: FONTS.display }}
           >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring" }}
-              className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full"
-              style={{ backgroundColor: `${C.gold}15` }}
-            >
-              <Check className="h-8 w-8" style={{ color: C.gold }} />
-            </motion.div>
-            <p
-              className="mb-2 text-2xl"
-              style={{ fontFamily: FONTS.script, color: C.text }}
-            >
-              Thank you, {name}!
-            </p>
-            <p className="text-sm" style={{ color: C.textMuted }}>
-              We can&apos;t wait to celebrate with you.
-            </p>
-          </motion.div>
+            Thank You, {name}
+          </h2>
+          <p
+            className="mx-auto mt-5 max-w-xl text-lg leading-8"
+            style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+          >
+            We're so happy you responded. Your RSVP has been received with love.
+          </p>
         </div>
       </section>
     );
   }
 
-  return (
-    <section className="py-20" style={{ backgroundColor: C.bgWarm }}>
-      <div className="mx-auto max-w-md px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-10 text-center"
-        >
-          <GoldDivider className="mb-6" />
-          <p
-            className="mb-2 text-xs uppercase tracking-[0.35em]"
-            style={{ color: C.gold }}
-          >
-            Kindly Respond
-          </p>
-          <h2
-            className="text-3xl md:text-4xl"
-            style={{ fontFamily: FONTS.script, color: C.text }}
-          >
-            Will You Join Us?
-          </h2>
-        </motion.div>
+  const options = [
+    { value: "yes" as const, label: "Joyfully Accept" },
+    { value: "maybe" as const, label: "Maybe" },
+    { value: "no" as const, label: "Decline" },
+  ];
 
-        <motion.form
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.15 }}
-          onSubmit={handleSubmit}
-          className="space-y-6 rounded-2xl border p-8"
-          style={{
-            backgroundColor: C.white,
-            borderColor: `${C.gold}20`,
-            boxShadow: `0 16px 48px ${C.gold}08`,
-          }}
-        >
-          <div>
-            <label
-              className="mb-2 block text-xs uppercase tracking-[0.15em]"
-              style={{ color: C.textMuted }}
+  return (
+    <section className="px-4 pb-24">
+      <div
+        className="mx-auto max-w-5xl overflow-hidden rounded-[42px] border"
+        style={{
+          borderColor: C.border,
+          backgroundColor: "rgba(255,253,249,0.9)",
+          boxShadow: C.shadow,
+        }}
+      >
+        <div className="grid gap-8 px-6 py-12 sm:px-10 lg:grid-cols-[0.82fr_1.18fr]">
+          <motion.div {...sectionReveal}>
+            <p
+              className="text-[11px] uppercase tracking-[0.42em]"
+              style={{ color: C.gold, fontFamily: FONTS.sans }}
             >
-              Your Name *
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full rounded-xl border px-4 py-3 text-sm outline-none"
-              style={{
-                color: C.text,
-                backgroundColor: C.bgCard,
-                borderColor: `${C.gold}25`,
-              }}
-              placeholder="Enter your full name"
-            />
-          </div>
-          <div>
-            <label
-              className="mb-2 block text-xs uppercase tracking-[0.15em]"
-              style={{ color: C.textMuted }}
+              Kindly Respond
+            </p>
+            <h2
+              className="mt-4 text-5xl leading-[0.96] sm:text-6xl"
+              style={{ fontFamily: FONTS.display }}
             >
-              Phone Number *
-            </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-              className="w-full rounded-xl border px-4 py-3 text-sm outline-none"
-              style={{
-                color: C.text,
-                backgroundColor: C.bgCard,
-                borderColor: `${C.gold}25`,
-              }}
-              placeholder="10-digit phone number"
-              maxLength={10}
-            />
-          </div>
-          <div>
-            <label
-              className="mb-3 block text-xs uppercase tracking-[0.15em]"
-              style={{ color: C.textMuted }}
+              Will You Celebrate With Us?
+            </h2>
+            <p
+              className="mt-5 max-w-md text-lg leading-8"
+              style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
             >
-              Your Response
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {attendOptions.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setAttending(opt.value)}
-                  className={cn(
-                    "rounded-xl border py-3 text-center transition-all",
-                    attending === opt.value
-                      ? "shadow-md"
-                      : "opacity-70 hover:opacity-100",
-                  )}
-                  style={{
-                    borderColor:
-                      attending === opt.value ? C.gold : `${C.gold}25`,
-                    backgroundColor:
-                      attending === opt.value ? `${C.gold}12` : C.bgCard,
-                    ...(attending === opt.value
-                      ? { boxShadow: `0 0 0 2px ${C.gold}` }
-                      : {}),
-                  }}
-                >
-                  <span className="block text-lg mb-1">{opt.icon}</span>
-                  <span
-                    className="text-[10px] uppercase tracking-wider"
-                    style={{ color: C.text }}
-                  >
-                    {opt.label}
+              This keeps the existing RSVP flow but dresses it in the same
+              editorial style as the rest of the invite.
+            </p>
+            <div className="mt-8 space-y-4">
+              {[
+                "Quick reply form",
+                "Phone-based guest tracking",
+                "Guest count and note support",
+                "Works in demo and live mode",
+              ].map((line) => (
+                <div key={line} className="flex items-center gap-3">
+                  <Heart size={16} style={{ color: C.gold }} />
+                  <span style={{ color: C.inkMuted, fontFamily: FONTS.sans }}>
+                    {line}
                   </span>
-                </button>
+                </div>
               ))}
             </div>
-          </div>
-          {attending !== "no" && (
-            <div>
-              <label
-                className="mb-2 block text-xs uppercase tracking-[0.15em]"
-                style={{ color: C.textMuted }}
+          </motion.div>
+
+          <motion.form
+            {...sectionReveal}
+            onSubmit={handleSubmit}
+            className="grid gap-5"
+          >
+            <label className="grid gap-2">
+              <span
+                className="text-[11px] uppercase tracking-[0.3em]"
+                style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
               >
-                Number of Guests
-              </label>
-              <div className="flex items-center justify-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => setGuestCount(Math.max(1, guestCount - 1))}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border"
-                  style={{ borderColor: `${C.gold}40` }}
-                >
-                  <Minus size={14} style={{ color: C.text }} />
-                </button>
-                <span
-                  className="w-12 text-center text-2xl font-light"
-                  style={{ color: C.text, fontFamily: FONTS.heading }}
-                >
-                  {guestCount}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setGuestCount(Math.min(10, guestCount + 1))}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border"
-                  style={{ borderColor: `${C.gold}40` }}
-                >
-                  <Plus size={14} style={{ color: C.text }} />
-                </button>
+                Guest Name
+              </span>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="rounded-[20px] border px-5 py-4 outline-none"
+                style={{
+                  borderColor: C.border,
+                  backgroundColor: C.white,
+                  fontFamily: FONTS.sans,
+                }}
+                placeholder="Your full name"
+              />
+            </label>
+            <label className="grid gap-2">
+              <span
+                className="text-[11px] uppercase tracking-[0.3em]"
+                style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+              >
+                Phone Number
+              </span>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                required
+                maxLength={10}
+                className="rounded-[20px] border px-5 py-4 outline-none"
+                style={{
+                  borderColor: C.border,
+                  backgroundColor: C.white,
+                  fontFamily: FONTS.sans,
+                }}
+                placeholder="10-digit mobile number"
+              />
+            </label>
+            <div>
+              <p
+                className="mb-3 text-[11px] uppercase tracking-[0.3em]"
+                style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+              >
+                Response
+              </p>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {options.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setAttending(option.value)}
+                    className="rounded-[18px] border px-4 py-4 text-sm transition-all"
+                    style={{
+                      borderColor:
+                        attending === option.value ? C.gold : C.border,
+                      backgroundColor:
+                        attending === option.value
+                          ? "rgba(184,138,65,0.08)"
+                          : C.white,
+                      fontFamily: FONTS.sans,
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
               </div>
             </div>
-          )}
-          <div>
-            <label
-              className="mb-2 block text-xs uppercase tracking-[0.15em]"
-              style={{ color: C.textMuted }}
-            >
-              Message (Optional)
+            <label className="grid gap-2">
+              <span
+                className="text-[11px] uppercase tracking-[0.3em]"
+                style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+              >
+                Guest Count
+              </span>
+              <input
+                type="number"
+                min={1}
+                max={10}
+                value={guestCount}
+                onChange={(e) => setGuestCount(Number(e.target.value))}
+                className="rounded-[20px] border px-5 py-4 outline-none"
+                style={{
+                  borderColor: C.border,
+                  backgroundColor: C.white,
+                  fontFamily: FONTS.sans,
+                }}
+              />
             </label>
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={3}
-              className="w-full resize-none rounded-xl border px-4 py-3 text-sm outline-none"
+            <label className="grid gap-2">
+              <span
+                className="text-[11px] uppercase tracking-[0.3em]"
+                style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+              >
+                Message
+              </span>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={4}
+                className="rounded-[20px] border px-5 py-4 outline-none"
+                style={{
+                  borderColor: C.border,
+                  backgroundColor: C.white,
+                  fontFamily: FONTS.sans,
+                }}
+                placeholder="Add a lovely note"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-4 text-sm uppercase tracking-[0.22em]"
               style={{
-                color: C.text,
-                backgroundColor: C.bgCard,
-                borderColor: `${C.gold}25`,
+                backgroundColor: C.plum,
+                color: C.white,
+                fontFamily: FONTS.sans,
               }}
-              placeholder="Write a message for the couple..."
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-xl py-4 text-sm font-semibold uppercase tracking-wider transition-all hover:shadow-lg disabled:opacity-60"
-            style={{ backgroundColor: C.gold, color: C.white }}
-          >
-            {loading ? (
-              <span className="animate-spin">⏳</span>
-            ) : (
-              <Send size={16} />
-            )}
-            {loading ? "Sending..." : "Send RSVP"}
-          </button>
-        </motion.form>
+            >
+              {loading ? (
+                <Sparkles size={16} className="animate-spin" />
+              ) : (
+                <Send size={16} />
+              )}
+              {loading ? "Sending..." : "Send RSVP"}
+            </button>
+          </motion.form>
+        </div>
       </div>
     </section>
   );

@@ -490,192 +490,192 @@ const HeroSection = ({
 
   return (
     <section className="relative min-h-[100dvh] flex flex-col items-center justify-center overflow-hidden px-4 py-16">
-    {/* Video background */}
-    <div className="absolute inset-0">
-      {mode === "edit" ? (
-        <EditablePhoto
-          photoUrl={data.couplePhotoUrl}
-          onSave={(url) => onUpdate({ couplePhotoUrl: url })}
-          mode={mode}
-          className="h-full w-full"
-          alt="Hero image"
-          placeholderText="Add Hero Image"
-          templateId={templateId}
-          sessionUUID={sessionUUID}
-          uploadStage={uploadStage}
-          invitationId={data.invitationId ?? undefined}
-          oldPublicUrl={data.couplePhotoUrl || undefined}
+      {/* Video background */}
+      <div className="absolute inset-0">
+        {mode === "edit" ? (
+          <EditablePhoto
+            photoUrl={data.couplePhotoUrl}
+            onSave={(url) => onUpdate({ couplePhotoUrl: url })}
+            mode={mode}
+            className="h-full w-full"
+            alt="Hero image"
+            placeholderText="Add Hero Image"
+            templateId={templateId}
+            sessionUUID={sessionUUID}
+            uploadStage={uploadStage}
+            invitationId={data.invitationId ?? undefined}
+            oldPublicUrl={data.couplePhotoUrl || undefined}
+          />
+        ) : heroPhoto ? (
+          <motion.img
+            src={heroPhoto}
+            alt={`${data.brideName} and ${data.groomName}`}
+            className="absolute inset-0 h-full w-full object-cover"
+            initial={{ scale: 1.05 }}
+            animate={{ scale: 1.12 }}
+            transition={{ duration: 12, ease: "easeInOut" }}
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(circle at 50% 25%, rgba(255,255,255,0.24), transparent 24%), linear-gradient(180deg, rgba(243,237,227,1) 0%, rgba(228,216,198,1) 100%)",
+            }}
+          />
+        )}
+        {/* Warm vignette overlay */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(180deg, rgba(56,40,24,0.28) 0%, rgba(92,74,50,0.2) 30%, rgba(92,74,50,0.56) 100%)`,
+          }}
         />
-      ) : heroPhoto ? (
-        <motion.img
-          src={heroPhoto}
-          alt={`${data.brideName} and ${data.groomName}`}
-          className="absolute inset-0 h-full w-full object-cover"
-          initial={{ scale: 1.05 }}
-          animate={{ scale: 1.12 }}
-          transition={{ duration: 12, ease: "easeInOut" }}
-        />
-      ) : (
         <div
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(circle at 50% 25%, rgba(255,255,255,0.24), transparent 24%), linear-gradient(180deg, rgba(243,237,227,1) 0%, rgba(228,216,198,1) 100%)",
+              "radial-gradient(circle at 50% 35%, rgba(255,255,255,0.16), transparent 28%), radial-gradient(circle at 20% 80%, rgba(197,164,109,0.16), transparent 26%), radial-gradient(circle at 82% 18%, rgba(255,255,255,0.1), transparent 22%)",
           }}
         />
-      )}
-      {/* Warm vignette overlay */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: `linear-gradient(180deg, rgba(56,40,24,0.28) 0%, rgba(92,74,50,0.2) 30%, rgba(92,74,50,0.56) 100%)`,
-        }}
-      />
-      <div
-        className="absolute inset-0"
+      </div>
+
+      {/* Content */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.9, ease: "easeOut" }}
+        className="relative z-10 mx-auto w-full max-w-4xl overflow-hidden rounded-[2rem] border px-6 py-12 text-center shadow-2xl backdrop-blur-[2px] md:px-12 md:py-16"
         style={{
           background:
-            "radial-gradient(circle at 50% 35%, rgba(255,255,255,0.16), transparent 28%), radial-gradient(circle at 20% 80%, rgba(197,164,109,0.16), transparent 26%), radial-gradient(circle at 82% 18%, rgba(255,255,255,0.1), transparent 22%)",
-        }}
-      />
-    </div>
-
-    {/* Content */}
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.9, ease: "easeOut" }}
-      className="relative z-10 mx-auto w-full max-w-4xl overflow-hidden rounded-[2rem] border px-6 py-12 text-center shadow-2xl backdrop-blur-[2px] md:px-12 md:py-16"
-      style={{
-        background:
-          "linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.06) 100%)",
-        borderColor: "rgba(255,255,255,0.18)",
-        boxShadow: "0 30px 80px rgba(34, 24, 14, 0.22)",
-      }}
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.15, duration: 0.7 }}
-        className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-full border text-xl tracking-[0.35em] text-white/90"
-        style={{
-          borderColor: "rgba(255,255,255,0.35)",
-          backgroundColor: "rgba(255,255,255,0.08)",
-          fontFamily: FONTS.body,
+            "linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.06) 100%)",
+          borderColor: "rgba(255,255,255,0.18)",
+          boxShadow: "0 30px 80px rgba(34, 24, 14, 0.22)",
         }}
       >
-        {(data.brideName?.trim()?.charAt(0)?.toUpperCase() || "B") +
-          (data.groomName?.trim()?.charAt(0)?.toUpperCase() || "G")}
-      </motion.div>
-      <motion.p
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.8 }}
-        className="mb-8 text-[11px] uppercase tracking-[0.45em] md:text-sm"
-        style={{ color: C.white, fontFamily: FONTS.body }}
-      >
-        A Celebration of Love and New Beginnings
-      </motion.p>
-
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.5, duration: 1 }}
-        className="mb-8"
-      >
-        <EditableText
-          value={data.brideName}
-          onSave={(val) => onUpdate({ brideName: val })}
-          mode={mode}
-          placeholder="Bride"
-          className="block font-script text-6xl sm:text-7xl md:text-8xl leading-tight text-white drop-shadow-lg"
-          as="h1"
-        />
-        <p className="text-3xl my-2 font-script text-white/80 drop-shadow">
-          &amp;
-        </p>
-        <EditableText
-          value={data.groomName}
-          onSave={(val) => onUpdate({ groomName: val })}
-          mode={mode}
-          placeholder="Groom"
-          className="block font-script text-6xl sm:text-7xl md:text-8xl leading-tight text-white drop-shadow-lg"
-          as="h1"
-        />
-      </motion.div>
-
-      {/* Diamond ornament */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.9, duration: 0.8 }}
-        className="flex items-center justify-center gap-3 mb-6"
-      >
-        <div className="w-16 h-[1px] bg-white/60" />
-        <span className="text-white/60 text-sm">◆</span>
-        <div className="w-16 h-[1px] bg-white/60" />
-      </motion.div>
-
-      {/* Date */}
-      {mode === "edit" ? (
-        <div className="mt-4">
-          <label
-            className="text-xs block mb-2 tracking-wider uppercase text-white/70"
-            style={{ fontFamily: FONTS.body }}
-          >
-            Wedding Date
-          </label>
-          <input
-            type="date"
-            value={data.weddingDate}
-            onChange={(e) => onUpdate({ weddingDate: e.target.value })}
-            className="rounded-full border border-white/40 bg-white/20 px-5 py-2 text-sm text-white backdrop-blur"
-            style={{ fontFamily: FONTS.body }}
-          />
-        </div>
-      ) : (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="inline-flex rounded-full border px-6 py-3"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.15, duration: 0.7 }}
+          className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-full border text-xl tracking-[0.35em] text-white/90"
           style={{
-            borderColor: "rgba(255,255,255,0.32)",
+            borderColor: "rgba(255,255,255,0.35)",
             backgroundColor: "rgba(255,255,255,0.08)",
+            fontFamily: FONTS.body,
           }}
         >
-          <p
-            className="text-sm uppercase tracking-[0.3em] text-white/90 md:text-base"
-            style={{ fontFamily: FONTS.serif }}
-          >
-            {formatWeddingDate(data.weddingDate)}
-          </p>
+          {(data.brideName?.trim()?.charAt(0)?.toUpperCase() || "B") +
+            (data.groomName?.trim()?.charAt(0)?.toUpperCase() || "G")}
         </motion.div>
-      )}
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.8 }}
+          className="mb-8 text-[11px] uppercase tracking-[0.45em] md:text-sm"
+          style={{ color: C.white, fontFamily: FONTS.body }}
+        >
+          A Celebration of Love and New Beginnings
+        </motion.p>
 
-      {/* RSVP scroll hint */}
-      {mode !== "edit" && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5, duration: 1 }}
+          className="mb-8"
+        >
+          <EditableText
+            value={data.brideName}
+            onSave={(val) => onUpdate({ brideName: val })}
+            mode={mode}
+            placeholder="Bride"
+            className="block font-script text-6xl sm:text-7xl md:text-8xl leading-tight text-white drop-shadow-lg"
+            as="h1"
+          />
+          <p className="text-3xl my-2 font-script text-white/80 drop-shadow">
+            &amp;
+          </p>
+          <EditableText
+            value={data.groomName}
+            onSave={(val) => onUpdate({ groomName: val })}
+            mode={mode}
+            placeholder="Groom"
+            className="block font-script text-6xl sm:text-7xl md:text-8xl leading-tight text-white drop-shadow-lg"
+            as="h1"
+          />
+        </motion.div>
+
+        {/* Diamond ornament */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.25 }}
-          className="mt-12"
+          transition={{ delay: 0.9, duration: 0.8 }}
+          className="flex items-center justify-center gap-3 mb-6"
         >
-          <p
-            className="mb-2 text-[10px] uppercase tracking-[0.38em] text-white/70"
-            style={{ fontFamily: FONTS.body }}
-          >
-            Scroll to discover
-          </p>
-          <motion.div
-            animate={{ y: [0, 6, 0] }}
-            transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-          >
-            <ChevronDown size={20} className="mx-auto text-white/70" />
-          </motion.div>
+          <div className="w-16 h-[1px] bg-white/60" />
+          <span className="text-white/60 text-sm">◆</span>
+          <div className="w-16 h-[1px] bg-white/60" />
         </motion.div>
-      )}
-    </motion.div>
+
+        {/* Date */}
+        {mode === "edit" ? (
+          <div className="mt-4">
+            <label
+              className="text-xs block mb-2 tracking-wider uppercase text-white/70"
+              style={{ fontFamily: FONTS.body }}
+            >
+              Wedding Date
+            </label>
+            <input
+              type="date"
+              value={data.weddingDate}
+              onChange={(e) => onUpdate({ weddingDate: e.target.value })}
+              className="rounded-full border border-white/40 bg-white/20 px-5 py-2 text-sm text-white backdrop-blur"
+              style={{ fontFamily: FONTS.body }}
+            />
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+            className="inline-flex rounded-full border px-6 py-3"
+            style={{
+              borderColor: "rgba(255,255,255,0.32)",
+              backgroundColor: "rgba(255,255,255,0.08)",
+            }}
+          >
+            <p
+              className="text-sm uppercase tracking-[0.3em] text-white/90 md:text-base"
+              style={{ fontFamily: FONTS.serif }}
+            >
+              {formatWeddingDate(data.weddingDate)}
+            </p>
+          </motion.div>
+        )}
+
+        {/* RSVP scroll hint */}
+        {mode !== "edit" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.25 }}
+            className="mt-12"
+          >
+            <p
+              className="mb-2 text-[10px] uppercase tracking-[0.38em] text-white/70"
+              style={{ fontFamily: FONTS.body }}
+            >
+              Scroll to discover
+            </p>
+            <motion.div
+              animate={{ y: [0, 6, 0] }}
+              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+            >
+              <ChevronDown size={20} className="mx-auto text-white/70" />
+            </motion.div>
+          </motion.div>
+        )}
+      </motion.div>
     </section>
   );
 };
@@ -754,6 +754,7 @@ const CountdownDisplay = ({ weddingDate }: { weddingDate: string }) => {
     days: number;
     hours: number;
     minutes: number;
+    seconds: number;
   } | null>(null);
 
   useEffect(() => {
@@ -764,17 +765,18 @@ const CountdownDisplay = ({ weddingDate }: { weddingDate: string }) => {
       }
       const diff = new Date(weddingDate).getTime() - Date.now();
       if (diff <= 0) {
-        setCountdown({ days: 0, hours: 0, minutes: 0 });
+        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
         return;
       }
       setCountdown({
         days: Math.floor(diff / 86400000),
         hours: Math.floor((diff % 86400000) / 3600000),
         minutes: Math.floor((diff % 3600000) / 60000),
+        seconds: Math.floor((diff % 60000) / 1000),
       });
     };
     update();
-    const interval = setInterval(update, 30000);
+    const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
   }, [weddingDate]);
 
@@ -784,6 +786,7 @@ const CountdownDisplay = ({ weddingDate }: { weddingDate: string }) => {
     { value: countdown.days, label: "Days" },
     { value: countdown.hours, label: "Hours" },
     { value: countdown.minutes, label: "Minutes" },
+    { value: countdown.seconds, label: "Seconds" },
   ];
 
   return (
@@ -853,15 +856,15 @@ const WelcomeSection = ({
           {...SECTION_REVEAL}
           transition={{ delay: 0.15, duration: 0.7 }}
         >
-        <EditableText
-          value={welcomeMessage}
-          onSave={(val) => onUpdate({ welcomeMessage: val })}
-          mode={mode}
-          placeholder="We warmly welcome you to celebrate our union of love and togetherness..."
-          className="mx-auto max-w-2xl text-lg leading-relaxed italic md:text-[1.35rem]"
-          multiline
-          as="p"
-        />
+          <EditableText
+            value={welcomeMessage}
+            onSave={(val) => onUpdate({ welcomeMessage: val })}
+            mode={mode}
+            placeholder="We warmly welcome you to celebrate our union of love and togetherness..."
+            className="mx-auto max-w-2xl text-lg leading-relaxed italic md:text-[1.35rem]"
+            multiline
+            as="p"
+          />
         </motion.div>
       </motion.div>
     </div>

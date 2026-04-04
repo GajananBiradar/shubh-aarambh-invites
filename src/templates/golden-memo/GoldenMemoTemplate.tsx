@@ -556,16 +556,14 @@ const StorySection = ({
       ? [0]
       : Array.from({ length: count }, (_, index) => {
           if (index === 0) return 0;
-          const spread = Math.max(count - 2, 1);
-          return 0.38 + ((index - 1) / spread) * 0.48;
+          const spread = Math.max(count - 1, 1);
+          return 0.46 + ((index - 1) / spread) * 0.42;
         });
-
+  const [activeIndex, setActiveIndex] = useState(0);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end end"],
   });
-
-  const [activeIndex, setActiveIndex] = useState(0);
   useMotionValueEvent(scrollYProgress, "change", (v) => {
     let idx = 0;
     for (let i = 0; i < revealPoints.length; i += 1) {
@@ -578,9 +576,9 @@ const StorySection = ({
     <section
       ref={sectionRef}
       className="relative overflow-hidden"
-      style={{ height: `${100 + (count - 1) * 92}vh` }}
+      style={{ height: `${100 + (count - 1) * 96}vh` }}
     >
-      <div className="sticky top-0 flex h-screen items-center px-4">
+      <div className="sticky top-0 flex h-screen items-center px-4 py-6">
         <div className="pointer-events-none absolute inset-0 opacity-70">
           <div className="absolute left-[8%] top-[18%] h-48 w-48 rounded-full bg-[#b6813f]/8 blur-3xl" />
           <div className="absolute right-[10%] bottom-[14%] h-60 w-60 rounded-full bg-[#7e4740]/10 blur-3xl" />

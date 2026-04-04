@@ -207,9 +207,9 @@ const MidnightMoonlitTemplate = ({
             <div className="mb-4 flex justify-center">
               <MoonStar size={22} style={{ color: C.gold }} />
             </div>
-            <EditableText value={data.brideName} onSave={(val) => onUpdate({ brideName: val })} mode={mode} placeholder="Bride Name" className="text-[4rem] leading-none sm:text-[5rem] md:text-[6rem]" as="h1" style={{ fontFamily: FONTS.script, color: C.goldSoft } as React.CSSProperties} />
+            <EditableText value={data.brideName} onSave={(val) => onUpdate({ brideName: val })} mode={mode} placeholder="Bride Name" className="text-[4rem] leading-none sm:text-[5rem] md:text-[6rem]" inputClassName="text-[4rem] sm:text-[5rem] md:text-[6rem]" as="h1" />
             <div className="text-[4rem] leading-none sm:text-[5rem] md:text-[6rem]" style={{ fontFamily: FONTS.script, color: C.goldSoft }}>&amp;</div>
-            <EditableText value={data.groomName} onSave={(val) => onUpdate({ groomName: val })} mode={mode} placeholder="Groom Name" className="-mt-2 text-[4rem] leading-none sm:text-[5rem] md:text-[6rem]" as="h1" style={{ fontFamily: FONTS.script, color: C.goldSoft } as React.CSSProperties} />
+            <EditableText value={data.groomName} onSave={(val) => onUpdate({ groomName: val })} mode={mode} placeholder="Groom Name" className="-mt-2 text-[4rem] leading-none sm:text-[5rem] md:text-[6rem]" inputClassName="text-[4rem] sm:text-[5rem] md:text-[6rem]" as="h1" />
           </motion.div>
 
           <p className="mt-3 text-2xl sm:text-3xl" style={{ fontFamily: FONTS.serif, color: C.gold }}>
@@ -250,7 +250,7 @@ const MidnightMoonlitTemplate = ({
           </div>
 
           <div className="mx-auto mt-10 max-w-4xl rounded-[28px] border p-6 text-center" style={{ borderColor: C.line, background: C.card }}>
-            <EditableText value={data.welcomeMessage} onSave={(val) => onUpdate({ welcomeMessage: val })} mode={mode} placeholder="Share your night-wedding story..." className="text-lg leading-8" multiline as="p" style={{ fontFamily: FONTS.serif, color: C.text } as React.CSSProperties} />
+            <EditableText value={data.welcomeMessage} onSave={(val) => onUpdate({ welcomeMessage: val })} mode={mode} placeholder="Share your night-wedding story..." className="text-lg leading-8" inputClassName="text-lg" multiline as="p" />
           </div>
         </div>
       </section>

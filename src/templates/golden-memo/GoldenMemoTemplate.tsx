@@ -353,11 +353,20 @@ const HeroSection = ({
     target: heroRef,
     offset: ["start start", "end end"],
   });
-  const heroScale = useTransform(scrollYProgress, [0, 0.42], [1, 0.78]);
-  const heroRadius = useTransform(scrollYProgress, [0, 0.42], [0, 42]);
-  const namesOpacity = useTransform(scrollYProgress, [0, 0.18, 0.28], [1, 1, 0]);
-  const detailsOpacity = useTransform(scrollYProgress, [0.2, 0.38], [0, 1]);
-  const detailsY = useTransform(scrollYProgress, [0.2, 0.38], [24, 0]);
+
+  // Main photo shrinks and rounds as you scroll
+  const heroScale = useTransform(scrollYProgress, [0, 0.5], [1, 0.62]);
+  const heroRadius = useTransform(scrollYProgress, [0, 0.5], [0, 36]);
+  const namesOpacity = useTransform(scrollYProgress, [0, 0.2, 0.35], [1, 1, 0]);
+
+  // Details badge appears after shrink
+  const detailsOpacity = useTransform(scrollYProgress, [0.3, 0.5], [0, 1]);
+  const detailsY = useTransform(scrollYProgress, [0.3, 0.5], [20, 0]);
+
+  // Corner photos slide in driven by scroll (not whileInView)
+  const cornerOpacity = useTransform(scrollYProgress, [0.25, 0.5], [0, 1]);
+  const cornerScale = useTransform(scrollYProgress, [0.25, 0.5], [0.6, 1]);
+
   const mainPhoto =
     data.couplePhotoUrl || photos[0]?.photoUrl || DEFAULT_COUPLE_PHOTO;
   const floatingPhotos = [
@@ -367,8 +376,22 @@ const HeroSection = ({
     photos[4]?.photoUrl,
   ];
 
+  const cornerPositions = [
+    { left: "3%", top: "6%", rotate: -6, xStart: -120, yStart: -100 },
+    { right: "3%", top: "8%", rotate: 5, xStart: 120, yStart: -100 },
+    { left: "5%", bottom: "8%", rotate: -4, xStart: -120, yStart: 100 },
+    { right: "4%", bottom: "6%", rotate: 6, xStart: 120, yStart: 100 },
+  ];
+
+  // Per-corner transforms driven by scroll
+  const cornerTransforms = cornerPositions.map((pos) => ({
+    x: useTransform(scrollYProgress, [0.2, 0.5], [pos.xStart, 0]),
+    y: useTransform(scrollYProgress, [0.2, 0.5], [pos.yStart, 0]),
+    rotate: useTransform(scrollYProgress, [0.2, 0.5], [0, pos.rotate]),
+  }));
+
   return (
-    <section ref={heroRef} className="relative h-[185vh]">
+    <section ref={heroRef} className="relative h-[160vh]">
       <div className="pointer-events-none absolute inset-0 opacity-60">
         <div className="absolute left-[-12%] top-10 h-64 w-64 rounded-full bg-[#dba35c]/15 blur-3xl" />
         <div className="absolute right-[-10%] top-40 h-80 w-80 rounded-full bg-[#7f2d2f]/10 blur-3xl" />
@@ -376,6 +399,7 @@ const HeroSection = ({
 
       <div className="sticky top-0 h-screen overflow-hidden">
         <div className="relative h-full">
+          {/* Main photo — shrinks on scroll */}
           <motion.div
             style={{ scale: heroScale, borderRadius: heroRadius }}
             className="absolute inset-0 z-20 origin-center overflow-hidden border bg-white shadow-[0_35px_90px_rgba(43,23,24,0.18)]"
@@ -437,6 +461,7 @@ const HeroSection = ({
             </div>
           </motion.div>
 
+          {/* "We're Getting Married" badge — appears as photo shrinks */}
           <motion.div
             style={{ opacity: detailsOpacity, y: detailsY }}
             className="pointer-events-none absolute inset-0 z-30"
@@ -467,32 +492,36 @@ const HeroSection = ({
             </div>
           </motion.div>
 
+          {/* 4 corner photos — slide in from edges driven by scroll */}
           {floatingPhotos.map((photoUrl, index) => {
-            const positions = [
-              "left-[4%] top-[8%] w-[22%] md:w-[18%]",
-              "right-[4%] top-[10%] w-[18%] md:w-[14%]",
-              "left-[8%] bottom-[9%] w-[20%] md:w-[16%]",
-              "right-[6%] bottom-[8%] w-[19%] md:w-[15%]",
-            ];
-            const startTransforms = [
-              { x: -180, y: -160, rotate: -14 },
-              { x: 180, y: -160, rotate: 14 },
-              { x: -180, y: 160, rotate: -14 },
-              { x: 180, y: 160, rotate: 14 },
-            ];
+            const widthClass = [
+              "w-[22vw] md:w-[18vw] max-w-[200px]",
+              "w-[18vw] md:w-[14vw] max-w-[170px]",
+              "w-[20vw] md:w-[16vw] max-w-[190px]",
+              "w-[19vw] md:w-[15vw] max-w-[180px]",
+            ][index];
+            const posStyle: React.CSSProperties = {};
+            const pos = cornerPositions[index];
+            if (pos.left) posStyle.left = pos.left;
+            if (pos.right) posStyle.right = pos.right;
+            if (pos.top) posStyle.top = pos.top;
+            if (pos.bottom) posStyle.bottom = pos.bottom;
+
             return (
               <motion.div
-                key={`${photoUrl || "empty"}-${index}`}
-                initial={{ opacity: 0, scale: 0.72, ...startTransforms[index] }}
-                whileInView={{ opacity: 1, x: 0, y: 0, scale: 1, rotate: index % 2 === 0 ? -4 : 4 }}
-                viewport={{ once: true, margin: "-15% 0px" }}
-                transition={{
-                  duration: 0.85,
-                  delay: 0.12 + index * 0.08,
-                  ease: [0.22, 1, 0.36, 1],
+                key={`corner-${index}`}
+                style={{
+                  opacity: cornerOpacity,
+                  scale: cornerScale,
+                  x: cornerTransforms[index].x,
+                  y: cornerTransforms[index].y,
+                  rotate: cornerTransforms[index].rotate,
+                  ...posStyle,
                 }}
-                className={cn("pointer-events-auto absolute z-30 rounded-[24px] border bg-white p-2 shadow-[0_24px_48px_rgba(43,23,24,0.18)]", positions[index])}
-                style={{ opacity: detailsOpacity, borderColor: C.border }}
+                className={cn(
+                  "pointer-events-auto absolute z-30 rounded-[24px] border bg-white p-2 shadow-[0_24px_48px_rgba(43,23,24,0.18)]",
+                  widthClass,
+                )}
               >
                 <EditablePhoto
                   photoUrl={photoUrl || null}
@@ -502,7 +531,7 @@ const HeroSection = ({
                     })
                   }
                   mode={mode}
-                  className="h-28 w-full rounded-[18px] sm:h-36 md:h-44"
+                  className="aspect-[4/5] w-full rounded-[18px]"
                   alt={`Floating memory ${index + 1}`}
                   templateId={templateId}
                   sessionUUID={sessionUUID}
@@ -551,32 +580,36 @@ const StorySection = ({
   ];
 
   const rotations = [-3, 4, -2];
-  const revealPoints =
-    count <= 1
-      ? [0]
-      : Array.from({ length: count }, (_, index) => {
-          if (index === 0) return 0;
-          const spread = Math.max(count - 1, 1);
-          return 0.46 + ((index - 1) / spread) * 0.42;
-        });
-  const [activeIndex, setActiveIndex] = useState(0);
+
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end end"],
   });
+
+  // Each card gets its own opacity/scale/y driven by scroll progress
+  // Card 0 visible from 0, card 1 from ~0.3, card 2 from ~0.6
+  const cardTransforms = cards.map((_, i) => {
+    const start = i / count;
+    const visible = Math.min(start + 0.15, 1);
+    return {
+      opacity: useTransform(scrollYProgress, [start, visible], [0, 1]),
+      scale: useTransform(scrollYProgress, [start, visible], [0.75, 1]),
+      y: useTransform(scrollYProgress, [start, visible], [200, i * 14]),
+    };
+  });
+
+  // Active text index based on scroll
+  const [activeIndex, setActiveIndex] = useState(0);
   useMotionValueEvent(scrollYProgress, "change", (v) => {
-    let idx = 0;
-    for (let i = 0; i < revealPoints.length; i += 1) {
-      if (v >= revealPoints[i]) idx = i;
-    }
-    setActiveIndex((prev) => Math.max(prev, idx));
+    const idx = Math.min(Math.floor(v * count), count - 1);
+    setActiveIndex(Math.max(0, idx));
   });
 
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden"
-      style={{ height: `${100 + (count - 1) * 96}vh` }}
+      className="relative"
+      style={{ height: `${100 + count * 60}vh` }}
     >
       <div className="sticky top-0 flex h-screen items-center px-4 py-6">
         <div className="pointer-events-none absolute inset-0 opacity-70">
@@ -611,9 +644,9 @@ const StorySection = ({
             </h2>
           </motion.div>
 
-          {/* Main content: text + stacking image */}
+          {/* Main content: text + stacking images */}
           <div className="grid items-center gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-            {/* Text — alternates side */}
+            {/* Text — changes with active card */}
             <div className="flex min-h-[180px] items-center">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -658,77 +691,64 @@ const StorySection = ({
               </AnimatePresence>
             </div>
 
-            {/* Image stack — in center / other side */}
+            {/* Image stack — cards overlap on scroll */}
             <div
               className="relative mx-auto"
               style={{ width: "min(420px, 80vw)", height: "min(520px, 72vw)" }}
             >
-              {cards.map((photoUrl, index) => {
-                const isVisible = index <= activeIndex;
-                return (
-                  <motion.div
-                    key={`card-${index}`}
-                    initial={false}
-                    animate={{
-                      opacity: isVisible ? 1 : 0,
-                      scale: isVisible ? 1 : 0.75,
-                      y: isVisible ? index * 16 : 320,
-                      rotate: isVisible ? (rotations[index] ?? 0) : 0,
-                    }}
-                    transition={{
-                      duration: 1,
-                      ease: [0.22, 1, 0.36, 1],
-                    }}
-                    className="absolute inset-0 rounded-[22px] bg-[#fffefb] p-3"
+              {cards.map((photoUrl, index) => (
+                <motion.div
+                  key={`card-${index}`}
+                  style={{
+                    opacity: cardTransforms[index].opacity,
+                    scale: cardTransforms[index].scale,
+                    y: cardTransforms[index].y,
+                    rotate: rotations[index] ?? 0,
+                    zIndex: 20 + index,
+                    boxShadow: `0 ${20 + index * 8}px ${60 + index * 20}px rgba(43,23,24,${0.12 + index * 0.04})`,
+                    pointerEvents: index === activeIndex ? "auto" : "none",
+                  }}
+                  className="absolute inset-0 rounded-[22px] bg-[#fffefb] p-3"
+                >
+                  <EditablePhoto
+                    photoUrl={photoUrl || null}
+                    onSave={(url) =>
+                      onUpdate({
+                        galleryPhotos: updateGalleryPhotoAtIndex(
+                          photos,
+                          index + 1,
+                          url,
+                        ),
+                      })
+                    }
+                    mode={mode}
+                    className="h-full w-full rounded-[14px]"
+                    alt={`Story frame ${index + 1}`}
+                    templateId={templateId}
+                    sessionUUID={sessionUUID}
+                    uploadStage={uploadStage}
+                    invitationId={data.invitationId ?? undefined}
+                    oldPublicUrl={photoUrl || undefined}
+                  />
+                  <div
+                    className="absolute bottom-5 left-5 right-5 flex items-center justify-between rounded-full px-4 py-2"
                     style={{
-                      zIndex: 20 + index,
-                      boxShadow: isVisible
-                        ? `0 ${20 + index * 8}px ${60 + index * 20}px rgba(43,23,24,${0.12 + index * 0.04})`
-                        : "none",
-                      pointerEvents: index === activeIndex ? "auto" : "none",
+                      backgroundColor: "rgba(255,254,251,0.92)",
+                      backdropFilter: "blur(8px)",
                     }}
                   >
-                    <EditablePhoto
-                      photoUrl={photoUrl || null}
-                      onSave={(url) =>
-                        onUpdate({
-                          galleryPhotos: updateGalleryPhotoAtIndex(
-                            photos,
-                            index + 1,
-                            url,
-                          ),
-                        })
-                      }
-                      mode={mode}
-                      className="h-full w-full rounded-[14px]"
-                      alt={`Story frame ${index + 1}`}
-                      templateId={templateId}
-                      sessionUUID={sessionUUID}
-                      uploadStage={uploadStage}
-                      invitationId={data.invitationId ?? undefined}
-                      oldPublicUrl={photoUrl || undefined}
-                    />
-                    <div
-                      className="absolute bottom-5 left-5 right-5 flex items-center justify-between rounded-full px-4 py-2"
-                      style={{
-                        backgroundColor: "rgba(255,254,251,0.92)",
-                        backdropFilter: "blur(8px)",
-                      }}
+                    <p
+                      className="text-xs uppercase tracking-[0.28em]"
+                      style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
                     >
-                      <p
-                        className="text-xs uppercase tracking-[0.28em]"
-                        style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
-                      >
-                        Chapter {index + 1}
-                      </p>
-                      <Sparkle size={14} style={{ color: C.gold }} />
-                    </div>
-                  </motion.div>
-                );
-              })}
+                      Chapter {index + 1}
+                    </p>
+                    <Sparkle size={14} style={{ color: C.gold }} />
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
-
         </div>
       </div>
     </section>

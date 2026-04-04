@@ -580,32 +580,36 @@ const StorySection = ({
   ];
 
   const rotations = [-3, 4, -2];
-  const revealPoints =
-    count <= 1
-      ? [0]
-      : Array.from({ length: count }, (_, index) => {
-          if (index === 0) return 0;
-          const spread = Math.max(count - 1, 1);
-          return 0.46 + ((index - 1) / spread) * 0.42;
-        });
-  const [activeIndex, setActiveIndex] = useState(0);
+
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end end"],
   });
+
+  // Each card gets its own opacity/scale/y driven by scroll progress
+  // Card 0 visible from 0, card 1 from ~0.3, card 2 from ~0.6
+  const cardTransforms = cards.map((_, i) => {
+    const start = i / count;
+    const visible = Math.min(start + 0.15, 1);
+    return {
+      opacity: useTransform(scrollYProgress, [start, visible], [0, 1]),
+      scale: useTransform(scrollYProgress, [start, visible], [0.75, 1]),
+      y: useTransform(scrollYProgress, [start, visible], [200, i * 14]),
+    };
+  });
+
+  // Active text index based on scroll
+  const [activeIndex, setActiveIndex] = useState(0);
   useMotionValueEvent(scrollYProgress, "change", (v) => {
-    let idx = 0;
-    for (let i = 0; i < revealPoints.length; i += 1) {
-      if (v >= revealPoints[i]) idx = i;
-    }
-    setActiveIndex((prev) => Math.max(prev, idx));
+    const idx = Math.min(Math.floor(v * count), count - 1);
+    setActiveIndex(Math.max(0, idx));
   });
 
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden"
-      style={{ height: `${100 + (count - 1) * 96}vh` }}
+      className="relative"
+      style={{ height: `${100 + count * 60}vh` }}
     >
       <div className="sticky top-0 flex h-screen items-center px-4 py-6">
         <div className="pointer-events-none absolute inset-0 opacity-70">
@@ -640,9 +644,9 @@ const StorySection = ({
             </h2>
           </motion.div>
 
-          {/* Main content: text + stacking image */}
+          {/* Main content: text + stacking images */}
           <div className="grid items-center gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-            {/* Text — alternates side */}
+            {/* Text — changes with active card */}
             <div className="flex min-h-[180px] items-center">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -687,77 +691,64 @@ const StorySection = ({
               </AnimatePresence>
             </div>
 
-            {/* Image stack — in center / other side */}
+            {/* Image stack — cards overlap on scroll */}
             <div
               className="relative mx-auto"
               style={{ width: "min(420px, 80vw)", height: "min(520px, 72vw)" }}
             >
-              {cards.map((photoUrl, index) => {
-                const isVisible = index <= activeIndex;
-                return (
-                  <motion.div
-                    key={`card-${index}`}
-                    initial={false}
-                    animate={{
-                      opacity: isVisible ? 1 : 0,
-                      scale: isVisible ? 1 : 0.75,
-                      y: isVisible ? index * 16 : 320,
-                      rotate: isVisible ? (rotations[index] ?? 0) : 0,
-                    }}
-                    transition={{
-                      duration: 1,
-                      ease: [0.22, 1, 0.36, 1],
-                    }}
-                    className="absolute inset-0 rounded-[22px] bg-[#fffefb] p-3"
+              {cards.map((photoUrl, index) => (
+                <motion.div
+                  key={`card-${index}`}
+                  style={{
+                    opacity: cardTransforms[index].opacity,
+                    scale: cardTransforms[index].scale,
+                    y: cardTransforms[index].y,
+                    rotate: rotations[index] ?? 0,
+                    zIndex: 20 + index,
+                    boxShadow: `0 ${20 + index * 8}px ${60 + index * 20}px rgba(43,23,24,${0.12 + index * 0.04})`,
+                    pointerEvents: index === activeIndex ? "auto" : "none",
+                  }}
+                  className="absolute inset-0 rounded-[22px] bg-[#fffefb] p-3"
+                >
+                  <EditablePhoto
+                    photoUrl={photoUrl || null}
+                    onSave={(url) =>
+                      onUpdate({
+                        galleryPhotos: updateGalleryPhotoAtIndex(
+                          photos,
+                          index + 1,
+                          url,
+                        ),
+                      })
+                    }
+                    mode={mode}
+                    className="h-full w-full rounded-[14px]"
+                    alt={`Story frame ${index + 1}`}
+                    templateId={templateId}
+                    sessionUUID={sessionUUID}
+                    uploadStage={uploadStage}
+                    invitationId={data.invitationId ?? undefined}
+                    oldPublicUrl={photoUrl || undefined}
+                  />
+                  <div
+                    className="absolute bottom-5 left-5 right-5 flex items-center justify-between rounded-full px-4 py-2"
                     style={{
-                      zIndex: 20 + index,
-                      boxShadow: isVisible
-                        ? `0 ${20 + index * 8}px ${60 + index * 20}px rgba(43,23,24,${0.12 + index * 0.04})`
-                        : "none",
-                      pointerEvents: index === activeIndex ? "auto" : "none",
+                      backgroundColor: "rgba(255,254,251,0.92)",
+                      backdropFilter: "blur(8px)",
                     }}
                   >
-                    <EditablePhoto
-                      photoUrl={photoUrl || null}
-                      onSave={(url) =>
-                        onUpdate({
-                          galleryPhotos: updateGalleryPhotoAtIndex(
-                            photos,
-                            index + 1,
-                            url,
-                          ),
-                        })
-                      }
-                      mode={mode}
-                      className="h-full w-full rounded-[14px]"
-                      alt={`Story frame ${index + 1}`}
-                      templateId={templateId}
-                      sessionUUID={sessionUUID}
-                      uploadStage={uploadStage}
-                      invitationId={data.invitationId ?? undefined}
-                      oldPublicUrl={photoUrl || undefined}
-                    />
-                    <div
-                      className="absolute bottom-5 left-5 right-5 flex items-center justify-between rounded-full px-4 py-2"
-                      style={{
-                        backgroundColor: "rgba(255,254,251,0.92)",
-                        backdropFilter: "blur(8px)",
-                      }}
+                    <p
+                      className="text-xs uppercase tracking-[0.28em]"
+                      style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
                     >
-                      <p
-                        className="text-xs uppercase tracking-[0.28em]"
-                        style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
-                      >
-                        Chapter {index + 1}
-                      </p>
-                      <Sparkle size={14} style={{ color: C.gold }} />
-                    </div>
-                  </motion.div>
-                );
-              })}
+                      Chapter {index + 1}
+                    </p>
+                    <Sparkle size={14} style={{ color: C.gold }} />
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
-
         </div>
       </div>
     </section>

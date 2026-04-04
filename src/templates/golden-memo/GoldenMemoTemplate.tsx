@@ -351,22 +351,22 @@ const HeroSection = ({
   const heroRef = useRef<HTMLElement | null>(null);
   const { scrollYProgress } = useScroll({
     target: heroRef,
-    offset: ["start start", "end 72%"],
+    offset: ["start start", "end 82%"],
   });
 
   // Main photo shrinks and rounds as you scroll
-  const heroScale = useTransform(scrollYProgress, [0, 0.5], [1, 0.72]);
-  const heroRadius = useTransform(scrollYProgress, [0, 0.5], [0, 34]);
-  const heroY = useTransform(scrollYProgress, [0, 0.5], [0, -48]);
-  const namesOpacity = useTransform(scrollYProgress, [0, 0.16, 0.3], [1, 1, 0]);
+  const heroScale = useTransform(scrollYProgress, [0, 0.38], [1, 0.68]);
+  const heroRadius = useTransform(scrollYProgress, [0, 0.38], [0, 36]);
+  const heroY = useTransform(scrollYProgress, [0, 0.38], [0, -82]);
+  const namesOpacity = useTransform(scrollYProgress, [0, 0.12, 0.22], [1, 1, 0]);
 
   // Details badge appears after shrink
-  const detailsOpacity = useTransform(scrollYProgress, [0.18, 0.38], [0, 1]);
-  const detailsY = useTransform(scrollYProgress, [0.18, 0.38], [28, 0]);
+  const detailsOpacity = useTransform(scrollYProgress, [0.12, 0.28], [0, 1]);
+  const detailsY = useTransform(scrollYProgress, [0.12, 0.28], [28, 0]);
 
   // Corner photos slide in driven by scroll (not whileInView)
-  const cornerOpacity = useTransform(scrollYProgress, [0.12, 0.36], [0, 1]);
-  const cornerScale = useTransform(scrollYProgress, [0.12, 0.36], [0.84, 1]);
+  const cornerOpacity = useTransform(scrollYProgress, [0.06, 0.24], [0, 1]);
+  const cornerScale = useTransform(scrollYProgress, [0.06, 0.24], [0.78, 1]);
 
   const mainPhoto =
     data.couplePhotoUrl || photos[0]?.photoUrl || DEFAULT_COUPLE_PHOTO;
@@ -386,13 +386,13 @@ const HeroSection = ({
 
   // Per-corner transforms driven by scroll
   const cornerTransforms = cornerPositions.map((pos) => ({
-    x: useTransform(scrollYProgress, [0.1, 0.36], [pos.xStart, 0]),
-    y: useTransform(scrollYProgress, [0.1, 0.36], [pos.yStart, 0]),
-    rotate: useTransform(scrollYProgress, [0.1, 0.36], [0, pos.rotate]),
+    x: useTransform(scrollYProgress, [0.05, 0.24], [pos.xStart, 0]),
+    y: useTransform(scrollYProgress, [0.05, 0.24], [pos.yStart, 0]),
+    rotate: useTransform(scrollYProgress, [0.05, 0.24], [0, pos.rotate]),
   }));
 
   return (
-    <section ref={heroRef} className="relative h-[132svh] sm:h-[140vh]">
+    <section ref={heroRef} className="relative h-[118svh] sm:h-[124vh]">
       <div className="pointer-events-none absolute inset-0 opacity-60">
         <div className="absolute left-[-12%] top-10 h-64 w-64 rounded-full bg-[#dba35c]/15 blur-3xl" />
         <div className="absolute right-[-10%] top-40 h-80 w-80 rounded-full bg-[#7f2d2f]/10 blur-3xl" />
@@ -624,10 +624,10 @@ const StorySection = ({
   return (
     <section
       ref={sectionRef}
-      className="relative"
-      style={{ height: `${100 + scrollSegments * 52}svh` }}
+      className="relative -mt-[10svh] pt-[10svh] sm:-mt-20 sm:pt-20"
+      style={{ height: `${92 + scrollSegments * 40}svh` }}
     >
-      <div className="sticky top-0 flex h-[100svh] items-center px-4 py-4 sm:h-screen sm:py-6">
+      <div className="sticky top-0 flex h-[100svh] items-start px-4 pb-4 pt-8 sm:h-screen sm:items-center sm:py-6">
         <div className="pointer-events-none absolute inset-0 opacity-70">
           <div className="absolute left-[8%] top-[18%] h-48 w-48 rounded-full bg-[#b6813f]/8 blur-3xl" />
           <div className="absolute right-[10%] bottom-[14%] h-60 w-60 rounded-full bg-[#7e4740]/10 blur-3xl" />
@@ -661,7 +661,7 @@ const StorySection = ({
           </motion.div>
 
           {/* Main content: text + stacking images */}
-          <div className="grid items-center gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:gap-8">
+          <div className="grid items-start gap-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-8">
             {/* Text — changes with active card */}
             <div className="flex min-h-[180px] items-center">
               <AnimatePresence mode="wait">
@@ -710,7 +710,7 @@ const StorySection = ({
             {/* Image stack — cards overlap on scroll */}
             <div
               className="relative mx-auto"
-              style={{ width: "min(420px, 84vw)", height: "min(540px, 108vw)" }}
+              style={{ width: "min(420px, 84vw)", height: "min(540px, 96vw)" }}
             >
               {cards.map((photoUrl, index) => (
                 <motion.div

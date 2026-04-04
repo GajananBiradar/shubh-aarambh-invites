@@ -207,9 +207,9 @@ const MidnightMoonlitTemplate = ({
             <div className="mb-4 flex justify-center">
               <MoonStar size={22} style={{ color: C.gold }} />
             </div>
-            <EditableText value={data.brideName} onSave={(val) => onUpdate({ brideName: val })} mode={mode} placeholder="Bride Name" className="text-[4rem] leading-none sm:text-[5rem] md:text-[6rem]" as="h1" style={{ fontFamily: FONTS.script, color: C.goldSoft } as React.CSSProperties} />
+            <EditableText value={data.brideName} onSave={(val) => onUpdate({ brideName: val })} mode={mode} placeholder="Bride Name" className="text-[4rem] leading-none sm:text-[5rem] md:text-[6rem]" inputClassName="text-[4rem] sm:text-[5rem] md:text-[6rem]" as="h1" />
             <div className="text-[4rem] leading-none sm:text-[5rem] md:text-[6rem]" style={{ fontFamily: FONTS.script, color: C.goldSoft }}>&amp;</div>
-            <EditableText value={data.groomName} onSave={(val) => onUpdate({ groomName: val })} mode={mode} placeholder="Groom Name" className="-mt-2 text-[4rem] leading-none sm:text-[5rem] md:text-[6rem]" as="h1" style={{ fontFamily: FONTS.script, color: C.goldSoft } as React.CSSProperties} />
+            <EditableText value={data.groomName} onSave={(val) => onUpdate({ groomName: val })} mode={mode} placeholder="Groom Name" className="-mt-2 text-[4rem] leading-none sm:text-[5rem] md:text-[6rem]" inputClassName="text-[4rem] sm:text-[5rem] md:text-[6rem]" as="h1" />
           </motion.div>
 
           <p className="mt-3 text-2xl sm:text-3xl" style={{ fontFamily: FONTS.serif, color: C.gold }}>

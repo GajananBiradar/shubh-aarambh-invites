@@ -1,8 +1,10 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AnimatePresence,
   motion,
-  useMotionValueEvent,
+  MotionValue,
+  useAnimationFrame,
+  useMotionValue,
   useScroll,
   useTransform,
 } from "framer-motion";
@@ -170,6 +172,190 @@ const SectionIntro = ({
   </motion.div>
 );
 
+/* ── 3D Curved-shelf card ───────────────────────────────── */
+const CurvedCard = ({
+  photoUrl,
+  index,
+  scrollX,
+  step,
+  containerCenter,
+  cardW,
+  cardH,
+}: {
+  photoUrl: string;
+  index: number;
+  scrollX: MotionValue<number>;
+  step: number;
+  containerCenter: number;
+  cardW: number;
+  cardH: number;
+}) => {
+  const rotateY = useTransform(scrollX, (x) => {
+    const cardCenter = index * step + step / 2 + x;
+    const offset = (cardCenter - containerCenter) / containerCenter;
+    const clamped = Math.max(-1.4, Math.min(1.4, offset));
+    return clamped * -45;
+  });
+
+  const scale = useTransform(scrollX, (x) => {
+    const cardCenter = index * step + step / 2 + x;
+    const offset = Math.abs(cardCenter - containerCenter) / containerCenter;
+    return Math.max(0.78, 1 - offset * 0.18);
+  });
+
+  const translateZ = useTransform(scrollX, (x) => {
+    const cardCenter = index * step + step / 2 + x;
+    const offset = Math.abs(cardCenter - containerCenter) / containerCenter;
+    return -offset * 120;
+  });
+
+  const opacity = useTransform(scrollX, (x) => {
+    const cardCenter = index * step + step / 2 + x;
+    const offset = Math.abs(cardCenter - containerCenter) / containerCenter;
+    return Math.max(0.45, 1 - offset * 0.45);
+  });
+
+  return (
+    <motion.div
+      style={{
+        rotateY,
+        scale,
+        z: translateZ,
+        opacity,
+        width: cardW,
+        height: cardH,
+        flexShrink: 0,
+        borderColor: "rgba(182,129,63,0.18)",
+        boxShadow:
+          "0 18px 50px rgba(43,23,24,0.16), 0 4px 14px rgba(0,0,0,0.06)",
+      }}
+      className="overflow-hidden rounded-2xl border-2 bg-white/90 p-[5px] sm:rounded-3xl sm:p-[6px]"
+    >
+      <img
+        src={photoUrl}
+        alt={`Memory ${index + 1}`}
+        className="h-full w-full rounded-xl object-cover sm:rounded-2xl"
+        draggable={false}
+      />
+    </motion.div>
+  );
+};
+
+/* ── 3D Curved carousel (horizontally-scrolling shelf) ─── */
+const HeroCurvedCarousel = ({
+  photos,
+}: {
+  photos: Array<string | null | undefined>;
+}) => {
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 640,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 640px)");
+    const handler = (e: MediaQueryListEvent) => setIsMobile(!e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  const CARD_W = isMobile ? 140 : 210;
+  const CARD_H = isMobile ? 200 : 310;
+  const GAP = isMobile ? 12 : 22;
+  const STEP = CARD_W + GAP;
+
+  const uniquePhotos = useMemo(() => {
+    const base = photos.filter(Boolean) as string[];
+    const fallback = base.length > 0 ? base : [DEFAULT_COUPLE_PHOTO];
+    const result: string[] = [];
+    while (result.length < 7) {
+      for (const p of fallback) {
+        result.push(p);
+        if (result.length >= 7) break;
+      }
+    }
+    return result.slice(0, 7);
+  }, [photos]);
+
+  // Triple the set for seamless infinite scroll
+  const carouselPhotos = useMemo(
+    () => [...uniquePhotos, ...uniquePhotos, ...uniquePhotos],
+    [uniquePhotos],
+  );
+
+  const setWidth = uniquePhotos.length * STEP;
+  const scrollX = useMotionValue(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerCenter, setContainerCenter] = useState(0);
+
+  useEffect(() => {
+    const measure = () => {
+      if (containerRef.current) {
+        setContainerCenter(containerRef.current.offsetWidth / 2);
+      }
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  useAnimationFrame((_, delta) => {
+    let curr = scrollX.get() - delta * 0.04;
+    if (curr < -setWidth) curr += setWidth;
+    scrollX.set(curr);
+  });
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative mx-auto w-full overflow-hidden"
+      style={{
+        height: CARD_H + 60,
+        perspective: isMobile ? "800px" : "1100px",
+        perspectiveOrigin: "50% 50%",
+      }}
+    >
+      {/* Edge fades matching page background */}
+      <div
+        className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 sm:w-24"
+        style={{
+          background:
+            "linear-gradient(to right, rgba(248,241,231,1) 0%, rgba(248,241,231,0) 100%)",
+        }}
+      />
+      <div
+        className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 sm:w-24"
+        style={{
+          background:
+            "linear-gradient(to left, rgba(248,241,231,1) 0%, rgba(248,241,231,0) 100%)",
+        }}
+      />
+
+      <motion.div
+        style={{
+          x: scrollX,
+          display: "flex",
+          gap: GAP,
+          alignItems: "center",
+          height: "100%",
+          transformStyle: "preserve-3d",
+        }}
+      >
+        {carouselPhotos.map((photoUrl, index) => (
+          <CurvedCard
+            key={`hero-carousel-${index}`}
+            photoUrl={photoUrl}
+            index={index}
+            scrollX={scrollX}
+            step={STEP}
+            containerCenter={containerCenter}
+            cardW={CARD_W}
+            cardH={CARD_H}
+          />
+        ))}
+      </motion.div>
+    </div>
+  );
+};
+
 const GoldenMemoTemplate = ({
   mode,
   data,
@@ -221,7 +407,7 @@ const GoldenMemoTemplate = ({
         sessionUUID={sessionUUID}
         uploadStage={uploadStage}
       />
-      <StorySection
+      <StoryMemorySection
         mode={mode}
         data={data}
         onUpdate={onUpdate}
@@ -348,201 +534,255 @@ const HeroSection = ({
   sessionUUID?: string;
   uploadStage: "temp" | "draft" | "published";
 }) => {
-  const heroRef = useRef<HTMLElement | null>(null);
-  const { scrollYProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end 82%"],
-  });
-
-  // Main photo shrinks and rounds as you scroll
-  const heroScale = useTransform(scrollYProgress, [0, 0.38], [1, 0.68]);
-  const heroRadius = useTransform(scrollYProgress, [0, 0.38], [0, 36]);
-  const heroY = useTransform(scrollYProgress, [0, 0.38], [0, -82]);
-  const namesOpacity = useTransform(scrollYProgress, [0, 0.12, 0.22], [1, 1, 0]);
-
-  // Details badge appears after shrink
-  const detailsOpacity = useTransform(scrollYProgress, [0.12, 0.28], [0, 1]);
-  const detailsY = useTransform(scrollYProgress, [0.12, 0.28], [28, 0]);
-
-  // Corner photos slide in driven by scroll (not whileInView)
-  const cornerOpacity = useTransform(scrollYProgress, [0.06, 0.24], [0, 1]);
-  const cornerScale = useTransform(scrollYProgress, [0.06, 0.24], [0.78, 1]);
-
-  const mainPhoto =
-    data.couplePhotoUrl || photos[0]?.photoUrl || DEFAULT_COUPLE_PHOTO;
   const floatingPhotos = [
+    data.couplePhotoUrl || photos[0]?.photoUrl || DEFAULT_COUPLE_PHOTO,
     photos[1]?.photoUrl,
     photos[2]?.photoUrl,
     photos[3]?.photoUrl,
     photos[4]?.photoUrl,
   ];
 
-  const cornerPositions = [
-    { left: "2%", top: "8%", rotate: -8, xStart: -88, yStart: -56 },
-    { right: "2%", top: "10%", rotate: 7, xStart: 88, yStart: -56 },
-    { left: "3%", bottom: "10%", rotate: -6, xStart: -88, yStart: 56 },
-    { right: "3%", bottom: "8%", rotate: 8, xStart: 88, yStart: 56 },
-  ];
-
-  // Per-corner transforms driven by scroll
-  const cornerTransforms = cornerPositions.map((pos) => ({
-    x: useTransform(scrollYProgress, [0.05, 0.24], [pos.xStart, 0]),
-    y: useTransform(scrollYProgress, [0.05, 0.24], [pos.yStart, 0]),
-    rotate: useTransform(scrollYProgress, [0.05, 0.24], [0, pos.rotate]),
-  }));
-
   return (
-    <section ref={heroRef} className="relative h-[118svh] sm:h-[124vh]">
+    <section className="relative overflow-hidden px-4 pb-8 pt-6 sm:pb-10 sm:pt-8">
       <div className="pointer-events-none absolute inset-0 opacity-60">
-        <div className="absolute left-[-12%] top-10 h-64 w-64 rounded-full bg-[#dba35c]/15 blur-3xl" />
-        <div className="absolute right-[-10%] top-40 h-80 w-80 rounded-full bg-[#7f2d2f]/10 blur-3xl" />
+        <div className="absolute left-[-12%] top-0 h-64 w-64 rounded-full bg-[#dba35c]/15 blur-3xl" />
+        <div className="absolute right-[-10%] top-20 h-80 w-80 rounded-full bg-[#7f2d2f]/10 blur-3xl" />
       </div>
 
-      <div className="sticky top-0 h-[100svh] overflow-hidden sm:h-screen">
-        <div className="relative h-full">
-          {/* Main photo — shrinks on scroll */}
-          <motion.div
-            style={{ scale: heroScale, borderRadius: heroRadius, y: heroY }}
-            className="absolute inset-0 z-20 origin-center overflow-hidden border bg-white shadow-[0_35px_90px_rgba(43,23,24,0.18)]"
+      <motion.div
+        {...sectionReveal}
+        className="relative mx-auto max-w-[1450px]"
+      >
+        <HeroCurvedCarousel photos={floatingPhotos} />
+
+        <div className="pt-6 text-center sm:pt-8">
+          <div
+            className="mx-auto inline-flex rounded-full border px-5 py-2 text-[11px] uppercase tracking-[0.38em]"
+            style={{
+              borderColor: "rgba(182,129,63,0.22)",
+              backgroundColor: "rgba(255,250,242,0.72)",
+              color: C.gold,
+              fontFamily: FONTS.sans,
+            }}
           >
-            <div className="relative h-full w-full p-0 sm:p-3">
-              <EditablePhoto
-                photoUrl={mainPhoto}
-                onSave={(url) => onUpdate({ couplePhotoUrl: url })}
-                mode={mode}
-                className="h-full w-full rounded-none sm:rounded-[32px]"
-                alt="Couple intro"
-                templateId={templateId}
-                sessionUUID={sessionUUID}
-                uploadStage={uploadStage}
-                invitationId={data.invitationId ?? undefined}
-                oldPublicUrl={data.couplePhotoUrl || undefined}
-              />
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(24,9,10,0.7)] via-transparent to-transparent" />
-              <motion.div
-                style={{ opacity: namesOpacity }}
-                className="absolute inset-x-0 bottom-0 z-10 px-8 pb-10 text-center sm:px-14"
-              >
-                <p
-                  className="text-[11px] uppercase tracking-[0.45em]"
-                  style={{
-                    color: "rgba(255,241,219,0.76)",
-                    fontFamily: FONTS.sans,
-                  }}
-                >
-                  Save The Date
-                </p>
-                <div className="mt-3 flex flex-col items-center gap-1">
-                  <EditableText
-                    value={data.brideName}
-                    onSave={(value) => onUpdate({ brideName: value })}
-                    mode={mode}
-                    className="block text-5xl leading-none text-white sm:text-7xl md:text-8xl"
-                    inputClassName="text-5xl sm:text-7xl md:text-8xl text-white"
-                    as="h1"
-                    placeholder="Bride Name"
-                  />
-                  <p
-                    className="text-3xl sm:text-4xl"
-                    style={{ color: C.goldSoft, fontFamily: FONTS.script }}
-                  >
-                    &amp;
-                  </p>
-                  <EditableText
-                    value={data.groomName}
-                    onSave={(value) => onUpdate({ groomName: value })}
-                    mode={mode}
-                    className="block text-5xl leading-none text-white sm:text-7xl md:text-8xl"
-                    inputClassName="text-5xl sm:text-7xl md:text-8xl text-white"
-                    as="h1"
-                    placeholder="Groom Name"
-                  />
-                </div>
-              </motion.div>
-            </div>
+            We're Getting Married
+          </div>
+          <p
+            className="mt-4 text-[11px] uppercase tracking-[0.45em] sm:text-xs"
+            style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+          >
+            Save The Date
+          </p>
+          <div className="mt-3 flex flex-col items-center gap-1">
+            <EditableText
+              value={data.brideName}
+              onSave={(value) => onUpdate({ brideName: value })}
+              mode={mode}
+              className="block text-5xl leading-none sm:text-7xl md:text-8xl"
+              inputClassName="text-5xl sm:text-7xl md:text-8xl"
+              as="h1"
+              placeholder="Bride Name"
+            />
+            <p
+              className="text-3xl sm:text-4xl"
+              style={{ color: C.gold, fontFamily: FONTS.script }}
+            >
+              &amp;
+            </p>
+            <EditableText
+              value={data.groomName}
+              onSave={(value) => onUpdate({ groomName: value })}
+              mode={mode}
+              className="block text-5xl leading-none sm:text-7xl md:text-8xl"
+              inputClassName="text-5xl sm:text-7xl md:text-8xl"
+              as="h1"
+              placeholder="Groom Name"
+            />
+          </div>
+          <p
+            className="mt-4 text-sm uppercase tracking-[0.36em]"
+            style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+          >
+            {formatWeddingDate(data.weddingDate)}
+          </p>
+        </div>
+      </motion.div>
+    </section>
+  );
+};
+
+const StoryMemorySection = ({
+  mode,
+  data,
+  onUpdate,
+  photos,
+  templateId,
+  sessionUUID,
+  uploadStage,
+}: {
+  mode: TemplateProps["mode"];
+  data: TemplateProps["data"];
+  onUpdate: TemplateProps["onUpdate"];
+  photos: ReturnType<typeof getDisplayPhotos>;
+  templateId?: number;
+  sessionUUID?: string;
+  uploadStage: "temp" | "draft" | "published";
+}) => {
+  const cards = [
+    photos[1]?.photoUrl || photos[0]?.photoUrl || DEFAULT_COUPLE_PHOTO,
+    photos[2]?.photoUrl || photos[1]?.photoUrl || DEFAULT_COUPLE_PHOTO,
+    photos[3]?.photoUrl || photos[2]?.photoUrl || DEFAULT_COUPLE_PHOTO,
+  ];
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const storyTexts = [
+    "The first time we met, there was an unspoken warmth — like finding a melody you never knew you were humming.",
+    "Through late-night conversations and shared silences, we discovered that love isn't just found — it grows, gently and deeply.",
+    "And now, here we are — two stories becoming one, ready to write every chapter of forever together.",
+  ];
+
+  return (
+    <section className="relative px-4 py-20 sm:py-24">
+      <div className="mx-auto max-w-6xl">
+        <div className="pointer-events-none absolute inset-0 opacity-70">
+          <div className="absolute left-[8%] top-[18%] h-48 w-48 rounded-full bg-[#b6813f]/8 blur-3xl" />
+          <div className="absolute right-[10%] bottom-[14%] h-60 w-60 rounded-full bg-[#7e4740]/10 blur-3xl" />
+        </div>
+
+        <div className="relative">
+          <motion.div {...sectionReveal} className="mb-8 text-center">
+            <p
+              className="mb-2 text-[11px] uppercase tracking-[0.42em]"
+              style={{ color: C.gold, fontFamily: FONTS.sans }}
+            >
+              Our Love Story
+            </p>
+            <h2
+              className="text-4xl leading-[0.95] sm:text-5xl md:text-6xl"
+              style={{ color: C.ink, fontFamily: FONTS.display }}
+            >
+              {data.brideName || "Bride"}{" "}
+              <span style={{ color: C.gold, fontFamily: FONTS.script }}>
+                &amp;
+              </span>{" "}
+              {data.groomName || "Groom"}
+            </h2>
           </motion.div>
 
-          {/* "We're Getting Married" badge — appears as photo shrinks */}
-          <motion.div
-            style={{ opacity: detailsOpacity, y: detailsY }}
-            className="pointer-events-none absolute inset-0 z-30"
-          >
-            <div className="mx-auto flex h-full w-full max-w-6xl items-start px-4 pt-10 sm:px-6 sm:pt-12">
-              <div className="w-full">
-                <div className="mb-6 flex items-center justify-center">
-                  <div
-                    className="rounded-full border px-5 py-2 text-[11px] uppercase tracking-[0.38em]"
+          <div className="grid items-center gap-8 lg:grid-cols-[0.84fr_1.16fr]">
+            <div className="space-y-4">
+              {storyTexts.map((story, index) => {
+                const isActive = index === activeIndex;
+                return (
+                  <button
+                    key={`story-tab-${index}`}
+                    type="button"
+                    onClick={() => setActiveIndex(index)}
+                    className="block w-full rounded-[28px] border px-6 py-5 text-left transition-all duration-300"
                     style={{
-                      borderColor: "rgba(255,247,233,0.34)",
-                      backgroundColor: "rgba(27,12,13,0.45)",
-                      color: "rgba(255,242,222,0.92)",
-                      fontFamily: FONTS.sans,
-                      backdropFilter: "blur(8px)",
+                      borderColor: isActive
+                        ? "rgba(182,129,63,0.32)"
+                        : C.border,
+                      backgroundColor: isActive
+                        ? "rgba(255,253,249,0.92)"
+                        : "rgba(255,253,249,0.62)",
+                      boxShadow: isActive
+                        ? "0 24px 60px rgba(43,23,24,0.08)"
+                        : "0 10px 30px rgba(43,23,24,0.03)",
                     }}
                   >
-                    We're Getting Married
-                  </div>
-                </div>
-                <p
-                  className="text-center text-sm uppercase tracking-[0.44em]"
-                  style={{ color: "rgba(255,241,219,0.88)", fontFamily: FONTS.sans }}
-                >
-                  {formatWeddingDate(data.weddingDate)}
-                </p>
-              </div>
+                    <div
+                      className="mb-3 inline-flex rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.3em]"
+                      style={{
+                        backgroundColor: "rgba(182,129,63,0.1)",
+                        color: C.gold,
+                        fontFamily: FONTS.sans,
+                        border: "1px solid rgba(182,129,63,0.18)",
+                      }}
+                    >
+                      Memory {String(index + 1).padStart(2, "0")}
+                    </div>
+                    <p
+                      className="text-xl leading-9 sm:text-2xl"
+                      style={{ color: C.ink, fontFamily: FONTS.serif }}
+                    >
+                      {story}
+                    </p>
+                  </button>
+                );
+              })}
+
+              {mode === "edit" && activeIndex === 0 && (
+                <EditableText
+                  value={data.groomBio || ""}
+                  onSave={(value) => onUpdate({ groomBio: value })}
+                  mode={mode}
+                  multiline
+                  className="block rounded-[24px] border px-6 py-5 text-base leading-7"
+                  inputClassName="text-base"
+                  as="p"
+                  placeholder="Add more to your story"
+                  style={{
+                    borderColor: C.border,
+                    backgroundColor: "rgba(255,253,249,0.72)",
+                  }}
+                />
+              )}
             </div>
-          </motion.div>
 
-          {/* 4 corner photos — slide in from edges driven by scroll */}
-          {floatingPhotos.map((photoUrl, index) => {
-            const widthClass = [
-              "w-[28vw] min-w-[88px] max-w-[164px] md:w-[18vw] md:max-w-[200px]",
-              "w-[24vw] min-w-[84px] max-w-[150px] md:w-[14vw] md:max-w-[170px]",
-              "w-[26vw] min-w-[86px] max-w-[156px] md:w-[16vw] md:max-w-[190px]",
-              "w-[24vw] min-w-[84px] max-w-[152px] md:w-[15vw] md:max-w-[180px]",
-            ][index];
-            const posStyle: React.CSSProperties = {};
-            const pos = cornerPositions[index];
-            if (pos.left) posStyle.left = pos.left;
-            if (pos.right) posStyle.right = pos.right;
-            if (pos.top) posStyle.top = pos.top;
-            if (pos.bottom) posStyle.bottom = pos.bottom;
-
-            return (
-              <motion.div
-                key={`corner-${index}`}
+            <motion.div
+              key={`featured-memory-${activeIndex}`}
+              initial={{ opacity: 0, y: 20, scale: 0.985 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true, margin: "-10% 0px" }}
+              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+              className="mx-auto w-full max-w-[520px]"
+            >
+              <div
+                className="relative rounded-[30px] border bg-[#fffefb] p-3 sm:p-4"
                 style={{
-                  opacity: cornerOpacity,
-                  scale: cornerScale,
-                  x: cornerTransforms[index].x,
-                  y: cornerTransforms[index].y,
-                  rotate: cornerTransforms[index].rotate,
-                  ...posStyle,
+                  borderColor: C.border,
+                  boxShadow: "0 32px 80px rgba(43,23,24,0.12)",
                 }}
-                className={cn(
-                  "pointer-events-auto absolute z-30 rounded-[24px] border bg-white p-2 shadow-[0_24px_48px_rgba(43,23,24,0.18)]",
-                  widthClass,
-                )}
               >
                 <EditablePhoto
-                  photoUrl={photoUrl || null}
+                  photoUrl={cards[activeIndex] || null}
                   onSave={(url) =>
                     onUpdate({
-                      galleryPhotos: updateGalleryPhotoAtIndex(photos, index + 1, url),
+                      galleryPhotos: updateGalleryPhotoAtIndex(
+                        photos,
+                        activeIndex + 1,
+                        url,
+                      ),
                     })
                   }
                   mode={mode}
-                  className="aspect-[4/5] w-full rounded-[18px]"
-                  alt={`Floating memory ${index + 1}`}
+                  className="aspect-[4/5] w-full rounded-[22px]"
+                  alt={`Story frame ${activeIndex + 1}`}
                   templateId={templateId}
                   sessionUUID={sessionUUID}
                   uploadStage={uploadStage}
                   invitationId={data.invitationId ?? undefined}
-                  oldPublicUrl={photoUrl || undefined}
+                  oldPublicUrl={cards[activeIndex] || undefined}
                 />
-              </motion.div>
-            );
-          })}
+                <div
+                  className="absolute bottom-7 left-7 right-7 flex items-center justify-between rounded-full px-4 py-2"
+                  style={{
+                    backgroundColor: "rgba(255,254,251,0.9)",
+                    backdropFilter: "blur(10px)",
+                  }}
+                >
+                  <p
+                    className="text-xs uppercase tracking-[0.28em]"
+                    style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+                  >
+                    Chapter {activeIndex + 1}
+                  </p>
+                  <Sparkle size={14} style={{ color: C.gold }} />
+                </div>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </div>
     </section>
@@ -566,74 +806,34 @@ const StorySection = ({
   sessionUUID?: string;
   uploadStage: "temp" | "draft" | "published";
 }) => {
-  const sectionRef = useRef<HTMLElement | null>(null);
   const cards = [
     photos[1]?.photoUrl || photos[0]?.photoUrl || DEFAULT_COUPLE_PHOTO,
     photos[2]?.photoUrl || photos[1]?.photoUrl || DEFAULT_COUPLE_PHOTO,
     photos[3]?.photoUrl || photos[2]?.photoUrl || DEFAULT_COUPLE_PHOTO,
   ];
-  const count = cards.length;
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const storyTexts = [
     "The first time we met, there was an unspoken warmth — like finding a melody you never knew you were humming.",
     "Through late-night conversations and shared silences, we discovered that love isn't just found — it grows, gently and deeply.",
     "And now, here we are — two stories becoming one, ready to write every chapter of forever together.",
   ];
-
-  const rotations = [-3, 4, -2];
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end end"],
-  });
-
-  const scrollSegments = Math.max(count - 1, 1);
-  const activationPoints = cards.map((_, i) =>
-    i === 0 ? 0 : 0.14 + ((i - 1) * 0.58) / scrollSegments,
-  );
-
-  const cardTransforms = cards.map((_, i) => {
-    if (i === 0) {
-      return {
-        opacity: useTransform(scrollYProgress, [0, 1], [1, 1]),
-        scale: useTransform(scrollYProgress, [0, 1], [1, 0.98]),
-        y: useTransform(scrollYProgress, [0, 1], [0, 18]),
-      };
-    }
-
-    const start = activationPoints[i];
-    const end = Math.min(start + 0.24, 0.96);
-
-    return {
-      opacity: useTransform(scrollYProgress, [start, end], [0, 1]),
-      scale: useTransform(scrollYProgress, [start, end], [0.9, 1]),
-      y: useTransform(scrollYProgress, [start, end], [180, i * 16]),
-    };
-  });
-
-  // Active text index based on scroll
-  const [activeIndex, setActiveIndex] = useState(0);
-  useMotionValueEvent(scrollYProgress, "change", (v) => {
-    let idx = 0;
-    activationPoints.forEach((point, index) => {
-      if (v >= point) idx = index;
-    });
-    setActiveIndex(idx);
-  });
+  const rotations = [0, 0, 0];
+  const cardTransforms = cards.map(() => ({
+    opacity: 1,
+    scale: 1,
+    y: 0,
+  }));
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative -mt-[10svh] pt-[10svh] sm:-mt-20 sm:pt-20"
-      style={{ height: `${92 + scrollSegments * 40}svh` }}
-    >
-      <div className="sticky top-0 flex h-[100svh] items-start px-4 pb-4 pt-8 sm:h-screen sm:items-center sm:py-6">
+    <section className="relative px-4 py-20 sm:py-24">
+      <div className="mx-auto max-w-6xl">
         <div className="pointer-events-none absolute inset-0 opacity-70">
           <div className="absolute left-[8%] top-[18%] h-48 w-48 rounded-full bg-[#b6813f]/8 blur-3xl" />
           <div className="absolute right-[10%] bottom-[14%] h-60 w-60 rounded-full bg-[#7e4740]/10 blur-3xl" />
         </div>
 
-        <div className="mx-auto w-full max-w-6xl">
+        <div className="relative">
           {/* Section title */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}

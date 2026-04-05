@@ -29,6 +29,7 @@ export type DemoDataOverrides = Partial<
 // Lazy loaders for per-template demo data
 // @ts-ignore — Vite handles .ts dynamic imports; TS may show false errors for newly created files
 const demoDataLoaders: Record<string, () => Promise<{ default: DemoDataOverrides }>> = {
+  ivory: () => import('./ivory-garden/demoData'),
   premium: () => import('./premium-elegante/demoData'),
   blossom: () => import('./blossom-date/demoData'),
   blush: () => import('./blush-affair/demoData'),

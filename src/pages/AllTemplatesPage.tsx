@@ -1,16 +1,7 @@
-import {
-  useState,
-  useMemo,
-  useEffect,
-  useRef,
-  useCallback,
-  Suspense,
-  lazy,
-} from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { SAMPLE_INVITATION } from "@/mock/sampleInvitation";
 import {
   Eye,
   Sparkles,
@@ -29,12 +20,6 @@ import { getTemplates } from "@/api/templates";
 import { getMyDrafts } from "@/api/invitations";
 import { deleteInvitation } from "@/api/invitations";
 import { SkeletonGrid } from "@/components/ui/SkeletonLoading";
-import { getTemplateComponent, getTemplateTheme } from "@/templates";
-import {
-  TemplateComponent,
-  InvitationData,
-  createEmptyInvitationData,
-} from "@/templates/types";
 import toast from "react-hot-toast";
 
 interface DraftInfo {
@@ -47,205 +32,67 @@ interface DraftInfo {
 
 /**
  * Dynamic Template Preview Component
- * Loads and renders the actual template component in a mini preview mode
+ * Uses an iframe to render the template demo at a true mobile viewport width,
+ * ensuring responsive Tailwind breakpoints behave correctly.
  */
 const DynamicTemplatePreview = ({
   templateId,
-  theme,
 }: {
   templateId: string | number;
   theme: string;
 }) => {
-  const [TemplateComp, setTemplateComp] = useState<TemplateComponent | null>(
-    null,
-  );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const MOBILE_WIDTH = 390;
+  const MOBILE_HEIGHT = 844;
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  // Create sample data for preview
-  const sampleData: InvitationData = useMemo(() => {
-    const base = createEmptyInvitationData(
-      typeof templateId === "string" ? parseInt(templateId) : templateId,
-      theme,
-      { defaultPhotos: [], defaultMusicUrl: "", defaultMusicName: "" },
-    );
-
-    // Add sample data to make preview look nice
-    return {
-      ...base,
-      brideName: "Ananya",
-      groomName: "Vikram",
-      brideBio: "Designer who paints sunsets & dreams",
-      groomBio: "Architect who builds worlds & love",
-      couplePhotoUrl: null,
-      hashtag: "#AnanyaWedVikram",
-      welcomeMessage:
-        "Together with our families, we invite you to celebrate our wedding.",
-      showCountdown: true,
-      weddingDate: "2026-02-14",
-      events: [
-        {
-          id: 1,
-          eventName: "Haldi",
-          eventDate: "2026-02-11",
-          eventTime: "10:00:00",
-          venueName: "Sharma Residence",
-          venueAddress: "Banjara Hills",
-          mapsUrl: null,
-        },
-        {
-          id: 2,
-          eventName: "Mehendi",
-          eventDate: "2026-02-12",
-          eventTime: "17:00:00",
-          venueName: "The Garden Club",
-          venueAddress: "Jubilee Hills",
-          mapsUrl: null,
-        },
-      ],
-      galleryPhotos: [],
-      status: "PUBLISHED",
-    };
-  }, [templateId, theme]);
-
-  useEffect(() => {
-    const loadTemplate = async () => {
-      setLoading(true);
-      setError(false);
-      try {
-        const id =
-          typeof templateId === "number" ? templateId.toString() : templateId;
-        const component = await getTemplateComponent(id);
-        if (component) {
-          setTemplateComp(() => component);
-        } else {
-          setError(true);
-        }
-      } catch (e) {
-        console.error("[v0] Failed to load template:", e);
-        setError(true);
-      }
-      setLoading(false);
-    };
-    loadTemplate();
-  }, [templateId]);
+  const [scale, setScale] = useState(0.5);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsVisible(entry.isIntersecting),
-      { threshold: 0.1 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
+    const updateScale = () => {
+      const containerWidth = el.clientWidth;
+      if (containerWidth > 0) {
+        setScale(containerWidth / MOBILE_WIDTH);
+      }
+    };
+    updateScale();
+    const ro = new ResizeObserver(updateScale);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
-
-  if (loading) {
-    return (
-      <div className="w-full h-full bg-muted/30 flex items-center justify-center">
-        <Loader2 className="w-6 h-6 text-primary animate-spin" />
-      </div>
-    );
-  }
-
-  if (error || !TemplateComp) {
-    // Fallback to simple preview
-    return <FallbackPreview theme={theme} />;
-  }
 
   return (
     <div
       ref={containerRef}
-      data-theme={theme}
-      className="w-full h-full overflow-hidden relative bg-white"
+      className="w-full h-full overflow-hidden relative bg-black"
     >
-      <div
-        className={`pointer-events-none origin-top-left absolute top-0 left-0 ${isVisible ? "template-preview-scroll" : ""}`}
+      {!iframeLoaded && (
+        <div className="absolute inset-0 z-10 bg-muted/30 flex items-center justify-center">
+          <Loader2 className="w-6 h-6 text-primary animate-spin" />
+        </div>
+      )}
+      <iframe
+        src={`/templates/${templateId}/demo`}
+        title="Template preview"
+        onLoad={() => setIframeLoaded(true)}
+        className="pointer-events-none border-0 origin-top-left absolute top-0 left-0"
         style={{
-          width: "150%",
-          transform: "scale(0.667)",
+          width: `${MOBILE_WIDTH}px`,
+          height: `${MOBILE_HEIGHT}px`,
+          transform: `scale(${scale})`,
           transformOrigin: "top left",
         }}
-      >
-        <TemplateComp
-          mode="view"
-          data={sampleData}
-          onUpdate={() => {}}
-          onSaveDraft={() => Promise.resolve(null)}
-          onPublish={() => Promise.resolve()}
-          isSaving={false}
-          isPublishing={false}
-        />
-      </div>
-      <style>{`
-        .template-preview-scroll {
-          animation: templateAutoScroll 20s ease-in-out infinite alternate;
-        }
-        @keyframes templateAutoScroll {
-          0% { transform: scale(0.667) translateY(0); }
-          100% { transform: scale(0.667) translateY(-50%); }
-        }
-      `}</style>
-    </div>
-  );
-};
-
-/**
- * Fallback simple preview when template component fails to load
- */
-const FallbackPreview = ({ theme }: { theme: string }) => {
-  const inv = SAMPLE_INVITATION;
-  return (
-    <div data-theme={theme} className="w-full bg-background text-foreground">
-      <div className="h-52 bg-gradient-to-b from-primary/20 via-primary/5 to-background flex flex-col items-center justify-center p-6">
-        <p className="font-body text-[10px] text-muted-foreground italic">
-          Together with our families
-        </p>
-        <p className="font-script text-3xl text-primary mt-2">
-          {inv.groomName.split(" ")[0]} & {inv.brideName.split(" ")[0]}
-        </p>
-        <div className="w-12 h-px bg-accent mt-3" />
-      </div>
-      <div className="flex justify-center gap-6 py-8 px-4">
-        <div className="text-center">
-          <div className="w-14 h-14 rounded-full bg-primary/15 mx-auto mb-2 ring-2 ring-accent/20" />
-          <p className="text-[9px] font-display font-semibold">
-            {inv.brideName.split(" ")[0]}
-          </p>
-        </div>
-        <div className="text-center">
-          <div className="w-14 h-14 rounded-full bg-accent/15 mx-auto mb-2 ring-2 ring-accent/20" />
-          <p className="text-[9px] font-display font-semibold">
-            {inv.groomName.split(" ")[0]}
-          </p>
-        </div>
-      </div>
-      <div className="px-4 py-4 space-y-2">
-        {inv.events.slice(0, 2).map((e, i) => (
-          <div key={i} className="bg-card rounded-lg p-3 border border-border">
-            <p className="text-[9px] font-display font-semibold">
-              {e.eventName}
-            </p>
-            <p className="text-[8px] text-muted-foreground font-body">
-              {e.venueName}
-            </p>
-          </div>
-        ))}
-      </div>
-      <div className="h-24 bg-gradient-to-t from-primary/8 to-background flex items-center justify-center">
-        <p className="font-script text-lg text-primary">{inv.hashtag}</p>
-      </div>
+        tabIndex={-1}
+        loading="lazy"
+      />
     </div>
   );
 };
 
 /**
  * Template preview image with fallback chain:
- * 1. Try rendering actual template scaled down with auto-scroll
- * 2. On error, fall back to static preview image or FallbackPreview
+ * Renders template demo in iframe at mobile viewport width
  */
 const TemplatePreviewImage = ({
   template,
@@ -293,87 +140,99 @@ const TemplateCard = ({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="card-hover rounded-2xl overflow-hidden relative group max-w-[280px] mx-auto w-full aspect-[9/16] cursor-pointer"
+      className="group max-w-[260px] mx-auto w-full cursor-pointer"
       onClick={() => window.open(`/templates/${template.id}/demo`, "_blank")}
     >
-      {/* Full-bleed template preview */}
-      <div className="absolute inset-0">
-        <TemplatePreviewImage template={template} theme={templateTheme} />
+      {/* iPhone Frame */}
+      <div className="relative rounded-[2rem] border-[3px] border-neutral-800 bg-neutral-900 p-[3px] shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30 transition-shadow duration-300">
+        {/* Notch / Dynamic Island */}
+        <div className="absolute top-[6px] left-1/2 -translate-x-1/2 z-20 w-[60px] h-[14px] bg-neutral-900 rounded-full" />
+
+        {/* Screen area */}
+        <div className="relative rounded-[1.7rem] overflow-hidden aspect-[9/19.5] bg-black">
+          {/* Template preview inside screen */}
+          <div className="absolute inset-0">
+            <TemplatePreviewImage template={template} theme={templateTheme} />
+          </div>
+
+          {/* Top badges */}
+          {draftInfo && (
+            <div className="absolute top-5 left-2.5 z-10 bg-amber-500/90 text-amber-950 font-body text-[9px] font-bold px-2 py-1 rounded-full flex items-center gap-1 backdrop-blur-sm">
+              ✏️ Draft
+            </div>
+          )}
+          {template.isPremium && !draftInfo && (
+            <div className="absolute top-5 left-2.5 z-10 bg-gold/90 text-background font-body text-[9px] font-bold px-2 py-1 rounded-full flex items-center gap-1 backdrop-blur-sm">
+              <Crown size={9} /> PREMIUM
+            </div>
+          )}
+          {template.isFree ? (
+            <div className="absolute top-5 right-2.5 z-10 bg-emerald text-white font-body text-[10px] font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">
+              FREE
+            </div>
+          ) : (
+            <div className="absolute top-5 right-2.5 z-10 btn-gold text-[10px] px-2.5 py-1 rounded-full backdrop-blur-sm">
+              ₹{template.priceInr}
+            </div>
+          )}
+
+          {/* Bottom overlay with actions */}
+          <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-12 pb-3 px-3">
+            {draftInfo ? (
+              <div className="flex gap-1.5">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/edit/${draftInfo.invitationId}`);
+                  }}
+                  className="flex-1 bg-white/20 backdrop-blur-sm text-white px-1.5 py-1.5 rounded-lg text-[10px] font-body font-semibold flex items-center justify-center gap-1 hover:bg-white/30 transition-colors"
+                >
+                  <Pencil size={11} /> Edit
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDeleteConfirm(true);
+                  }}
+                  className="flex-1 bg-white/20 backdrop-blur-sm text-white px-1.5 py-1.5 rounded-lg text-[10px] font-body font-semibold flex items-center justify-center gap-1 hover:bg-red-500/60 transition-colors"
+                >
+                  <Trash2 size={11} /> Fresh
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-1.5">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open(`/templates/${template.id}/demo`, "_blank");
+                  }}
+                  className="flex-1 bg-white/20 backdrop-blur-sm text-white px-1.5 py-1.5 rounded-lg text-[10px] font-body font-semibold flex items-center justify-center gap-1 hover:bg-white/30 transition-colors"
+                >
+                  <Eye size={11} /> Demo
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    triggerPaymentFlow(template.id);
+                  }}
+                  className={`flex-1 ${template.isFree ? "bg-emerald-500 hover:bg-emerald-600" : "bg-amber-600 hover:bg-amber-700"} text-white px-1.5 py-1.5 rounded-lg text-[10px] font-body font-semibold flex items-center justify-center gap-1 transition-colors`}
+                >
+                  <Sparkles size={11} /> {template.isFree ? "Free" : "Use"}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Top badges */}
-      {draftInfo && (
-        <div className="absolute top-3 left-3 z-10 bg-amber-500/90 text-amber-950 font-body text-[10px] font-bold px-2.5 py-1.5 rounded-full flex items-center gap-1 backdrop-blur-sm">
-          ✏️ Draft saved
-        </div>
-      )}
-      {template.isPremium && !draftInfo && (
-        <div className="absolute top-3 left-3 z-10 bg-gold/90 text-background font-body text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 backdrop-blur-sm">
-          <Crown size={10} /> PREMIUM
-        </div>
-      )}
-      {template.isFree ? (
-        <div className="absolute top-3 right-3 z-10 bg-emerald text-white font-body text-xs font-semibold px-3 py-1.5 rounded-full backdrop-blur-sm">
-          FREE
-        </div>
-      ) : (
-        <div className="absolute top-3 right-3 z-10 btn-gold text-xs px-3 py-1.5 rounded-full backdrop-blur-sm">
-          ₹{template.priceInr}
-        </div>
-      )}
-
-      {/* Bottom overlay with info + actions */}
-      <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/80 via-black/50 to-transparent pt-16 pb-4 px-4">
-        <h3 className="font-display text-base font-semibold text-white leading-tight">
+      {/* Template name & description below frame */}
+      <div className="mt-3 text-center px-1">
+        <h3 className="font-display text-sm font-semibold leading-tight">
           {template.name}
         </h3>
-        <p className="font-body text-[11px] text-white/70 line-clamp-1 mt-1">
+        <p className="font-body text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
           {template.description}
         </p>
-
-        {draftInfo ? (
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/edit/${draftInfo.invitationId}`);
-              }}
-              className="flex-1 bg-white/20 backdrop-blur-sm text-white px-2 py-1.5 rounded-lg text-xs font-body font-semibold flex items-center justify-center gap-1 hover:bg-white/30 transition-colors"
-            >
-              <Pencil size={13} /> Edit
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowDeleteConfirm(true);
-              }}
-              className="flex-1 bg-white/20 backdrop-blur-sm text-white px-2 py-1.5 rounded-lg text-xs font-body font-semibold flex items-center justify-center gap-1 hover:bg-red-500/60 transition-colors"
-            >
-              <Trash2 size={13} /> Fresh
-            </button>
-          </div>
-        ) : (
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(`/templates/${template.id}/demo`, "_blank");
-              }}
-              className="flex-1 bg-white/20 backdrop-blur-sm text-white px-2 py-1.5 rounded-lg text-xs font-body font-semibold flex items-center justify-center gap-1 hover:bg-white/30 transition-colors"
-            >
-              <Eye size={13} /> Demo
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                triggerPaymentFlow(template.id);
-              }}
-              className={`flex-1 ${template.isFree ? "bg-emerald-500 hover:bg-emerald-600" : "bg-amber-600 hover:bg-amber-700"} text-white px-2 py-1.5 rounded-lg text-xs font-body font-semibold flex items-center justify-center gap-1 transition-colors`}
-            >
-              <Sparkles size={13} /> {template.isFree ? "Free" : "Use"}
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Delete confirmation dialog */}

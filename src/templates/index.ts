@@ -2,7 +2,7 @@ import { TemplateComponent, TemplateRegistryEntry } from './types';
 
 // Lazy load templates for code splitting
 const CrimsonShaadiTemplate = () => import('./crimson-shaadi/CrimsonShaadiTemplate');
-const IvoryGardenTemplate = () => import('./ivory-garden/IvoryGardenTemplate');
+const IvoryGardenTemplate = () => import('./ivory-garden/VelvetPromiseEngagementTemplate');
 const BlossomDateTemplate = () => import('./blossom-date/BlossomDateTemplate');
 const MidnightNawabTemplate = () => import('./midnight-nawab/MidnightMoonlitTemplate');
 const GoldenMemoTemplate = () => import('./golden-memo/GoldenMemoTemplate');
@@ -29,16 +29,16 @@ const templateRegistry: Record<string, TemplateRegistryEntry & { loader: () => P
   'ivory': {
     loader: IvoryGardenTemplate,
     component: null as unknown as TemplateComponent,
-    name: 'Ivory Garden',
+    name: 'Velvet Promise',
     theme: 'ivory',
-    category: 'Wedding',
+    category: 'Engagement',
   },
   'ivory-garden': {
     loader: IvoryGardenTemplate,
     component: null as unknown as TemplateComponent,
-    name: 'Ivory Garden',
+    name: 'Velvet Promise',
     theme: 'ivory',
-    category: 'Wedding',
+    category: 'Engagement',
   },
   'blossom': {
     loader: BlossomDateTemplate,

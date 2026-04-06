@@ -121,6 +121,22 @@ const PublicInvitationPage = () => {
             invitation.brideBio || invitation.invitationData?.bride_bio || "",
           groomBio:
             invitation.groomBio || invitation.invitationData?.groom_bio || "",
+          brideFamilyNames:
+            invitation.invitationData?.bride_family_names || "",
+          groomFamilyNames:
+            invitation.invitationData?.groom_family_names || "",
+          footerNote:
+            invitation.invitationData?.footer_note ||
+            "Made with love on ShubhAarambh",
+          storyMilestones: invitation.invitationData?.story_milestones || [],
+          sectionVisibility: invitation.invitationData?.section_visibility || {
+            story: true,
+            events: true,
+            gallery: true,
+            families: true,
+            footer: true,
+            music: true,
+          },
           couplePhotoUrl: invitation.couplePhotoUrl || null,
           bridePhotoUrl: invitation.bridePhotoUrl || null,
           groomPhotoUrl: invitation.groomPhotoUrl || null,

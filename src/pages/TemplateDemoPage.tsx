@@ -139,6 +139,19 @@ const TemplateDemoPage = () => {
       templateOverrides.brideBio || "Designer who paints sunsets & dreams",
     groomBio:
       templateOverrides.groomBio || "Architect who builds worlds & love",
+    brideFamilyNames: templateOverrides.brideFamilyNames || "Sharma Family",
+    groomFamilyNames: templateOverrides.groomFamilyNames || "Mehta Family",
+    footerNote:
+      templateOverrides.footerNote || "Made with love on ShubhAarambh",
+    storyMilestones: templateOverrides.storyMilestones || [],
+    sectionVisibility: templateOverrides.sectionVisibility || {
+      story: true,
+      events: true,
+      gallery: true,
+      families: true,
+      footer: true,
+      music: true,
+    },
     couplePhotoUrl:
       demoData?.couplePhotoUrl ?? templateOverrides.couplePhotoUrl ?? null,
     bridePhotoUrl: templateOverrides.bridePhotoUrl ?? null,
@@ -146,7 +159,7 @@ const TemplateDemoPage = () => {
     hashtag: templateOverrides.hashtag || "#AnanyaWedVikram",
     welcomeMessage:
       templateOverrides.welcomeMessage ||
-      "Together with our families, Ananya & Vikram joyfully invite you to be part of their celebration of love and new beginnings.",
+      "Together with our families, Ananya & Vikram joyfully invite you to be part of our celebration of love and new beginnings.",
     showCountdown: true,
     weddingDate: templateOverrides.weddingDate || "2027-02-14",
     events: effectiveEvents.map((e: any, i: number) => ({

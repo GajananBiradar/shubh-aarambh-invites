@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronDown, Heart, MapPin } from "lucide-react";
-import { TemplateProps, EventData } from "@/templates/types";
+import { ChevronDown, Heart, MapPin, Plus, Trash2 } from "lucide-react";
+import { TemplateProps, EventData, SectionVisibility, StoryMilestone } from "@/templates/types";
 import {
   EditableText,
   EditablePhoto,
@@ -127,6 +127,72 @@ const getHeroPhoto = (data: TemplateProps["data"]) =>
 
 const getPortraitPhoto = (data: TemplateProps["data"]) =>
   data.bridePhotoUrl || data.couplePhotoUrl || getDisplayPhotos(data)[0]?.photoUrl || null;
+
+const GANESH_IMAGE_URL =
+  "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/1/photos/ganesh.png";
+
+const DEFAULT_SECTION_VISIBILITY: SectionVisibility = {
+  story: true,
+  events: true,
+  gallery: true,
+  families: true,
+  footer: true,
+  music: true,
+};
+
+const getSectionVisibility = (data: TemplateProps["data"]) => ({
+  ...DEFAULT_SECTION_VISIBILITY,
+  ...(data.sectionVisibility || {}),
+});
+
+const getDefaultStoryMilestones = (
+  data: TemplateProps["data"],
+): StoryMilestone[] => {
+  const weddingDate = data.weddingDate ? new Date(data.weddingDate) : null;
+  const weddingMonth =
+    weddingDate && !Number.isNaN(weddingDate.getTime())
+      ? weddingDate.toLocaleString("en-US", { month: "long" })
+      : "February";
+  const weddingYear =
+    weddingDate && !Number.isNaN(weddingDate.getTime())
+      ? String(weddingDate.getFullYear())
+      : "2027";
+
+  return [
+    {
+      month: "March",
+      year: "2018",
+      title: "First Meet",
+      venue: "Royale Resort",
+      iconKey: "Haldi",
+    },
+    {
+      month: "December",
+      year: "2021",
+      title: "Engagement",
+      venue: "Family Villa",
+      iconKey: "Engagement",
+    },
+    {
+      month: weddingMonth,
+      year: weddingYear,
+      title: "Wedding",
+      venue: data.events[0]?.venueName || "Grand Ballroom",
+      iconKey: "Wedding",
+    },
+  ];
+};
+
+const getStoryMilestones = (data: TemplateProps["data"]) => {
+  const existing = data.storyMilestones || [];
+  if (existing.length > 0) {
+    return existing.map((milestone, index) => ({
+      ...getDefaultStoryMilestones(data)[index],
+      ...milestone,
+    }));
+  }
+  return getDefaultStoryMilestones(data);
+};
 
 const SectionTitle = ({
   title,
@@ -300,6 +366,7 @@ const CrimsonShaadiTemplate = ({
     data.musicName ||
     data.effectiveMusicName ||
     data.templateDefaults.defaultMusicName;
+  const sectionVisibility = getSectionVisibility(data);
 
   return (
     <div
@@ -327,24 +394,82 @@ const CrimsonShaadiTemplate = ({
         uploadStage={uploadStage}
       />
 
-      <OurStorySection mode={mode} data={data} onUpdate={onUpdate} />
+      {sectionVisibility.story && (
+        <OurStorySection mode={mode} data={data} onUpdate={onUpdate} />
+      )}
+      {mode === "edit" && !sectionVisibility.story && (
+        <HiddenSectionPlaceholder
+          title="Our Story"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, story: true },
+            })
+          }
+        />
+      )}
 
-      <WeddingEventsSection mode={mode} data={data} onUpdate={onUpdate} />
+      {sectionVisibility.events && (
+        <WeddingEventsSection mode={mode} data={data} onUpdate={onUpdate} />
+      )}
+      {mode === "edit" && !sectionVisibility.events && (
+        <HiddenSectionPlaceholder
+          title="Events"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, events: true },
+            })
+          }
+        />
+      )}
 
-      <GallerySection
-        mode={mode}
-        data={data}
-        onUpdate={onUpdate}
-        templateId={templateId}
-        sessionUUID={sessionUUID}
-        uploadStage={uploadStage}
-      />
+      {sectionVisibility.gallery && (
+        <GallerySection
+          mode={mode}
+          data={data}
+          onUpdate={onUpdate}
+          templateId={templateId}
+          sessionUUID={sessionUUID}
+          uploadStage={uploadStage}
+        />
+      )}
+      {mode === "edit" && !sectionVisibility.gallery && (
+        <HiddenSectionPlaceholder
+          title="Gallery"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, gallery: true },
+            })
+          }
+        />
+      )}
 
-      <FamiliesSection mode={mode} data={data} onUpdate={onUpdate} />
+      {sectionVisibility.families && (
+        <FamiliesSection mode={mode} data={data} onUpdate={onUpdate} />
+      )}
+      {mode === "edit" && !sectionVisibility.families && (
+        <HiddenSectionPlaceholder
+          title="Families"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, families: true },
+            })
+          }
+        />
+      )}
 
-      {mode === "edit" && (
+      {mode === "edit" && sectionVisibility.music && (
         <section className="py-16" style={{ backgroundColor: C.bg }}>
           <div className="max-w-xl mx-auto px-6">
+            <div className="mb-4 flex justify-end">
+              <SectionActionButton
+                label="Remove Music"
+                onClick={() =>
+                  onUpdate({
+                    sectionVisibility: { ...sectionVisibility, music: false },
+                  })
+                }
+              />
+            </div>
             <EditableMusicPlayer
               musicUrl={data.musicUrl}
               musicName={data.musicName}
@@ -362,6 +487,16 @@ const CrimsonShaadiTemplate = ({
           </div>
         </section>
       )}
+      {mode === "edit" && !sectionVisibility.music && (
+        <HiddenSectionPlaceholder
+          title="Music"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, music: true },
+            })
+          }
+        />
+      )}
 
       {mode !== "edit" && data.rsvpEnabled !== false && (
         <RsvpSection
@@ -370,38 +505,74 @@ const CrimsonShaadiTemplate = ({
         />
       )}
 
-      <footer
-        className={cn(
-          "relative overflow-hidden py-14 text-center sm:py-20",
-          mode === "edit" && "pb-32",
-        )}
-        style={{
-          background: `linear-gradient(to bottom, ${C.bg}, ${C.maroonDark})`,
-        }}
-      >
-        <BokehOverlay count={15} />
-        <GoldDivider />
-        <div className="relative z-10 mx-auto mt-6 max-w-md px-6 sm:mt-8">
-          <p
-            className="mb-2 text-3xl sm:text-4xl"
-            style={{ fontFamily: FONTS.script, color: C.gold }}
-          >
-            {data.brideName?.split(" ")[0] || "Bride"} &{" "}
-            {data.groomName?.split(" ")[0] || "Groom"}
-          </p>
-          <p className="text-sm mt-3" style={{ color: C.textMuted }}>
-            {formatWeddingDate(data.weddingDate)}
-          </p>
-          {data.hashtag && (
-            <p className="text-sm mt-4" style={{ color: C.gold }}>
-              {data.hashtag}
-            </p>
+      {sectionVisibility.footer && (
+        <footer
+          className={cn(
+            "relative overflow-hidden py-14 text-center sm:py-20",
+            mode === "edit" && "pb-32",
           )}
-          <p className="text-[10px] mt-8" style={{ color: `${C.textMuted}80` }}>
-            Made with love on ShubhAarambh
-          </p>
-        </div>
-      </footer>
+          style={{
+            background: `linear-gradient(to bottom, ${C.bg}, ${C.maroonDark})`,
+          }}
+        >
+          <BokehOverlay count={15} />
+          <GoldDivider />
+          <div className="relative z-10 mx-auto mt-6 max-w-md px-6 sm:mt-8">
+            {mode === "edit" && (
+              <div className="mb-6 flex justify-center">
+                <SectionActionButton
+                  label="Remove Section"
+                  onClick={() =>
+                    onUpdate({
+                      sectionVisibility: { ...sectionVisibility, footer: false },
+                    })
+                  }
+                />
+              </div>
+            )}
+            <p
+              className="mb-2 text-3xl sm:text-4xl"
+              style={{ fontFamily: FONTS.script, color: C.gold }}
+            >
+              {data.brideName?.split(" ")[0] || "Bride"} &{" "}
+              {data.groomName?.split(" ")[0] || "Groom"}
+            </p>
+            <p className="text-sm mt-3" style={{ color: C.textMuted }}>
+              {formatWeddingDate(data.weddingDate)}
+            </p>
+            {(mode === "edit" || data.hashtag) && (
+              <EditableText
+                value={data.hashtag}
+                onSave={(val) => onUpdate({ hashtag: val })}
+                mode={mode}
+                placeholder="#BrideWedGroom"
+                className="mt-4 block text-sm"
+                as="p"
+              />
+            )}
+            {(mode === "edit" || data.footerNote) && (
+              <EditableText
+                value={data.footerNote || "Made with love on ShubhAarambh"}
+                onSave={(val) => onUpdate({ footerNote: val })}
+                mode={mode}
+                placeholder="Made with love on ShubhAarambh"
+                className="text-[10px] mt-8 block"
+                as="p"
+              />
+            )}
+          </div>
+        </footer>
+      )}
+      {mode === "edit" && !sectionVisibility.footer && (
+        <HiddenSectionPlaceholder
+          title="Footer"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, footer: true },
+            })
+          }
+        />
+      )}
 
       {mode === "edit" && (
         <EditModeToolbar
@@ -414,7 +585,7 @@ const CrimsonShaadiTemplate = ({
         />
       )}
 
-      {mode !== "edit" && effectiveMusicUrl && (
+      {mode !== "edit" && sectionVisibility.music && effectiveMusicUrl && (
         <FloatingMusicPlayer
           musicUrl={effectiveMusicUrl}
           musicName={effectiveMusicName}
@@ -745,6 +916,65 @@ const GoldOrnamentTop = () => (
   </svg>
 );
 
+const SectionActionButton = ({
+  label,
+  onClick,
+  variant = "remove",
+}: {
+  label: string;
+  onClick: () => void;
+  variant?: "remove" | "add";
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] uppercase tracking-[0.22em] transition-all"
+    style={{
+      borderColor:
+        variant === "add" ? `${C.gold}88` : "rgba(212,175,55,0.22)",
+      background:
+        variant === "add"
+          ? "linear-gradient(135deg, rgba(246,215,118,0.16), rgba(212,175,55,0.06))"
+          : "rgba(34,8,8,0.38)",
+      color: variant === "add" ? C.goldLight : C.textMuted,
+    }}
+  >
+    {variant === "add" ? <Plus size={14} /> : <Trash2 size={14} />}
+    {label}
+  </button>
+);
+
+const HiddenSectionPlaceholder = ({
+  title,
+  onAdd,
+}: {
+  title: string;
+  onAdd: () => void;
+}) => (
+  <section className="py-10 sm:py-12">
+    <div className="mx-auto max-w-5xl px-6">
+      <div
+        className="rounded-[1.5rem] border px-6 py-8 text-center"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(82,26,24,0.32) 0%, rgba(40,10,10,0.74) 100%)",
+          borderColor: "rgba(212,175,55,0.2)",
+        }}
+      >
+        <p
+          className="text-xs uppercase tracking-[0.32em]"
+          style={{ color: `${C.goldLight}cc` }}
+        >
+          {title} hidden
+        </p>
+        <div className="mt-4 flex justify-center">
+          <SectionActionButton label={`Add ${title}`} onClick={onAdd} variant="add" />
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
 /* ====== HERO SECTION ====== */
 const HeroSection = ({
   mode,
@@ -762,7 +992,7 @@ const HeroSection = ({
   uploadStage?: "temp" | "draft" | "published";
 }) => {
   const heroPhoto = getHeroPhoto(data);
-  const portraitPhoto = getPortraitPhoto(data);
+  const portraitPhoto = data.couplePhotoUrl || getPortraitPhoto(data);
 
   return (
     <section
@@ -852,6 +1082,18 @@ const HeroSection = ({
             style={{ borderColor: "rgba(212,175,55,0.14)" }}
           />
           <div className="relative z-10">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.8 }}
+              className="mb-5 flex justify-center sm:mb-6"
+            >
+              <img
+                src={GANESH_IMAGE_URL}
+                alt="Ganesh blessing"
+                className="h-14 w-14 object-contain opacity-90 drop-shadow-[0_0_18px_rgba(212,175,55,0.3)] sm:h-16 sm:w-16"
+              />
+            </motion.div>
             <div
               className="mx-auto mb-4 h-px w-28 sm:mb-6 sm:w-44"
               style={{
@@ -912,23 +1154,34 @@ const HeroSection = ({
               </div>
               <motion.div
                 initial={{ opacity: 0, scale: 0.75 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.8, duration: 0.9, ease: "easeOut" }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                  x: [0, 10, 0, -10, 0],
+                  y: [0, -10, 0, 10, 0],
+                }}
+                transition={{
+                  opacity: { delay: 0.8, duration: 0.9, ease: "easeOut" },
+                  scale: { delay: 0.8, duration: 0.9, ease: "easeOut" },
+                  x: { duration: 12, repeat: Infinity, ease: "easeInOut" },
+                  y: { duration: 12, repeat: Infinity, ease: "easeInOut" },
+                }}
                 className="relative z-10"
               >
                 <MandalaFrame size={190}>
                   {mode === "edit" ? (
                     <EditablePhoto
-                      photoUrl={data.bridePhotoUrl || data.couplePhotoUrl}
-                      onSave={(url) => onUpdate({ bridePhotoUrl: url })}
+                      photoUrl={data.couplePhotoUrl}
+                      onSave={(url) => onUpdate({ couplePhotoUrl: url })}
                       mode={mode}
                       className="w-full h-full"
+                      shape="circle"
                       placeholderText="Couple Photo"
                       templateId={templateId}
                       sessionUUID={sessionUUID}
                       uploadStage={uploadStage}
                       invitationId={data.invitationId ?? undefined}
-                      oldPublicUrl={data.bridePhotoUrl || undefined}
+                      oldPublicUrl={data.couplePhotoUrl || undefined}
                     />
                   ) : (
                     portraitPhoto ? (
@@ -1040,26 +1293,33 @@ const OurStorySection = ({
   data: TemplateProps["data"];
   onUpdate: TemplateProps["onUpdate"];
 }) => {
-  const milestones = [
-    {
-      year: "2018",
-      icon: "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z",
-      title: "First Meet",
-      venue: "Royale Resort",
-    },
-    {
-      year: "2021",
-      icon: eventIconSVG.Engagement,
-      title: "Engagement",
-      venue: "Family Villa",
-    },
-    {
-      year: new Date(data.weddingDate).getFullYear().toString() || "2026",
-      icon: "M12 2L14.5 9.5 22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5L12 2z",
-      title: "Wedding",
-      venue: data.events[0]?.venueName || "Grand Ballroom",
-    },
-  ];
+  const milestones = getStoryMilestones(data);
+  const sectionVisibility = getSectionVisibility(data);
+  const updateMilestone = (index: number, updates: Partial<StoryMilestone>) => {
+    const nextMilestones = [...milestones];
+    nextMilestones[index] = { ...nextMilestones[index], ...updates };
+    onUpdate({ storyMilestones: nextMilestones });
+  };
+  const removeMilestone = (index: number) => {
+    if (milestones.length <= 1) return;
+    onUpdate({
+      storyMilestones: milestones.filter((_, milestoneIndex) => milestoneIndex !== index),
+    });
+  };
+  const addMilestone = () => {
+    onUpdate({
+      storyMilestones: [
+        ...milestones,
+        {
+          month: "Month",
+          year: "2028",
+          title: "New Story Moment",
+          venue: "Venue",
+          iconKey: "Wedding",
+        },
+      ],
+    });
+  };
 
   return (
     <section
@@ -1073,8 +1333,23 @@ const OurStorySection = ({
     >
       <BokehOverlay count={20} />
       <FloatingHearts count={3} />
-      <div className="relative z-10 mx-auto max-w-5xl px-6">
+    <div className="relative z-10 mx-auto max-w-5xl px-6">
+      <div className="flex flex-col items-center gap-4">
         <SectionTitle title="Our Story" />
+        {mode === "edit" && (
+          <div className="flex flex-wrap justify-center gap-2">
+            <SectionActionButton label="Add Story Card" onClick={addMilestone} variant="add" />
+            <SectionActionButton
+              label="Remove Section"
+              onClick={() =>
+                onUpdate({
+                  sectionVisibility: { ...sectionVisibility, story: false },
+                })
+              }
+            />
+          </div>
+        )}
+      </div>
         <motion.div
           initial={{ opacity: 0, scale: 0 }}
           whileInView={{ opacity: 1, scale: 1 }}
@@ -1121,6 +1396,14 @@ const OurStorySection = ({
               transition={{ delay: i * 0.2, duration: 0.7, ease: "easeOut" }}
               className="text-center relative"
             >
+              {mode === "edit" && milestones.length > 1 && (
+                <div className="mb-3 flex justify-center">
+                  <SectionActionButton
+                    label="Remove Card"
+                    onClick={() => removeMilestone(i)}
+                  />
+                </div>
+              )}
               <motion.div
                 className="mb-4 flex justify-center"
                 whileInView={{ rotate: [0, 10, -10, 0] }}
@@ -1136,27 +1419,47 @@ const OurStorySection = ({
                     boxShadow: "0 0 28px rgba(212,175,55,0.12)",
                   }}
                 >
-                  <GoldIcon d={m.icon} size={24} />
+                  <GoldIcon d={eventIconSVG[m.iconKey] || eventIconSVG.Wedding} size={24} />
                 </div>
               </motion.div>
-              <p
+              <EditableText
+                value={m.month}
+                onSave={(val) => updateMilestone(i, { month: val })}
+                mode={mode}
+                placeholder="Month"
+                className="text-xs uppercase tracking-[0.3em] block"
+                as="p"
+              />
+              <EditableText
+                value={m.year}
+                onSave={(val) => updateMilestone(i, { year: val })}
+                mode={mode}
+                placeholder="Year"
                 className="text-3xl sm:text-4xl font-bold"
-                style={{ fontFamily: FONTS.heading, color: C.cream }}
-              >
-                {m.year}
-              </p>
-              <p
-                className="mt-2 text-xl"
-                style={{ color: C.cream, fontFamily: FONTS.body }}
-              >
-                {m.title}
-              </p>
-              <p
+                as="p"
+              />
+              <EditableText
+                value={m.title}
+                onSave={(val) => updateMilestone(i, { title: val })}
+                mode={mode}
+                placeholder="Title"
+                className="mt-2 text-xl block"
+                as="p"
+              />
+              <div
                 className="mt-2 flex items-center justify-center gap-1 text-xs sm:text-sm"
                 style={{ color: C.textMuted }}
               >
-                <MapPin size={10} style={{ color: C.gold }} /> {m.venue}
-              </p>
+                <MapPin size={10} style={{ color: C.gold }} />
+                <EditableText
+                  value={m.venue}
+                  onSave={(val) => updateMilestone(i, { venue: val })}
+                  mode={mode}
+                  placeholder="Venue"
+                  className="block"
+                  as="span"
+                />
+              </div>
             </motion.div>
           ))}
           </div>
@@ -1175,7 +1478,9 @@ const WeddingEventsSection = ({
   mode: TemplateProps["mode"];
   data: TemplateProps["data"];
   onUpdate: TemplateProps["onUpdate"];
-}) => (
+}) => {
+  const sectionVisibility = getSectionVisibility(data);
+  return (
   <section
     className="relative overflow-hidden py-24 sm:py-28"
     style={{
@@ -1187,7 +1492,21 @@ const WeddingEventsSection = ({
   >
     <BokehOverlay count={18} />
     <div className="relative z-10 mx-auto max-w-6xl px-6">
-      <SectionTitle title="Wedding Events" />
+      <div className="flex flex-col items-center gap-4">
+        <SectionTitle title="Wedding Events" />
+        {mode === "edit" && (
+          <div className="flex flex-wrap justify-center gap-2">
+            <SectionActionButton
+              label="Remove Section"
+              onClick={() =>
+                onUpdate({
+                  sectionVisibility: { ...sectionVisibility, events: false },
+                })
+              }
+            />
+          </div>
+        )}
+      </div>
 
       {mode === "edit" ? (
         <div className="space-y-4 mt-10">
@@ -1229,8 +1548,14 @@ const WeddingEventsSection = ({
       ) : (
         <div className="mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
           {data.events.map((event, i) => (
-            <motion.div
+            <motion.button
               key={event.id || i}
+              type="button"
+              onClick={() => {
+                if (event.mapsUrl) {
+                  window.open(event.mapsUrl, "_blank", "noopener,noreferrer");
+                }
+              }}
               initial={{ opacity: 0, scale: 0.8, y: 30 }}
               whileInView={{ opacity: 1, scale: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
@@ -1246,7 +1571,7 @@ const WeddingEventsSection = ({
                   "radial-gradient(circle at 50% 18%, rgba(255,219,141,0.16), transparent 36%), linear-gradient(145deg, rgba(106,56,24,0.95), rgba(82,30,14,0.96) 45%, rgba(56,16,12,0.96) 100%)",
                 border: `1.6px solid ${C.gold}75`,
                 boxShadow: `0 18px 32px rgba(0,0,0,0.28), 0 0 20px ${C.gold}1f, inset 0 1px 0 rgba(255,233,185,0.18)`,
-                cursor: "default",
+                cursor: event.mapsUrl ? "pointer" : "default",
               }}
             >
               <div
@@ -1304,24 +1629,22 @@ const WeddingEventsSection = ({
                 <MapPin size={9} style={{ color: C.gold }} /> {event.venueName}
               </p>
               {event.mapsUrl && (
-                <a
-                  href={event.mapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 mt-1 text-[10px] hover:underline"
+                <span
+                  className="inline-flex items-center gap-1 mt-2 text-[10px]"
                   style={{ color: C.goldLight }}
                 >
-                  Map
-                </a>
+                  Tap for directions
+                </span>
               )}
               </div>
-            </motion.div>
+            </motion.button>
           ))}
         </div>
       )}
     </div>
   </section>
-);
+  );
+};
 
 /* ====== GALLERY ====== */
 const GallerySection = ({
@@ -1340,7 +1663,17 @@ const GallerySection = ({
   uploadStage?: "temp" | "draft" | "published";
 }) => {
   const displayPhotos = getDisplayPhotos(data);
-  const collagePhotos = displayPhotos.slice(0, 7);
+  const showcasePhotos = displayPhotos.slice(0, 4);
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+  const sectionVisibility = getSectionVisibility(data);
+
+  useEffect(() => {
+    if (showcasePhotos.length <= 1) return;
+    const timer = window.setInterval(() => {
+      setActivePhotoIndex((current) => (current + 1) % showcasePhotos.length);
+    }, 2600);
+    return () => window.clearInterval(timer);
+  }, [showcasePhotos.length]);
 
   return (
     <section
@@ -1354,7 +1687,21 @@ const GallerySection = ({
     >
       <BokehOverlay count={20} />
       <div className="relative z-10 mx-auto max-w-6xl px-6">
-        <SectionTitle title="Gallery" subtitle="Our Beautiful Moments" />
+        <div className="flex flex-col items-center gap-4">
+          <SectionTitle title="Gallery" subtitle="Our Beautiful Moments" />
+          {mode === "edit" && (
+            <div className="flex flex-wrap justify-center gap-2">
+              <SectionActionButton
+                label="Remove Section"
+                onClick={() =>
+                  onUpdate({
+                    sectionVisibility: { ...sectionVisibility, gallery: false },
+                  })
+                }
+              />
+            </div>
+          )}
+        </div>
         <motion.div
           className="mt-12"
           initial={{ opacity: 0, y: 30 }}
@@ -1374,54 +1721,73 @@ const GallerySection = ({
               sessionUUID={sessionUUID}
               uploadStage={uploadStage}
             />
-          ) : collagePhotos.length > 0 ? (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-12 sm:grid-rows-2">
-              {collagePhotos.map((photo, i) => {
-                const layoutMap = [
-                  "sm:col-span-2 sm:row-span-2",
-                  "sm:col-span-2 sm:row-span-1",
-                  "sm:col-span-3 sm:row-span-2",
-                  "sm:col-span-2 sm:row-span-1",
-                  "sm:col-span-3 sm:row-span-2",
-                  "sm:col-span-2 sm:row-span-1",
-                  "sm:col-span-2 sm:row-span-1",
-                ];
-
-                return (
-                  <motion.div
-                    key={`${photo.photoUrl}-${i}`}
-                    initial={{ opacity: 0, scale: 0.94 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.08, duration: 0.45 }}
-                    className={cn(
-                      "group relative min-h-[220px] overflow-hidden rounded-[1.4rem] border",
-                      layoutMap[i] || "sm:col-span-3 sm:row-span-1",
-                    )}
-                    style={{
-                      borderColor: "rgba(212,175,55,0.18)",
-                      boxShadow: "0 20px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,233,185,0.12)",
-                    }}
-                  >
-                    <img
-                      src={photo.photoUrl}
-                      alt={`Gallery photo ${i + 1}`}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div
-                      className="absolute inset-0"
-                      style={{
-                        background:
-                          "linear-gradient(180deg, rgba(34,8,8,0.05) 0%, rgba(34,8,8,0.15) 50%, rgba(34,8,8,0.42) 100%)",
-                      }}
-                    />
-                    <div
-                      className="pointer-events-none absolute inset-3 rounded-[1rem] border"
-                      style={{ borderColor: "rgba(246,215,118,0.16)" }}
-                    />
-                  </motion.div>
-                );
-              })}
+          ) : showcasePhotos.length > 0 ? (
+            <div className="mx-auto max-w-[25rem]">
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8 }}
+                className="relative"
+              >
+                <div
+                  className="relative aspect-square overflow-hidden rounded-[2rem] border p-4 sm:p-5"
+                  style={{
+                    borderColor: "rgba(212,175,55,0.24)",
+                    background:
+                      "linear-gradient(145deg, rgba(92,30,24,0.82), rgba(48,12,12,0.94))",
+                    boxShadow:
+                      "0 28px 54px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,233,185,0.14)",
+                  }}
+                >
+                  <div
+                    className="pointer-events-none absolute inset-4 rounded-[1.6rem] border"
+                    style={{ borderColor: "rgba(246,215,118,0.14)" }}
+                  />
+                  {showcasePhotos.map((photo, index) => {
+                    const isActive = index === activePhotoIndex % showcasePhotos.length;
+                    return (
+                      <motion.div
+                        key={`${photo.photoUrl}-${index}`}
+                        className="absolute inset-5 overflow-hidden rounded-[1.4rem]"
+                        initial={false}
+                        animate={{
+                          opacity: isActive ? 1 : 0,
+                          scale: isActive ? 1 : 1.05,
+                        }}
+                        transition={{ duration: 0.65, ease: "easeInOut" }}
+                      >
+                        <img
+                          src={photo.photoUrl}
+                          alt={`Gallery photo ${index + 1}`}
+                          className="absolute inset-0 h-full w-full object-cover blur-2xl scale-110 opacity-35"
+                        />
+                        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(21,5,5,0.16),rgba(21,5,5,0.45))]" />
+                        <img
+                          src={photo.photoUrl}
+                          alt={`Gallery photo ${index + 1}`}
+                          className="relative z-10 h-full w-full object-contain p-3"
+                        />
+                      </motion.div>
+                    );
+                  })}
+                  <div className="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 gap-2">
+                    {showcasePhotos.map((photo, index) => (
+                      <button
+                        key={`dot-${photo.photoUrl}-${index}`}
+                        type="button"
+                        onClick={() => setActivePhotoIndex(index)}
+                        className="h-2.5 rounded-full transition-all"
+                        style={{
+                          width: index === activePhotoIndex ? 28 : 10,
+                          backgroundColor:
+                            index === activePhotoIndex ? C.goldLight : "rgba(246,215,118,0.35)",
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
             </div>
           ) : null}
         </motion.div>
@@ -1439,7 +1805,9 @@ const FamiliesSection = ({
   mode: TemplateProps["mode"];
   data: TemplateProps["data"];
   onUpdate: TemplateProps["onUpdate"];
-}) => (
+}) => {
+  const sectionVisibility = getSectionVisibility(data);
+  return (
   <section
     className="relative overflow-hidden py-24 sm:py-28"
     style={{
@@ -1451,7 +1819,21 @@ const FamiliesSection = ({
   >
     <BokehOverlay count={12} />
     <div className="relative z-10 mx-auto max-w-5xl px-6">
-      <SectionTitle title="Our Families" />
+      <div className="flex flex-col items-center gap-4">
+        <SectionTitle title="Our Families" />
+        {mode === "edit" && (
+          <div className="flex flex-wrap justify-center gap-2">
+            <SectionActionButton
+              label="Remove Section"
+              onClick={() =>
+                onUpdate({
+                  sectionVisibility: { ...sectionVisibility, families: false },
+                })
+              }
+            />
+          </div>
+        )}
+      </div>
 
       <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2">
         <motion.div
@@ -1480,6 +1862,14 @@ const FamiliesSection = ({
           >
             Bride's Family
           </h3>
+          <EditableText
+            value={data.brideFamilyNames || ""}
+            onSave={(val) => onUpdate({ brideFamilyNames: val })}
+            mode={mode}
+            placeholder="Daughter of..."
+            className="mb-4 block text-sm sm:text-base"
+            as="p"
+          />
           <EditableText
             value={data.brideBio}
             onSave={(val) => onUpdate({ brideBio: val })}
@@ -1518,6 +1908,14 @@ const FamiliesSection = ({
             Groom's Family
           </h3>
           <EditableText
+            value={data.groomFamilyNames || ""}
+            onSave={(val) => onUpdate({ groomFamilyNames: val })}
+            mode={mode}
+            placeholder="Son of..."
+            className="mb-4 block text-sm sm:text-base"
+            as="p"
+          />
+          <EditableText
             value={data.groomBio}
             onSave={(val) => onUpdate({ groomBio: val })}
             mode={mode}
@@ -1530,7 +1928,8 @@ const FamiliesSection = ({
       </div>
     </div>
   </section>
-);
+  );
+};
 
 /* ====== RSVP ====== */
 const RsvpSection = ({

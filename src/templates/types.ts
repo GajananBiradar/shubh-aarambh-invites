@@ -33,6 +33,23 @@ export interface TemplateDefaults {
   defaultVideoUrl: string | null;
 }
 
+export interface StoryMilestone {
+  month: string;
+  year: string;
+  title: string;
+  venue: string;
+  iconKey: string;
+}
+
+export interface SectionVisibility {
+  story: boolean;
+  events: boolean;
+  gallery: boolean;
+  families: boolean;
+  footer: boolean;
+  music: boolean;
+}
+
 // Main invitation data structure
 export interface InvitationData {
   invitationId: number | null;
@@ -47,6 +64,11 @@ export interface InvitationData {
   groomPhotoUrl: string | null;
   hashtag: string;
   welcomeMessage: string;
+  brideFamilyNames: string;
+  groomFamilyNames: string;
+  footerNote: string;
+  storyMilestones: StoryMilestone[];
+  sectionVisibility: SectionVisibility;
   showCountdown: boolean;
   weddingDate: string;
   events: EventData[];
@@ -107,6 +129,40 @@ export const createEmptyInvitationData = (
   groomPhotoUrl: null,
   hashtag: '#BrideWedGroom',
   welcomeMessage: 'Together with our families, we joyfully invite you to be part of our celebration of love and new beginnings.',
+  brideFamilyNames: '',
+  groomFamilyNames: '',
+  footerNote: 'Made with love on ShubhAarambh',
+  storyMilestones: [
+    {
+      month: 'March',
+      year: '2018',
+      title: 'First Meet',
+      venue: 'Royale Resort',
+      iconKey: 'Haldi',
+    },
+    {
+      month: 'December',
+      year: '2021',
+      title: 'Engagement',
+      venue: 'Family Villa',
+      iconKey: 'Engagement',
+    },
+    {
+      month: '',
+      year: '',
+      title: 'Wedding',
+      venue: 'Grand Ballroom',
+      iconKey: 'Wedding',
+    },
+  ],
+  sectionVisibility: {
+    story: true,
+    events: true,
+    gallery: true,
+    families: true,
+    footer: true,
+    music: true,
+  },
   showCountdown: true,
   weddingDate: '',
   events: [

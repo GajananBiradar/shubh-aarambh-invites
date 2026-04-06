@@ -76,10 +76,24 @@ const CreateInvitationPage = ({
     queryKey: ["templateDemoData", effectiveTemplateId],
     queryFn: async () => {
       const backendData = await getTemplateDemoData(effectiveTemplateId);
+      const slug = getTemplateTheme(effectiveTemplateId);
+      const frontendData = await loadTemplateDemoData(slug);
+
+      if (slug === "crimson" && frontendData) {
+        if (frontendData.galleryPhotos?.length) {
+          backendData.defaultPhotos = frontendData.galleryPhotos;
+        }
+        if (frontendData.events?.length) {
+          backendData.events = frontendData.events;
+        }
+        if (frontendData.musicUrl) {
+          backendData.musicUrl = frontendData.musicUrl;
+          backendData.musicName = frontendData.musicName;
+        }
+      }
+
       // If backend returned no default photos, merge in frontend demo data
       if (!backendData?.defaultPhotos?.length) {
-        const slug = getTemplateTheme(effectiveTemplateId);
-        const frontendData = await loadTemplateDemoData(slug);
         if (frontendData?.galleryPhotos?.length) {
           backendData.defaultPhotos = frontendData.galleryPhotos;
         }
@@ -149,6 +163,41 @@ const CreateInvitationPage = ({
         groomName: editData.groomName || "",
         brideBio: editData.invitationData?.bride_bio || "",
         groomBio: editData.invitationData?.groom_bio || "",
+        brideFamilyNames: editData.invitationData?.bride_family_names || "",
+        groomFamilyNames: editData.invitationData?.groom_family_names || "",
+        footerNote:
+          editData.invitationData?.footer_note || "Made with love on ShubhAarambh",
+        storyMilestones: editData.invitationData?.story_milestones || [
+          {
+            month: "March",
+            year: "2018",
+            title: "First Meet",
+            venue: "Royale Resort",
+            iconKey: "Haldi",
+          },
+          {
+            month: "December",
+            year: "2021",
+            title: "Engagement",
+            venue: "Family Villa",
+            iconKey: "Engagement",
+          },
+          {
+            month: "",
+            year: "",
+            title: "Wedding",
+            venue: "Grand Ballroom",
+            iconKey: "Wedding",
+          },
+        ],
+        sectionVisibility: editData.invitationData?.section_visibility || {
+          story: true,
+          events: true,
+          gallery: true,
+          families: true,
+          footer: true,
+          music: true,
+        },
         couplePhotoUrl: editData.couplePhotoUrl || null,
         bridePhotoUrl: editData.bridePhotoUrl || null,
         groomPhotoUrl: editData.groomPhotoUrl || null,
@@ -347,12 +396,19 @@ const CreateInvitationPage = ({
         templateId: numTemplateId,
         brideName: data.brideName,
         groomName: data.groomName,
+        brideBio: data.brideBio,
+        groomBio: data.groomBio,
         weddingDate: data.weddingDate,
         bridePhotoUrl: data.bridePhotoUrl,
         groomPhotoUrl: data.groomPhotoUrl,
         couplePhotoUrl: data.couplePhotoUrl,
         events: data.events,
         galleryPhotos: data.galleryPhotos,
+        brideFamilyNames: data.brideFamilyNames,
+        groomFamilyNames: data.groomFamilyNames,
+        footerNote: data.footerNote,
+        storyMilestones: data.storyMilestones,
+        sectionVisibility: data.sectionVisibility,
         musicUrl: data.musicUrl,
         musicName: data.musicName,
         effectiveMusicUrl: data.effectiveMusicUrl,
@@ -360,6 +416,8 @@ const CreateInvitationPage = ({
         templateDefaults: data.templateDefaults,
         hashtag: data.hashtag,
         welcomeMessage: data.welcomeMessage,
+        showCountdown: data.showCountdown,
+        rsvpEnabled: data.rsvpEnabled,
         invitationId: data.invitationId || null,
       });
     }

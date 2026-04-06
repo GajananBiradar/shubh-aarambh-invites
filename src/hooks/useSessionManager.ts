@@ -18,6 +18,14 @@ interface SessionData {
   effectiveMusicName?: string;
   hashtag?: string;
   welcomeMessage?: string;
+  brideBio?: string;
+  groomBio?: string;
+  brideFamilyNames?: string;
+  groomFamilyNames?: string;
+  footerNote?: string;
+  storyMilestones?: any[];
+  sectionVisibility?: any;
+  showCountdown?: boolean;
   invitationId?: number | null;
   templateDefaults?: any;
   rsvpEnabled?: boolean;

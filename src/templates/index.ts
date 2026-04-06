@@ -57,16 +57,16 @@ const templateRegistry: Record<string, TemplateRegistryEntry & { loader: () => P
   'midnight': {
     loader: MidnightNawabTemplate,
     component: null as unknown as TemplateComponent,
-    name: 'Midnight Reverie',
+    name: 'Sage Letter',
     theme: 'midnight',
-    category: 'Wedding',
+    category: 'Engagement',
   },
   'midnight-nawab': {
     loader: MidnightNawabTemplate,
     component: null as unknown as TemplateComponent,
-    name: 'Midnight Reverie',
+    name: 'Sage Letter',
     theme: 'midnight',
-    category: 'Wedding',
+    category: 'Engagement',
   },
   'golden': {
     loader: GoldenMemoTemplate,

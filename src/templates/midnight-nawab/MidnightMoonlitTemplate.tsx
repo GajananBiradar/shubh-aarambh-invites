@@ -1,15 +1,6 @@
-import { useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Heart,
-  MoonStar,
-  Sparkles,
-  UtensilsCrossed,
-  Wine,
-} from "lucide-react";
-import { TemplateProps, EventData } from "@/templates/types";
-import {
-  AddEventButton,
   EditableEventCard,
   EditableMusicPlayer,
   EditablePhotoGallery,
@@ -17,97 +8,273 @@ import {
   EditModeToolbar,
 } from "@/components/inline-editor";
 import FloatingMusicPlayer from "@/components/invitation/FloatingMusicPlayer";
-import { formatEventDate, formatWeddingDate } from "@/utils/formatDate";
 import { submitRsvp } from "@/api/rsvp";
+import { cn } from "@/lib/utils";
+import { EventData, TemplateProps } from "@/templates/types";
+import { formatEventDate, formatTime } from "@/utils/formatDate";
+import {
+  CalendarDays,
+  Check,
+  Clock3,
+  Heart,
+  MapPin,
+  Sparkles,
+} from "lucide-react";
 import toast from "react-hot-toast";
 
-const FONTS = {
-  serif: "'Cormorant Garamond', serif",
-  sans: "'Manrope', sans-serif",
-  script: "'Great Vibes', cursive",
-};
-
 const C = {
-  bg: "#120f24",
-  bgSoft: "#1c1730",
-  gold: "#e8ba76",
-  goldSoft: "#f7dfb4",
-  text: "#f6e7ca",
-  muted: "#d0b28a",
-  line: "rgba(232,186,118,0.24)",
-  card: "rgba(20,16,38,0.72)",
-  button: "rgba(36,31,53,0.88)",
+  blush: "#f6e7e3",
+  blushSoft: "#fbf2ef",
+  parchment: "#fffaf5",
+  parchmentWarm: "#f4ece0",
+  sage: "#91a398",
+  sageDeep: "#53655c",
+  moss: "#3d4942",
+  gold: "#c1a06a",
+  goldSoft: "rgba(193, 160, 106, 0.16)",
+  ink: "#2c2620",
+  muted: "rgba(44, 38, 32, 0.68)",
+  line: "rgba(193, 160, 106, 0.34)",
+  shadow: "rgba(109, 87, 60, 0.16)",
+  darkPanel: "#26241f",
 };
 
-const FALLBACKS = [
-  "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80",
-  "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1525258946800-98cfd641d0de?auto=format&fit=crop&w=900&q=80",
-];
+const F = {
+  display: "'Bodoni Moda', serif",
+  serif: "'Cormorant Garamond', serif",
+  sans: "'Jost', sans-serif",
+  script: "'Allura', cursive",
+};
 
-const storyMilestones = [
-  { year: "2018", label: "First Meet" },
-  { year: "2022", label: "Engagement" },
-  { year: "2024", label: "We’re Getting Married" },
-  { year: "2028", label: "Reception" },
-];
+const GANESH_ICON_URL =
+  "https://upload.wikimedia.org/wikipedia/commons/0/05/Noun_Project_Ganesha_icon_744441_cc.svg";
+
+const reveal = {
+  initial: { opacity: 0, y: 24 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: "-8% 0px" },
+  transition: { duration: 0.72, ease: [0.22, 1, 0.36, 1] },
+} as const;
 
 const getPhotos = (data: TemplateProps["data"]) =>
-  data.galleryPhotos.length > 0
+  (data.galleryPhotos.length > 0
     ? data.galleryPhotos
-    : data.templateDefaults.defaultPhotos.length > 0
-      ? data.templateDefaults.defaultPhotos.map((photo, index) => ({
-          photoUrl: photo.photoUrl,
-          sortOrder: index,
-          isDefault: true,
-        }))
-      : FALLBACKS.map((photoUrl, index) => ({ photoUrl, sortOrder: index, isDefault: true }));
+    : data.templateDefaults.defaultPhotos.map((photo, index) => ({
+        photoUrl: photo.photoUrl,
+        sortOrder: index,
+        isDefault: true,
+      }))
+  ).sort((a, b) => a.sortOrder - b.sortOrder);
 
-const eventIcon = (eventName: string) => {
-  const key = eventName.toLowerCase();
-  if (key.includes("dinner")) return UtensilsCrossed;
-  if (key.includes("reception")) return Wine;
-  if (key.includes("wedding")) return Heart;
-  return Sparkles;
+const shortDate = (value: string) => {
+  if (!value) return "Date to be announced";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(parsed);
 };
 
-const SectionTitle = ({ title }: { title: string }) => (
-  <div className="text-center">
-    <div className="mx-auto flex max-w-md items-center gap-4">
-      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#e8ba76] to-transparent" />
-      <Sparkles size={14} style={{ color: C.gold }} />
-      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#e8ba76] to-transparent" />
+const firstName = (value: string, fallback: string) => value?.split(" ")[0] || fallback;
+
+const BotanicalStem = ({ className, delay = 0, reverse = false }: { className: string; delay?: number; reverse?: boolean }) => (
+  <motion.div
+    className={cn("pointer-events-none absolute", className)}
+    animate={{ rotate: reverse ? [2, -3, 2] : [-2, 3, -2], y: [0, -6, 0] }}
+    transition={{ duration: 7.5, repeat: Infinity, ease: "easeInOut", delay }}
+    style={{ transformOrigin: reverse ? "top right" : "top left" }}
+  >
+    <div className="relative h-48 w-40 sm:h-56 sm:w-48">
+      <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-[linear-gradient(180deg,rgba(145,163,152,0),rgba(145,163,152,0.75),rgba(145,163,152,0.15))]" />
+      {[
+        { left: 34, top: 40, rotate: -34, w: 54, h: 18 },
+        { left: 62, top: 78, rotate: 22, w: 58, h: 18 },
+        { left: 20, top: 112, rotate: -28, w: 50, h: 16 },
+        { left: 68, top: 148, rotate: 34, w: 56, h: 18 },
+      ].map((leaf, index) => (
+        <span
+          key={`${leaf.left}-${index}`}
+          className="absolute rounded-[100%_0_100%_0]"
+          style={{
+            left: leaf.left,
+            top: leaf.top,
+            width: leaf.w,
+            height: leaf.h,
+            transform: `rotate(${leaf.rotate}deg)`,
+            background: "linear-gradient(135deg, #dfe8e0 0%, #a3b4a8 45%, #6f8477 100%)",
+            boxShadow: "0 8px 12px rgba(109, 87, 60, 0.08)",
+          }}
+        />
+      ))}
+      {[{ left: 18, top: 14, size: 28 }, { left: 88, top: 10, size: 20 }, { left: 92, top: 186, size: 22 }].map((bloom, index) => (
+        <span
+          key={`${bloom.left}-${index}`}
+          className="absolute rounded-full"
+          style={{
+            left: bloom.left,
+            top: bloom.top,
+            width: bloom.size,
+            height: bloom.size,
+            background: "radial-gradient(circle at 30% 30%, #fffefc, #f2ebe2 70%, #e0d1c0 100%)",
+            boxShadow: "0 10px 16px rgba(109, 87, 60, 0.08)",
+          }}
+        />
+      ))}
     </div>
-    <h2 className="mt-3 text-4xl sm:text-5xl" style={{ fontFamily: FONTS.script, color: C.gold }}>
+  </motion.div>
+);
+
+const PetalFloat = ({ index }: { index: number }) => (
+  <motion.span
+    className="pointer-events-none absolute rounded-full"
+    initial={{ opacity: 0 }}
+    animate={{
+      opacity: [0, 0.35, 0],
+      y: [0, 260, 520],
+      x: [0, index % 2 === 0 ? 28 : -26, index % 2 === 0 ? -18 : 16],
+      rotate: [0, 120, 240],
+    }}
+    transition={{
+      duration: 10 + (index % 4),
+      repeat: Infinity,
+      ease: "linear",
+      delay: index * 0.7,
+    }}
+    style={{
+      left: `${8 + ((index * 11) % 84)}%`,
+      top: "-4%",
+      width: index % 3 === 0 ? 10 : 7,
+      height: index % 3 === 0 ? 14 : 10,
+      background: index % 2 === 0 ? "rgba(193,160,106,0.24)" : "rgba(145,163,152,0.22)",
+      filter: "blur(0.2px)",
+      borderRadius: "55% 45% 60% 40%",
+    }}
+  />
+);
+
+const SectionHeading = ({ kicker, title, body }: { kicker: string; title: string; body?: string }) => (
+  <motion.div {...reveal} className="mx-auto max-w-3xl text-center">
+    <p className="text-[11px] uppercase tracking-[0.42em]" style={{ color: C.gold, fontFamily: F.sans }}>
+      {kicker}
+    </p>
+    <h2 className="mt-4 text-4xl leading-[0.95] sm:text-5xl md:text-6xl" style={{ color: C.ink, fontFamily: F.display }}>
       {title}
     </h2>
+    {body ? <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 sm:text-base" style={{ color: C.muted, fontFamily: F.sans }}>{body}</p> : null}
+  </motion.div>
+);
+
+const DetailChip = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
+  <div className="rounded-full border px-5 py-4 text-left" style={{ borderColor: C.line, background: "rgba(255,255,255,0.52)" }}>
+    <div className="flex items-center gap-3">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full border" style={{ borderColor: C.line, background: C.goldSoft }}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-[10px] uppercase tracking-[0.32em]" style={{ color: C.muted, fontFamily: F.sans }}>{label}</p>
+        <p className="mt-1 text-sm sm:text-base" style={{ color: C.ink, fontFamily: F.serif }}>{value}</p>
+      </div>
+    </div>
   </div>
 );
 
-const CandleCluster = ({ align }: { align: "left" | "right" }) => (
-  <div className={`pointer-events-none absolute bottom-0 hidden w-56 lg:block ${align === "left" ? "left-0" : "right-0"}`}>
-    <div className="relative h-44">
-      {[{ h: 110, w: 46, x: 34 }, { h: 88, w: 36, x: 0 }, { h: 76, w: 34, x: 96 }].map((candle, i) => (
-        <div
-          key={i}
-          className="absolute bottom-0 rounded-md border"
-          style={{
-            left: align === "left" ? candle.x : undefined,
-            right: align === "right" ? candle.x : undefined,
-            width: candle.w,
-            height: candle.h,
-            borderColor: C.line,
-            background: "rgba(31,23,42,0.78)",
-            filter: "drop-shadow(0 0 22px rgba(232,186,118,0.32))",
-          }}
-        >
-          <div className="absolute inset-x-2 bottom-3 rounded-sm bg-gradient-to-t from-[#f7c173] via-[#fff0cd] to-white opacity-90" style={{ height: candle.h * 0.58 }} />
-        </div>
-      ))}
+const CoupleStoryCard = ({ title, text, photoUrl, align = "left" }: { title: string; text: string; photoUrl?: string; align?: "left" | "right" }) => (
+  <motion.div
+    {...reveal}
+    whileHover={{ y: -6 }}
+    className={cn("grid gap-5 rounded-[34px] border p-5 sm:p-6 lg:grid-cols-[0.92fr_1.08fr]", align === "right" && "lg:grid-cols-[1.08fr_0.92fr]")}
+    style={{ borderColor: C.line, background: "rgba(255,255,255,0.56)" }}
+  >
+    <div className={cn("overflow-hidden rounded-[28px] border", align === "right" && "lg:order-2")} style={{ borderColor: C.lineSoft }}>
+      {photoUrl ? <img src={photoUrl} alt={title} className="h-[280px] w-full object-cover sm:h-[340px]" /> : <div className="flex h-[280px] items-center justify-center sm:h-[340px]" style={{ color: C.muted, fontFamily: F.sans }}>Add a story photo</div>}
     </div>
-  </div>
+    <div className={cn("flex flex-col justify-center", align === "right" && "lg:order-1")}>
+      <p className="text-[11px] uppercase tracking-[0.36em]" style={{ color: C.gold, fontFamily: F.sans }}>Couple Story</p>
+      <h3 className="mt-3 text-3xl sm:text-4xl" style={{ color: C.ink, fontFamily: F.display }}>{title}</h3>
+      <p className="mt-4 text-base leading-8" style={{ color: C.muted, fontFamily: F.sans }}>{text}</p>
+    </div>
+  </motion.div>
 );
+
+const RSVPSection = ({ invitationId, isDemo }: { invitationId: number | null; isDemo: boolean }) => {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [guestCount, setGuestCount] = useState(2);
+  const [attending, setAttending] = useState<"yes" | "maybe" | "no">("yes");
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!name.trim()) return toast.error("Please enter your name");
+    if (!phone.trim() || phone.length < 10) return toast.error("Please enter a valid 10-digit phone number");
+    if (isDemo) {
+      toast("Demo preview only. RSVP works after publishing.", { icon: "i" });
+      return;
+    }
+    setLoading(true);
+    try {
+      await submitRsvp(String(invitationId || ""), {
+        guestName: name,
+        guestPhone: phone,
+        attending: attending === "yes" ? "YES" : attending === "maybe" ? "MAYBE" : "NO",
+        guestCount,
+      });
+      setSubmitted(true);
+    } catch {
+      toast.error("Could not submit RSVP. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (submitted) {
+    return (
+      <div className="rounded-[32px] border px-6 py-12 text-center" style={{ borderColor: C.line, background: "rgba(255,255,255,0.06)" }}>
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border" style={{ borderColor: "rgba(255,255,255,0.16)", background: "rgba(255,255,255,0.08)" }}>
+          <Check color="#f5ede2" />
+        </div>
+        <h3 className="mt-5 text-4xl" style={{ color: C.parchment, fontFamily: F.display }}>Thank you, {name}</h3>
+        <p className="mx-auto mt-4 max-w-xl text-sm leading-7" style={{ color: "rgba(245,237,226,0.76)", fontFamily: F.sans }}>
+          Your RSVP has been received. We are delighted to celebrate this new chapter with you.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-8 rounded-[34px] border p-6 sm:p-8 lg:grid-cols-[0.84fr_1.16fr]" style={{ borderColor: C.line, background: "rgba(255,255,255,0.04)" }}>
+      <div>
+        <p className="text-[11px] uppercase tracking-[0.38em]" style={{ color: "#d8c4a3", fontFamily: F.sans }}>RSVP</p>
+        <h3 className="mt-4 text-4xl leading-[0.96] sm:text-5xl" style={{ color: C.parchment, fontFamily: F.display }}>
+          Join us for one elegant evening.
+        </h3>
+        <p className="mt-4 text-sm leading-7" style={{ color: "rgba(245,237,226,0.74)", fontFamily: F.sans }}>
+          A European-style engagement invitation should feel intimate and curated, so the RSVP remains simple and beautifully presented.
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="grid gap-4">
+        <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your full name" className="rounded-[18px] border px-4 py-4 outline-none" style={{ borderColor: "rgba(255,255,255,0.14)", background: "rgba(255,255,255,0.08)", color: C.parchment, fontFamily: F.sans }} />
+        <input value={phone} onChange={(event) => setPhone(event.target.value.replace(/\D/g, ""))} maxLength={10} placeholder="Phone number" className="rounded-[18px] border px-4 py-4 outline-none" style={{ borderColor: "rgba(255,255,255,0.14)", background: "rgba(255,255,255,0.08)", color: C.parchment, fontFamily: F.sans }} />
+        <div className="grid gap-3 sm:grid-cols-3">
+          {[{ value: "yes" as const, label: "Joyfully yes" }, { value: "maybe" as const, label: "Maybe" }, { value: "no" as const, label: "Cannot attend" }].map((option) => (
+            <button key={option.value} type="button" onClick={() => setAttending(option.value)} className="rounded-[16px] border px-4 py-3 text-sm transition-all" style={{ borderColor: attending === option.value ? "#d8c4a3" : "rgba(255,255,255,0.14)", background: attending === option.value ? "rgba(193,160,106,0.18)" : "rgba(255,255,255,0.06)", color: C.parchment, fontFamily: F.sans }}>
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <input type="number" min={1} max={10} value={guestCount} onChange={(event) => setGuestCount(Number(event.target.value))} className="rounded-[18px] border px-4 py-4 outline-none" style={{ borderColor: "rgba(255,255,255,0.14)", background: "rgba(255,255,255,0.08)", color: C.parchment, fontFamily: F.sans }} />
+        <button type="submit" disabled={loading} className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-4 text-sm uppercase tracking-[0.24em]" style={{ background: `linear-gradient(135deg, ${C.gold}, #d7b686)`, color: C.darkPanel, fontFamily: F.sans }}>
+          {loading ? <Sparkles size={16} className="animate-spin" /> : <Heart size={16} />}
+          {loading ? "Sending" : "Send RSVP"}
+        </button>
+      </form>
+    </div>
+  );
+};
 
 const MidnightMoonlitTemplate = ({
   mode,
@@ -122,251 +289,216 @@ const MidnightMoonlitTemplate = ({
   uploadStage = "temp",
 }: TemplateProps) => {
   const photos = useMemo(() => getPhotos(data), [data]);
+  const heroPhoto = data.couplePhotoUrl || photos[0]?.photoUrl || "";
+  const storyPhotoOne = photos[1]?.photoUrl || heroPhoto;
+  const storyPhotoTwo = photos[2]?.photoUrl || photos[1]?.photoUrl || heroPhoto;
+  const celebration = data.events[0];
   const effectiveMusicUrl = data.musicUrl || data.effectiveMusicUrl || data.templateDefaults.defaultMusicUrl;
   const effectiveMusicName = data.musicName || data.effectiveMusicName || data.templateDefaults.defaultMusicName;
+
+  const storyOne = data.brideBio || "A quiet beginning, a familiar ease, and conversations that felt like they had been waiting for the right time.";
+  const storyTwo = data.groomBio || "From thoughtful moments to a beautiful promise, their story now opens into a joyful celebration surrounded by the people they love.";
 
   return (
     <div
       data-theme="midnight"
-      className="min-h-screen overflow-hidden"
+      className="min-h-screen overflow-x-hidden"
       style={{
-        color: C.text,
         background:
-          "radial-gradient(circle at 50% -10%, rgba(255,229,163,0.16), transparent 18%), radial-gradient(circle at 20% 20%, rgba(120,90,180,0.18), transparent 24%), linear-gradient(180deg, #090713 0%, #171129 38%, #120f24 100%)",
+          "radial-gradient(circle at top left, rgba(255,255,255,0.4), transparent 18%), radial-gradient(circle at bottom right, rgba(145,163,152,0.16), transparent 20%), linear-gradient(180deg, #f4dfdf 0%, #f7eee8 32%, #f2e3cf 100%)",
+        color: C.ink,
       }}
     >
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Great+Vibes&family=Manrope:wght@400;500;600;700&display=swap');`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Allura&family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,700&family=Cormorant+Garamond:wght@400;500;600;700&family=Jost:wght@400;500;600;700&display=swap');`}</style>
 
-      <section className="relative overflow-hidden px-5 pb-14 pt-8 sm:px-8 md:px-10 lg:px-14">
-        <div
-          className="pointer-events-none absolute left-1/2 top-8 -translate-x-1/2 rounded-full"
+      {mode !== "edit" && effectiveMusicUrl ? <FloatingMusicPlayer musicUrl={effectiveMusicUrl} musicName={effectiveMusicName} /> : null}
+
+      <section className="relative overflow-hidden px-4 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-14">
+        {Array.from({ length: 14 }).map((_, index) => <PetalFloat key={index} index={index} />)}
+
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.5),transparent_70%)]" />
+
+        <motion.div
+          {...reveal}
+          className="relative mx-auto max-w-6xl overflow-hidden rounded-[42px] border p-3 shadow-[0_34px_100px_rgba(109,87,60,0.16)] sm:p-4"
           style={{
-            width: 220,
-            height: 220,
-            background:
-              "radial-gradient(circle, rgba(255,245,214,0.98) 0%, rgba(255,220,160,0.85) 35%, rgba(255,220,160,0.18) 68%, transparent 100%)",
-            boxShadow: "0 0 90px rgba(255,224,170,0.42)",
+            borderColor: "rgba(255,255,255,0.6)",
+            background: "linear-gradient(180deg, rgba(255,255,255,0.48), rgba(255,255,255,0.22))",
+            backdropFilter: "blur(10px)",
           }}
-        />
-        <CandleCluster align="left" />
-        <CandleCluster align="right" />
+        >
+          <div
+            className="relative overflow-hidden rounded-[34px] border px-5 py-16 sm:px-8 sm:py-20 lg:px-12"
+            style={{
+              borderColor: C.line,
+              background:
+                "linear-gradient(180deg, rgba(255,250,245,0.98) 0%, rgba(247,239,231,0.96) 100%)",
+            }}
+          >
+            <div className="pointer-events-none absolute inset-0 opacity-70" style={{ background: "radial-gradient(circle at center, rgba(255,255,255,0.55), transparent 58%)" }} />
+            <div className="pointer-events-none absolute inset-[18px] rounded-[28px] border" style={{ borderColor: C.lineSoft }} />
+            <div className="pointer-events-none absolute left-1/2 top-[24px] h-[1px] w-40 -translate-x-1/2 bg-[linear-gradient(90deg,transparent,rgba(193,160,106,0.6),transparent)] sm:w-56" />
 
-        <div className="pointer-events-none absolute inset-x-0 top-6">
-          <div className="mx-auto flex max-w-5xl justify-center gap-3 opacity-80">
-            {Array.from({ length: 24 }).map((_, i) => (
-              <span
-                key={i}
-                className="rounded-full"
-                style={{
-                  width: i % 4 === 0 ? 5 : 3,
-                  height: i % 4 === 0 ? 5 : 3,
-                  background: "#ffd89b",
-                  boxShadow: "0 0 12px rgba(255,216,155,0.95)",
-                  transform: `translateY(${Math.sin(i * 0.7) * 9}px)`,
-                }}
-              />
-            ))}
-          </div>
-          <div className="mx-auto mt-10 flex max-w-4xl justify-center gap-4 opacity-70">
-            {Array.from({ length: 18 }).map((_, i) => (
-              <span
-                key={i}
-                className="rounded-full"
-                style={{
-                  width: 4,
-                  height: 4,
-                  background: "#ffd89b",
-                  boxShadow: "0 0 10px rgba(255,216,155,0.95)",
-                  transform: `translateY(${Math.sin(i * 0.85) * 12}px)`,
-                }}
-              />
-            ))}
-          </div>
-        </div>
+            <BotanicalStem className="left-0 top-[-10px]" />
+            <BotanicalStem className="right-0 top-[-8px]" reverse delay={1.1} />
 
-        <div className="pointer-events-none absolute inset-0 opacity-90">
-          {Array.from({ length: 90 }).map((_, i) => (
-            <span
-              key={i}
-              className="absolute rounded-full"
-              style={{
-                left: `${(i * 17) % 100}%`,
-                top: `${(i * 29) % 100}%`,
-                width: i % 5 === 0 ? 3 : 2,
-                height: i % 5 === 0 ? 3 : 2,
-                background: "rgba(255,224,170,0.92)",
-                boxShadow: "0 0 8px rgba(255,224,170,0.9)",
-                opacity: i % 4 === 0 ? 0.8 : 0.45,
-              }}
-            />
-          ))}
-        </div>
+            <div className="relative z-10 mx-auto max-w-3xl text-center">
+              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border shadow-[0_18px_40px_rgba(109,87,60,0.12)]" style={{ borderColor: C.line, background: "radial-gradient(circle at 30% 30%, #fffdf9, #f0e4d5 70%, #dcc8b0 100%)" }}>
+                <img src={GANESH_ICON_URL} alt="Ganesh icon" className="h-12 w-12" style={{ filter: "invert(59%) sepia(15%) saturate(842%) hue-rotate(353deg) brightness(91%) contrast(84%)", opacity: 0.95 }} />
+              </div>
 
-        <div className="relative mx-auto max-w-5xl pt-28 text-center sm:pt-32">
-          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="mb-4 flex justify-center">
-              <MoonStar size={22} style={{ color: C.gold }} />
+              <p className="mt-8 text-[11px] uppercase tracking-[0.48em]" style={{ color: C.gold, fontFamily: F.sans }}>
+                Engagement Invitation
+              </p>
+              <p className="mt-4 text-xl sm:text-2xl" style={{ color: C.sageDeep, fontFamily: F.script }}>
+                a beautifully gathered evening of love and promise
+              </p>
+
+              <h1 className="mt-6 text-5xl leading-[0.9] sm:text-6xl md:text-7xl" style={{ color: C.ink, fontFamily: F.display }}>
+                <EditableText value={data.brideName} onSave={(value) => onUpdate({ brideName: value })} mode={mode} as="span" className="block" inputClassName="text-5xl sm:text-6xl md:text-7xl" placeholder="Bride name" />
+                <span className="my-3 block text-4xl sm:text-5xl" style={{ color: C.gold, fontFamily: F.script }}>&amp;</span>
+                <EditableText value={data.groomName} onSave={(value) => onUpdate({ groomName: value })} mode={mode} as="span" className="block" inputClassName="text-5xl sm:text-6xl md:text-7xl" placeholder="Groom name" />
+              </h1>
+
+              <p className="mx-auto mt-6 max-w-2xl text-base leading-8 sm:text-lg" style={{ color: C.muted, fontFamily: F.sans }}>
+                together with their families request the pleasure of your presence as they celebrate the beginning of a beautiful new chapter.
+              </p>
+
+              <div className="mx-auto mt-8 flex max-w-sm items-center justify-center gap-4">
+                <div className="h-px flex-1" style={{ background: C.line }} />
+                <Sparkles size={16} color={C.gold} />
+                <div className="h-px flex-1" style={{ background: C.line }} />
+              </div>
+
+              <EditableText value={data.welcomeMessage} onSave={(value) => onUpdate({ welcomeMessage: value })} mode={mode} multiline as="p" className="mx-auto mt-8 max-w-2xl text-base leading-8 sm:text-lg" inputClassName="text-base sm:text-lg" placeholder="Write your engagement announcement..." />
+
+              <div className="mt-10 grid gap-3 sm:grid-cols-3">
+                <DetailChip icon={<CalendarDays size={16} color={C.gold} />} label="Date" value={shortDate(data.weddingDate)} />
+                <DetailChip icon={<Clock3 size={16} color={C.gold} />} label="Time" value={celebration?.eventTime ? formatTime(celebration.eventTime) : "Time to be announced"} />
+                <DetailChip icon={<MapPin size={16} color={C.gold} />} label="Venue" value={celebration?.venueName || "Venue details"} />
+              </div>
             </div>
-            <EditableText value={data.brideName} onSave={(val) => onUpdate({ brideName: val })} mode={mode} placeholder="Bride Name" className="text-[4rem] leading-none sm:text-[5rem] md:text-[6rem]" inputClassName="text-[4rem] sm:text-[5rem] md:text-[6rem]" as="h1" />
-            <div className="text-[4rem] leading-none sm:text-[5rem] md:text-[6rem]" style={{ fontFamily: FONTS.script, color: C.goldSoft }}>&amp;</div>
-            <EditableText value={data.groomName} onSave={(val) => onUpdate({ groomName: val })} mode={mode} placeholder="Groom Name" className="-mt-2 text-[4rem] leading-none sm:text-[5rem] md:text-[6rem]" inputClassName="text-[4rem] sm:text-[5rem] md:text-[6rem]" as="h1" />
+          </div>
+        </motion.div>
+      </section>
+
+      <section className="px-4 py-12 sm:px-6 sm:py-16">
+        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.96fr_1.04fr]">
+          <motion.div {...reveal} className="rounded-[34px] border p-5 sm:p-6" style={{ borderColor: C.line, background: "rgba(255,255,255,0.54)" }}>
+            <div className="overflow-hidden rounded-[28px] border" style={{ borderColor: C.lineSoft }}>
+              {heroPhoto ? <img src={heroPhoto} alt={`${data.brideName} and ${data.groomName}`} className="h-[360px] w-full object-cover sm:h-[460px]" /> : <div className="flex h-[360px] items-center justify-center sm:h-[460px]" style={{ color: C.muted, fontFamily: F.sans }}>Add a hero photo</div>}
+            </div>
           </motion.div>
 
-          <p className="mt-3 text-2xl sm:text-3xl" style={{ fontFamily: FONTS.serif, color: C.gold }}>
-            Are Getting Married
-          </p>
-
-          {mode === "edit" ? (
-            <div className="mt-6 flex justify-center">
-              <input type="date" value={data.weddingDate} onChange={(e) => onUpdate({ weddingDate: e.target.value })} className="rounded-full border bg-black/20 px-5 py-3 text-sm" style={{ borderColor: C.line, color: C.text, fontFamily: FONTS.sans }} />
-            </div>
-          ) : (
-            <p className="mt-6 text-3xl sm:text-4xl" style={{ fontFamily: FONTS.serif, color: C.goldSoft }}>
-              {formatWeddingDate(data.weddingDate)}
+          <motion.div {...reveal} transition={{ ...reveal.transition, delay: 0.08 }} className="rounded-[34px] border p-6 sm:p-8" style={{ borderColor: C.line, background: "rgba(255,255,255,0.54)" }}>
+            <p className="text-[11px] uppercase tracking-[0.42em]" style={{ color: C.gold, fontFamily: F.sans }}>The Celebration</p>
+            <h2 className="mt-4 text-4xl leading-[0.95] sm:text-5xl" style={{ color: C.ink, fontFamily: F.display }}>
+              One beautifully styled engagement evening.
+            </h2>
+            <p className="mt-5 text-base leading-8" style={{ color: C.muted, fontFamily: F.sans }}>
+              This concept stays focused on one central event instead of a wedding-style list. It feels closer to a European invitation suite: lighter, more romantic, and more editorial.
             </p>
-          )}
 
-          <div className="mx-auto mt-8 w-fit rounded-full border px-8 py-4 shadow-[0_0_24px_rgba(232,186,118,0.12)]" style={{ borderColor: C.line, background: C.button }}>
-            <span className="text-lg" style={{ fontFamily: FONTS.serif, color: C.goldSoft }}>
-              Add to Calendar
-            </span>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-5 py-14 sm:px-8 md:px-10 lg:px-14">
-        <SectionTitle title="Our Story" />
-        <div className="mx-auto mt-10 max-w-6xl">
-          <div className="flex flex-wrap items-start justify-center gap-6 lg:flex-nowrap">
-            {storyMilestones.map((item, index) => (
-              <div key={item.year} className="w-[210px] text-center">
-                <div className="relative mx-auto h-[170px] w-[170px] rounded-full border p-2 shadow-[0_0_25px_rgba(232,186,118,0.12)]" style={{ borderColor: C.line, background: "rgba(20,16,38,0.5)" }}>
-                  <img src={photos[index]?.photoUrl || FALLBACKS[index % FALLBACKS.length]} alt={item.label} className="h-full w-full rounded-full object-cover" />
+            <div className="mt-8 grid gap-4">
+              {mode === "edit" ? (
+                <EditableEventCard
+                  event={celebration || ({ id: null, eventName: "Engagement Celebration", eventDate: "", eventTime: "", venueName: "", venueAddress: "", mapsUrl: null } as EventData)}
+                  onUpdate={(updates) => {
+                    const current = celebration || { id: null, eventName: "Engagement Celebration", eventDate: "", eventTime: "", venueName: "", venueAddress: "", mapsUrl: null };
+                    onUpdate({ events: [{ ...current, ...updates }] });
+                  }}
+                  onDelete={() => onUpdate({ events: [] })}
+                  mode={mode}
+                  index={0}
+                />
+              ) : (
+                <div className="rounded-[28px] border p-5 sm:p-6" style={{ borderColor: C.line, background: "rgba(255,250,245,0.7)" }}>
+                  <p className="text-[10px] uppercase tracking-[0.34em]" style={{ color: C.gold, fontFamily: F.sans }}>Invitation Details</p>
+                  <h3 className="mt-3 text-3xl sm:text-4xl" style={{ color: C.ink, fontFamily: F.display }}>{celebration?.eventName || "Engagement Celebration"}</h3>
+                  <p className="mt-4 text-sm leading-7 sm:text-base" style={{ color: C.muted, fontFamily: F.sans }}>{celebration ? `${formatEventDate(celebration.eventDate)} | ${formatTime(celebration.eventTime)}` : "Date and time to be announced"}</p>
+                  <p className="mt-2 text-sm leading-7 sm:text-base" style={{ color: C.muted, fontFamily: F.sans }}>{celebration?.venueName}{celebration?.venueAddress ? `, ${celebration.venueAddress}` : ""}</p>
+                  {celebration?.mapsUrl ? <a href={celebration.mapsUrl} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-2 rounded-full border px-4 py-3 text-sm" style={{ borderColor: C.line, color: C.ink, fontFamily: F.sans }}><MapPin size={16} color={C.gold} />Open map</a> : null}
                 </div>
-                <p className="mt-4 text-4xl" style={{ fontFamily: FONTS.serif, color: C.goldSoft }}>{item.year}</p>
-                <p className="text-xl" style={{ fontFamily: FONTS.serif, color: C.text }}>{item.label}</p>
+              )}
+            </div>
+
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-[26px] border p-5" style={{ borderColor: C.line, background: "rgba(255,250,245,0.6)" }}>
+                <p className="text-[10px] uppercase tracking-[0.34em]" style={{ color: C.gold, fontFamily: F.sans }}>Styling</p>
+                <p className="mt-3 text-base leading-7" style={{ color: C.muted, fontFamily: F.sans }}>Paper tones, soft botanicals, and editorial typography keep the page looking premium and distinctly different from your current templates.</p>
               </div>
-            ))}
-          </div>
+              <div className="rounded-[26px] border p-5" style={{ borderColor: C.line, background: "rgba(255,250,245,0.6)" }}>
+                <p className="text-[10px] uppercase tracking-[0.34em]" style={{ color: C.gold, fontFamily: F.sans }}>Blessing Seal</p>
+                <p className="mt-3 text-base leading-7" style={{ color: C.muted, fontFamily: F.sans }}>The Ganesh crest stays integrated into the stationery layout so it feels ceremonial, refined, and intentional.</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
 
-          <div className="mx-auto mt-10 max-w-4xl rounded-[28px] border p-6 text-center" style={{ borderColor: C.line, background: C.card }}>
-            <EditableText value={data.welcomeMessage} onSave={(val) => onUpdate({ welcomeMessage: val })} mode={mode} placeholder="Share your night-wedding story..." className="text-lg leading-8" inputClassName="text-lg" multiline as="p" />
+      <section className="px-4 py-12 sm:px-6 sm:py-16">
+        <div className="mx-auto max-w-6xl">
+          <SectionHeading kicker="Our Story" title="A softer, more personal chapter" body="You asked for couple story and a more premium engagement page, so this section replaces the wedding-event grid with something more intimate and editorial." />
+          <div className="mt-10 grid gap-6">
+            <CoupleStoryCard title="How it began" text={storyOne} photoUrl={storyPhotoOne} />
+            <CoupleStoryCard title="Why this day matters" text={storyTwo} photoUrl={storyPhotoTwo} align="right" />
           </div>
         </div>
       </section>
 
-      <section className="px-5 py-14 sm:px-8 md:px-10 lg:px-14">
-        <SectionTitle title="Wedding Events" />
-        <div className="mx-auto mt-10 max-w-5xl">
-          {mode === "edit" ? (
-            <div className="space-y-4">
-              {data.events.map((event, index) => (
-                <EditableEventCard key={event.id || index} event={event} onUpdate={(updates) => {
-                  const next = [...data.events];
-                  next[index] = { ...next[index], ...updates };
-                  onUpdate({ events: next });
-                }} onDelete={() => onUpdate({ events: data.events.filter((_, i) => i !== index) })} mode={mode} index={index} />
-              ))}
-              <AddEventButton onAdd={() => onUpdate({ events: [...data.events, { id: null, eventName: "New Event", eventDate: "", eventTime: "", venueName: "", venueAddress: "", mapsUrl: null } as EventData] })} mode={mode} maxEvents={8} currentCount={data.events.length} />
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {data.events.map((event, index) => {
-                const Icon = eventIcon(event.eventName);
-                return (
-                  <motion.div key={event.id || index} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.08 }} className="rounded-[8px] border p-6 text-center shadow-[0_0_24px_rgba(232,186,118,0.08)]" style={{ borderColor: C.line, background: "rgba(18,15,33,0.6)" }}>
-                    <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border" style={{ borderColor: C.line, color: C.gold }}>
-                      <Icon size={26} />
-                    </div>
-                    <h3 className="text-2xl" style={{ fontFamily: FONTS.serif, color: C.goldSoft }}>{event.eventName}</h3>
-                    <p className="mt-3 text-sm" style={{ fontFamily: FONTS.sans, color: C.muted }}>{formatEventDate(event.eventDate)}</p>
-                    {event.eventTime && <p className="mt-1 text-sm" style={{ fontFamily: FONTS.sans, color: C.muted }}>{event.eventTime}</p>}
+      <section className="px-4 py-12 sm:px-6 sm:py-16">
+        <div className="mx-auto max-w-6xl">
+          <SectionHeading kicker="Gallery" title="Frames from the journey so far" body="The gallery stays elegant and spacious, with enough room for romance without becoming visually heavy." />
+          <div className="mt-10">
+            {mode === "edit" ? (
+              <div className="rounded-[34px] border p-5 sm:p-6" style={{ borderColor: C.line, background: "rgba(255,255,255,0.54)" }}>
+                <EditablePhotoGallery photos={data.galleryPhotos} defaultPhotos={data.templateDefaults.defaultPhotos} onUpdate={(items) => onUpdate({ galleryPhotos: items })} mode={mode} maxPhotos={10} invitationId={data.invitationId ?? undefined} templateId={templateId} sessionUUID={sessionUUID} uploadStage={uploadStage} />
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {photos.map((photo, index) => (
+                  <motion.div key={`${photo.photoUrl}-${index}`} {...reveal} transition={{ ...reveal.transition, delay: index * 0.05 }} whileHover={{ y: -6 }} className={cn("overflow-hidden rounded-[30px] border", index === 0 || index === 3 ? "xl:col-span-2" : "")} style={{ borderColor: C.line, background: "rgba(255,255,255,0.5)" }}>
+                    <img src={photo.photoUrl} alt={`Couple memory ${index + 1}`} className="h-[260px] w-full object-cover sm:h-[320px]" loading="lazy" />
                   </motion.div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </section>
-
-      <section className="px-5 py-14 sm:px-8 md:px-10 lg:px-14">
-        <div className="mx-auto max-w-5xl rounded-[34px] border p-6" style={{ borderColor: C.line, background: C.card }}>
-          <SectionTitle title="Will you join us?" />
-          <div className="mt-8">
-            <RsvpSection invitationId={data.invitationId} isDemo={mode === "demo"} />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      {mode === "edit" && (
-        <section className="px-5 pb-8 pt-2 sm:px-8 md:px-10 lg:px-14">
-          <div className="mx-auto max-w-xl rounded-[28px] border p-5" style={{ borderColor: C.line, background: C.card }}>
-            <EditablePhotoGallery photos={data.galleryPhotos} defaultPhotos={data.templateDefaults.defaultPhotos} onUpdate={(items) => onUpdate({ galleryPhotos: items })} mode={mode} maxPhotos={10} invitationId={data.invitationId ?? undefined} templateId={templateId} sessionUUID={sessionUUID} uploadStage={uploadStage} />
-            <div className="mt-5">
+      {mode === "edit" ? (
+        <section className="px-4 pb-8 sm:px-6">
+          <div className="mx-auto max-w-3xl rounded-[34px] border p-6 sm:p-8" style={{ borderColor: C.line, background: "rgba(255,255,255,0.54)" }}>
+            <SectionHeading kicker="Music" title="Set the soundtrack" body="Choose the background music for this invitation experience." />
+            <div className="mt-8">
               <EditableMusicPlayer musicUrl={data.musicUrl} musicName={data.musicName} defaultMusicUrl={data.templateDefaults.defaultMusicUrl} defaultMusicName={data.templateDefaults.defaultMusicName} onUpdate={(url, name) => onUpdate({ musicUrl: url, musicName: name })} mode={mode} templateId={templateId} sessionUUID={sessionUUID} uploadStage={uploadStage} invitationId={data.invitationId ?? undefined} />
             </div>
           </div>
         </section>
-      )}
+      ) : null}
 
-      <footer className={mode === "edit" ? "px-5 py-16 pb-32 text-center sm:px-8 md:px-10 lg:px-14" : "px-5 py-16 text-center sm:px-8 md:px-10 lg:px-14"}>
-        <MoonStar className="mx-auto mb-4" style={{ color: C.gold }} />
-        <p className="text-4xl" style={{ fontFamily: FONTS.script, color: C.goldSoft }}>{data.brideName?.split(" ")[0] || "Bride"} &amp; {data.groomName?.split(" ")[0] || "Groom"}</p>
-        <p className="mt-3 text-[11px] uppercase tracking-[0.38em]" style={{ fontFamily: FONTS.sans, color: C.muted }}>{formatWeddingDate(data.weddingDate)}</p>
+      {mode !== "edit" && data.rsvpEnabled !== false ? (
+        <section className="px-4 py-12 sm:px-6 sm:py-16">
+          <div className="mx-auto max-w-5xl rounded-[38px] p-1" style={{ background: "linear-gradient(135deg, rgba(193,160,106,0.26), rgba(61,73,66,0.82))" }}>
+            <div className="rounded-[36px] bg-[#292621] p-6 sm:p-8">
+              <RSVPSection invitationId={data.invitationId} isDemo={mode === "demo"} />
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      <footer className={cn("px-4 pb-20 pt-8 sm:px-6", mode === "edit" && "pb-36")}>
+        <motion.div {...reveal} className="mx-auto max-w-5xl rounded-[34px] border px-6 py-10 text-center sm:px-10" style={{ borderColor: C.line, background: "rgba(255,255,255,0.48)" }}>
+          <p className="text-[11px] uppercase tracking-[0.42em]" style={{ color: C.gold, fontFamily: F.sans }}>Sage Letter</p>
+          <h2 className="mt-4 text-4xl sm:text-5xl" style={{ color: C.ink, fontFamily: F.display }}>{data.brideName} &amp; {data.groomName}</h2>
+          <p className="mt-4 text-sm sm:text-base" style={{ color: C.muted, fontFamily: F.sans }}>Engagement Celebration | {shortDate(data.weddingDate)}</p>
+          <p className="mx-auto mt-4 max-w-2xl text-xs leading-6" style={{ color: "rgba(44,38,32,0.5)", fontFamily: F.sans }}>Ganesh icon source: Ameya Narvankar via Wikimedia Commons, CC BY-SA 3.0.</p>
+        </motion.div>
       </footer>
 
-      {mode === "edit" && <EditModeToolbar onSaveDraft={onSaveDraft} onPublish={onPublish} isSaving={isSaving} isPublishing={isPublishing} invitationId={data.invitationId} hasUnsavedChanges={true} />}
-      {mode !== "edit" && effectiveMusicUrl && <FloatingMusicPlayer musicUrl={effectiveMusicUrl} musicName={effectiveMusicName} />}
+      {mode === "edit" ? <EditModeToolbar onSaveDraft={onSaveDraft} onPublish={onPublish} isSaving={isSaving} isPublishing={isPublishing} invitationId={data.invitationId} hasUnsavedChanges={true} /> : null}
     </div>
-  );
-};
-
-const RsvpSection = ({ invitationId, isDemo }: { invitationId: number | null; isDemo: boolean }) => {
-  const [attending, setAttending] = useState<"yes" | "no" | null>(null);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [guestCount, setGuestCount] = useState(1);
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isDemo) return setSubmitted(true);
-    if (!invitationId || !attending) return;
-    try {
-      await submitRsvp(String(invitationId), {
-        guestName: name,
-        guestPhone: email,
-        attending: attending === "yes" ? "YES" : "NO",
-        guestCount: attending === "no" ? 0 : guestCount,
-      });
-      setSubmitted(true);
-      toast.success("RSVP submitted!");
-    } catch {
-      toast.error("Failed to submit RSVP");
-    }
-  };
-
-  if (submitted) {
-    return (
-      <div className="rounded-[24px] border px-6 py-10 text-center" style={{ borderColor: C.line, background: "rgba(12,10,23,0.65)" }}>
-        <Heart className="mx-auto mb-4" style={{ color: C.gold }} fill={C.gold} />
-        <h3 className="text-3xl" style={{ fontFamily: FONTS.script, color: C.goldSoft }}>Thank you</h3>
-      </div>
-    );
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="mx-auto max-w-3xl space-y-5">
-      <div className="flex flex-wrap justify-center gap-4">
-        <button type="button" onClick={() => setAttending("yes")} className="rounded-full border px-8 py-4 text-lg" style={{ borderColor: attending === "yes" ? C.gold : C.line, background: attending === "yes" ? "rgba(232,186,118,0.14)" : C.button, color: C.goldSoft, fontFamily: FONTS.serif }}>Yes, we&apos;ll be there!</button>
-        <button type="button" onClick={() => setAttending("no")} className="rounded-full border px-8 py-4 text-lg" style={{ borderColor: attending === "no" ? C.gold : C.line, background: attending === "no" ? "rgba(232,186,118,0.14)" : C.button, color: C.goldSoft, fontFamily: FONTS.serif }}>Sorry, we can&apos;t make it.</button>
-      </div>
-      <div className="grid gap-4 md:grid-cols-[1.3fr_0.7fr]">
-        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your Name" required className="rounded-full border bg-black/20 px-6 py-4 text-lg" style={{ borderColor: C.line, color: C.text, fontFamily: FONTS.serif }} />
-        <input type="number" min={1} max={10} value={guestCount} onChange={(e) => setGuestCount(Number(e.target.value))} placeholder="Guest(s)" className="rounded-full border bg-black/20 px-6 py-4 text-lg" style={{ borderColor: C.line, color: C.text, fontFamily: FONTS.serif }} />
-      </div>
-      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email Address" className="w-full rounded-full border bg-black/20 px-6 py-4 text-lg" style={{ borderColor: C.line, color: C.text, fontFamily: FONTS.serif }} />
-    </form>
   );
 };
 

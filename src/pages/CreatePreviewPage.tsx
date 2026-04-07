@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import {
   getTemplateComponent,
@@ -33,8 +33,10 @@ interface SaveDraftResponse {
 
 const CreatePreviewPage = () => {
   const { templateId } = useParams<{ templateId: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
 
   const [TemplateComp, setTemplateComp] = useState<TemplateComponent | null>(
     null,
@@ -48,6 +50,7 @@ const CreatePreviewPage = () => {
 
   const numTemplateId = parseInt(templateId || "1");
   const sessionKey = `session_${numTemplateId}`;
+  const isFrameOnly = searchParams.get("frame") === "1";
 
   // Load template component on mount
   useEffect(() => {
@@ -218,28 +221,56 @@ const CreatePreviewPage = () => {
     );
   }
 
+  const previewContent =
+    showMobilePreview && !isFrameOnly ? (
+      <div className="mx-auto flex min-h-screen w-full items-start justify-center px-4 py-20">
+        <div className="relative w-full max-w-[420px] rounded-[2.5rem] border-[4px] border-neutral-900 bg-neutral-950 p-[6px] shadow-[0_32px_90px_rgba(0,0,0,0.28)]">
+          <div className="absolute left-1/2 top-[10px] z-20 h-[18px] w-[88px] -translate-x-1/2 rounded-full bg-neutral-900" />
+          <div className="overflow-hidden rounded-[2rem] bg-background">
+            <iframe
+              src={`/create/${numTemplateId}/preview?frame=1`}
+              title="Mobile invitation preview"
+              className="block h-[844px] w-full border-0"
+            />
+          </div>
+        </div>
+      </div>
+    ) : (
+      <TemplateComp
+        mode="view"
+        data={data}
+        onUpdate={() => {}}
+        onSaveDraft={() => {}}
+        onPublish={() => {}}
+        isSaving={false}
+        isPublishing={false}
+      />
+    );
+
   return (
     <div
       data-theme={theme}
       className="min-h-screen bg-background text-foreground preview-page-wrapper"
     >
-      {/* Bump music player above the bottom toolbar */}
-      <style>{`.preview-page-wrapper .fixed.bottom-6.right-6 { bottom: 5rem !important; }`}</style>
+      {!isFrameOnly && (
+        <style>{`.preview-page-wrapper .fixed.bottom-6.right-6 { bottom: 5rem !important; }`}</style>
+      )}
 
-      {/* Preview Template in VIEW mode */}
-      <div>
-        <TemplateComp
-          mode="view"
-          data={data}
-          onUpdate={() => {}} // No updates in view mode
-          onSaveDraft={() => {}} // This shouldn't be called
-          onPublish={() => {}} // This shouldn't be called
-          isSaving={false}
-          isPublishing={false}
-        />
-      </div>
+      {!isFrameOnly && (
+        <div className="fixed right-4 top-4 z-50">
+          <button
+            onClick={() => setShowMobilePreview((current) => !current)}
+            className="rounded-xl border border-border bg-background/90 px-4 py-2 font-body text-sm text-foreground shadow-lg backdrop-blur-sm transition-colors hover:bg-background"
+          >
+            {showMobilePreview ? "Desktop View" : "Mobile View"}
+          </button>
+        </div>
+      )}
+
+      {previewContent}
 
       {/* Preview Toolbar */}
+      {!isFrameOnly && (
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border shadow-lg">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4 max-w-4xl">
           <button
@@ -276,6 +307,7 @@ const CreatePreviewPage = () => {
           )}
         </div>
       </div>
+      )}
 
       {/* Success Modal */}
       <AnimatePresence>

@@ -1,11 +1,13 @@
 import { DemoDataOverrides } from "../demoData";
 
+const R2 = "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/2";
+
 const galleryPhotos = [
-  "https://images.pexels.com/photos/12165484/pexels-photo-12165484.jpeg?cs=srgb&dl=pexels-camera-treasure-928922-12165484.jpg&fm=jpg",
-  "https://images.pexels.com/photos/32596493/pexels-photo-32596493.jpeg?cs=srgb&dl=pexels-amodita-s-frame-485464413-32596493.jpg&fm=jpg",
-  "https://images.pexels.com/photos/29816041/pexels-photo-29816041.jpeg?cs=srgb&dl=pexels-luckydigital-29816041.jpg&fm=jpg",
-  "https://images.pexels.com/photos/30685773/pexels-photo-30685773.jpeg?cs=srgb&dl=pexels-dream_-makkerzz-1603229-30685773.jpg&fm=jpg",
-  "https://images.pexels.com/photos/19609198/pexels-photo-19609198.jpeg?cs=srgb&dl=pexels-fotographiya-wedding-photography-823737813-19609198.jpg&fm=jpg",
+  `${R2}/couple1.jpg`,
+  `${R2}/couple3.jpg`,
+  `${R2}/couple4.jpg`,
+  `${R2}/couple5.jpg`,
+  `${R2}/couple6.jpg`,
 ];
 
 const demoData: DemoDataOverrides = {
@@ -33,27 +35,27 @@ const demoData: DemoDataOverrides = {
       eventName: "Welcome & High Tea",
       eventDate: "2027-02-14",
       eventTime: "16:30:00",
-      venueName: "The Courtyard Pavilion",
-      venueAddress: "Banjara Hills, Hyderabad",
-      mapsUrl: "https://maps.google.com",
+      venueName: "Château de Vaux-le-Vicomte",
+      venueAddress: "77950 Maincy, Île-de-France, France",
+      mapsUrl: "https://maps.google.com/?q=Chateau+de+Vaux-le-Vicomte,+77950+Maincy,+France",
     },
     {
       id: 2,
       eventName: "Ring Ceremony",
       eventDate: "2027-02-14",
       eventTime: "18:30:00",
-      venueName: "Jade Ballroom, Aurum Grand",
-      venueAddress: "Road No. 12, Hyderabad",
-      mapsUrl: "https://maps.google.com",
+      venueName: "Villa Cora",
+      venueAddress: "Viale Niccolò Machiavelli 18, 50125 Florence, Italy",
+      mapsUrl: "https://maps.google.com/?q=Villa+Cora,+Viale+Niccolo+Machiavelli+18,+50125+Florence,+Italy",
     },
     {
       id: 3,
       eventName: "Dinner & Toasts",
       eventDate: "2027-02-14",
       eventTime: "20:00:00",
-      venueName: "Sky Garden Deck",
-      venueAddress: "Banjara Hills, Hyderabad",
-      mapsUrl: "https://maps.google.com",
+      venueName: "Belmond Hotel Cipriani",
+      venueAddress: "Giudecca 10, 30133 Venice, Italy",
+      mapsUrl: "https://maps.google.com/?q=Belmond+Hotel+Cipriani,+Giudecca+10,+30133+Venice,+Italy",
     },
   ],
   templateDefaults: {
@@ -61,12 +63,12 @@ const demoData: DemoDataOverrides = {
       photoUrl,
       sortOrder,
     })),
-    defaultMusicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
-    defaultMusicName: "Velvet Promise BGM",
+    defaultMusicUrl: "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/music/music.mp3",
+    defaultMusicName: "Default Wedding BGM",
     defaultVideoUrl: null,
   },
-  musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
-  musicName: "Velvet Promise BGM",
+  musicUrl: "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/music/music.mp3",
+  musicName: "Default Wedding BGM",
 };
 
 export default demoData;

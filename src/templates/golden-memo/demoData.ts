@@ -77,8 +77,8 @@ const demoData: DemoDataOverrides = {
   })),
   templateDefaults: {
     defaultPhotos: galleryPhotos.map((url, i) => ({ photoUrl: url, sortOrder: i })),
-    defaultMusicUrl: `${R2_BASE}/templates/7/music/elegant-piano-bgm.mp3`,
-    defaultMusicName: 'Elegant Piano BGM',
+    defaultMusicUrl: 'https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/music/music.mp3',
+    defaultMusicName: 'Default Wedding BGM',
     defaultVideoUrl: null,
   },
 };

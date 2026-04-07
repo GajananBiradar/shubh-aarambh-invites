@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   getTemplateComponent,
@@ -13,10 +13,33 @@ import { SAMPLE_TEMPLATES } from "@/mock/sampleInvitation";
 import { usePayment } from "@/hooks/usePayment";
 import { Loader2, Sparkles } from "lucide-react";
 
+const MOBILE_PREVIEW_HEIGHT = 844;
+
+const buildMapsUrl = (
+  rawUrl: string | null | undefined,
+  venueName?: string,
+  venueAddress?: string,
+) => {
+  const normalizedUrl = rawUrl?.trim();
+  if (
+    normalizedUrl &&
+    normalizedUrl !== "https://maps.google.com" &&
+    normalizedUrl !== "http://maps.google.com"
+  ) {
+    return normalizedUrl;
+  }
+
+  const query = [venueName, venueAddress].filter(Boolean).join(", ").trim();
+  return query
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+    : null;
+};
+
 const TemplateDemoPage = () => {
   const { templateId } = useParams<{ templateId: string }>();
-  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { triggerPaymentFlow } = usePayment();
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
 
   const [TemplateComp, setTemplateComp] = useState<TemplateComponent | null>(
     null,
@@ -25,6 +48,10 @@ const TemplateDemoPage = () => {
   const [templateOverrides, setTemplateOverrides] = useState<DemoDataOverrides>(
     {},
   );
+  const isEmbeddedPreview = searchParams.get("embed") === "1";
+  const isFrameOnly = searchParams.get("frame") === "1";
+  const showPageChrome = !isEmbeddedPreview && !isFrameOnly;
+  const shouldMutePreviewMusic = isEmbeddedPreview;
 
   // Fetch real template data
   const { data: template, isLoading: templateLoading } = useQuery({
@@ -150,7 +177,7 @@ const TemplateDemoPage = () => {
       gallery: true,
       families: true,
       footer: true,
-      music: true,
+      music: !shouldMutePreviewMusic,
     },
     couplePhotoUrl:
       demoData?.couplePhotoUrl ?? templateOverrides.couplePhotoUrl ?? null,
@@ -169,7 +196,7 @@ const TemplateDemoPage = () => {
       eventTime: e.eventTime,
       venueName: e.venueName || "",
       venueAddress: e.venueAddress || "",
-      mapsUrl: e.mapsUrl || null,
+      mapsUrl: buildMapsUrl(e.mapsUrl, e.venueName, e.venueAddress),
     })),
     galleryPhotos: effectiveGallery.map((url: any, i: number) => ({
       photoUrl: typeof url === "string" ? url : url.photoUrl,
@@ -178,8 +205,8 @@ const TemplateDemoPage = () => {
     })),
     musicUrl: null,
     musicName: null,
-    effectiveMusicUrl: effectiveMusicUrl,
-    effectiveMusicName: effectiveMusicName,
+    effectiveMusicUrl: shouldMutePreviewMusic ? "" : effectiveMusicUrl,
+    effectiveMusicName: shouldMutePreviewMusic ? "" : effectiveMusicName,
     locale: "en",
     slug: "ananya-weds-vikram",
     accessCode: "DEMO",
@@ -187,19 +214,51 @@ const TemplateDemoPage = () => {
     rsvpEnabled: true,
     templateDefaults: {
       defaultPhotos: defaultDefaults.defaultPhotos || [],
-      defaultMusicUrl: defaultDefaults.defaultMusicUrl || "",
-      defaultMusicName: defaultDefaults.defaultMusicName || "",
+      defaultMusicUrl: shouldMutePreviewMusic
+        ? ""
+        : defaultDefaults.defaultMusicUrl || "",
+      defaultMusicName: shouldMutePreviewMusic
+        ? ""
+        : defaultDefaults.defaultMusicName || "",
       defaultVideoUrl: defaultDefaults.defaultVideoUrl || null,
     },
   };
 
-  const showWatermark = demoData?.showWatermark !== false;
+  const showWatermark =
+    demoData?.showWatermark !== false && !isEmbeddedPreview;
   const isFree = template?.isFree ?? false;
   const priceInr = template?.priceInr ?? 0;
 
   const ctaText = isFree
     ? "Start Free — No Payment Needed"
     : `Use This Template — ₹${priceInr}`;
+
+  const previewContent =
+    showMobilePreview && !isFrameOnly ? (
+      <div className="mx-auto flex min-h-screen w-full items-start justify-center px-4 py-20">
+        <div className="relative w-full max-w-[420px] rounded-[2.5rem] border-[4px] border-neutral-900 bg-neutral-950 p-[6px] shadow-[0_32px_90px_rgba(0,0,0,0.28)]">
+          <div className="absolute left-1/2 top-[10px] z-20 h-[18px] w-[88px] -translate-x-1/2 rounded-full bg-neutral-900" />
+          <div className="overflow-hidden rounded-[2rem] bg-background">
+            <iframe
+              src={`/templates/${templateId}/demo?frame=1`}
+              title="Mobile demo preview"
+              className="block w-full border-0"
+              style={{ height: `${MOBILE_PREVIEW_HEIGHT}px` }}
+            />
+          </div>
+        </div>
+      </div>
+    ) : (
+      <TemplateComp
+        mode="demo"
+        data={demoInvitationData}
+        onUpdate={() => {}}
+        onSaveDraft={() => {}}
+        onPublish={() => {}}
+        isSaving={false}
+        isPublishing={false}
+      />
+    );
 
   if (isLoading || !TemplateComp) {
     return (
@@ -215,50 +274,52 @@ const TemplateDemoPage = () => {
       className="min-h-screen bg-background text-foreground"
     >
       {/* Top bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border h-12 flex items-center justify-between px-4">
+      {showPageChrome && (
+      <div className="fixed top-0 left-0 right-0 z-50 flex h-12 items-center justify-between border-b border-border bg-card/80 px-4 backdrop-blur-xl">
         <span className="font-body text-sm text-foreground font-medium">
           {metadata?.name || "Template"} ·{" "}
           <span className="text-muted-foreground">DEMO PREVIEW</span>
         </span>
-        <button
-          onClick={() => triggerPaymentFlow(template?.id || "1")}
-          className={`${isFree ? "btn-emerald" : "btn-gold"} px-4 py-1.5 rounded-lg text-xs flex items-center gap-1.5`}
-        >
-          <Sparkles size={12} />
-          {ctaText}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowMobilePreview((current) => !current)}
+            className="rounded-lg border border-border bg-background/70 px-3 py-1.5 font-body text-xs text-foreground transition-colors hover:bg-background"
+          >
+            {showMobilePreview ? "Desktop View" : "Mobile View"}
+          </button>
+          <button
+            onClick={() => triggerPaymentFlow(template?.id || "1")}
+            className={`${isFree ? "btn-emerald" : "btn-gold"} rounded-lg px-4 py-1.5 text-xs flex items-center gap-1.5`}
+          >
+            <Sparkles size={12} />
+            {ctaText}
+          </button>
+        </div>
       </div>
+      )}
 
       {/* Demo watermark */}
       {showWatermark && <div className="demo-watermark" />}
 
-      <div className="pt-12">
-        <TemplateComp
-          mode="demo"
-          data={demoInvitationData}
-          onUpdate={() => {}}
-          onSaveDraft={() => {}}
-          onPublish={() => {}}
-          isSaving={false}
-          isPublishing={false}
-        />
-      </div>
+      <div className={showPageChrome ? "pt-12" : ""}>{previewContent}</div>
 
       {/* Bottom CTA bar */}
+      {showPageChrome && (
       <div className="fixed bottom-20 left-0 right-0 z-40 flex justify-center pointer-events-none">
-        <div className="bg-card/90 backdrop-blur-xl border border-border rounded-full px-6 py-3 flex items-center gap-4 shadow-2xl pointer-events-auto">
+        <div className="pointer-events-auto flex items-center gap-4 rounded-full border border-border bg-card/90 px-6 py-3 shadow-2xl backdrop-blur-xl">
           <span className="font-body text-sm text-muted-foreground hidden sm:inline">
             Like what you see?
           </span>
           <button
             onClick={() => triggerPaymentFlow(template?.id || "1")}
-            className={`${isFree ? "btn-emerald" : "btn-gold"} px-5 py-2 rounded-full text-sm flex items-center gap-1.5`}
+            className={`${isFree ? "btn-emerald" : "btn-gold"} rounded-full px-5 py-2 text-sm flex items-center gap-1.5`}
           >
             <Sparkles size={14} />
             {isFree ? "Start for Free →" : `Get This for ₹${priceInr} →`}
           </button>
         </div>
       </div>
+      )}
     </div>
   );
 };

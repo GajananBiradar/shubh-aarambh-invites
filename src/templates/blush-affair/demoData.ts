@@ -26,12 +26,12 @@ const demoData: DemoDataOverrides = {
     { id: 2, eventName: "Moonlight Reception", eventDate: "2027-06-14", eventTime: "20:30:00", venueName: "Cypress Courtyard", venueAddress: "Tuscany, Italy", mapsUrl: "https://maps.google.com" },
   ],
   galleryPhotos: galleryPhotos.map((url, i) => ({ photoUrl: url, sortOrder: i, isDefault: true })),
-  musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
-  musicName: "Editorial Piano BGM",
+  musicUrl: "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/music/music.mp3",
+  musicName: "Default Wedding BGM",
   templateDefaults: {
     defaultPhotos: galleryPhotos.map((url, i) => ({ photoUrl: url, sortOrder: i })),
-    defaultMusicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
-    defaultMusicName: "Editorial Piano BGM",
+    defaultMusicUrl: "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/music/music.mp3",
+    defaultMusicName: "Default Wedding BGM",
     defaultVideoUrl: null,
   },
 };

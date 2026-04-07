@@ -116,8 +116,8 @@ const crimsonDemoData = {
       photoUrl,
       sortOrder,
     })),
-    defaultMusicUrl: "",
-    defaultMusicName: "Crimson Shaadi BGM",
+    defaultMusicUrl: "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/music/music.mp3",
+    defaultMusicName: "Default Wedding BGM",
     defaultVideoUrl: null,
   },
 };

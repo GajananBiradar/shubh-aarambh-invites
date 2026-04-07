@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
+  AddEventButton,
   EditableEventCard,
   EditableMusicPlayer,
   EditablePhotoGallery,
@@ -10,7 +11,7 @@ import {
 import FloatingMusicPlayer from "@/components/invitation/FloatingMusicPlayer";
 import { submitRsvp } from "@/api/rsvp";
 import { cn } from "@/lib/utils";
-import { EventData, TemplateProps } from "@/templates/types";
+import { createEmptyEvent, EventData, TemplateProps } from "@/templates/types";
 import { formatEventDate, formatTime } from "@/utils/formatDate";
 import {
   CalendarDays,
@@ -298,6 +299,11 @@ const MidnightMoonlitTemplate = ({
 
   const storyOne = data.brideBio || "A quiet beginning, a familiar ease, and conversations that felt like they had been waiting for the right time.";
   const storyTwo = data.groomBio || "From thoughtful moments to a beautiful promise, their story now opens into a joyful celebration surrounded by the people they love.";
+  const updateEventAt = (index: number, updates: Partial<EventData>) => {
+    const nextEvents = [...data.events];
+    nextEvents[index] = { ...nextEvents[index], ...updates };
+    onUpdate({ events: nextEvents });
+  };
 
   return (
     <div
@@ -393,32 +399,65 @@ const MidnightMoonlitTemplate = ({
           <motion.div {...reveal} transition={{ ...reveal.transition, delay: 0.08 }} className="rounded-[34px] border p-6 sm:p-8" style={{ borderColor: C.line, background: "rgba(255,255,255,0.54)" }}>
             <p className="text-[11px] uppercase tracking-[0.42em]" style={{ color: C.gold, fontFamily: F.sans }}>The Celebration</p>
             <h2 className="mt-4 text-4xl leading-[0.95] sm:text-5xl" style={{ color: C.ink, fontFamily: F.display }}>
-              One beautifully styled engagement evening.
+              A beautifully styled sequence of celebrations.
             </h2>
             <p className="mt-5 text-base leading-8" style={{ color: C.muted, fontFamily: F.sans }}>
-              This concept stays focused on one central event instead of a wedding-style list. It feels closer to a European invitation suite: lighter, more romantic, and more editorial.
+              This concept now supports multiple moments as well, so you can add, remove, and arrange each function while keeping the page light, romantic, and editorial.
             </p>
 
             <div className="mt-8 grid gap-4">
               {mode === "edit" ? (
-                <EditableEventCard
-                  event={celebration || ({ id: null, eventName: "Engagement Celebration", eventDate: "", eventTime: "", venueName: "", venueAddress: "", mapsUrl: null } as EventData)}
-                  onUpdate={(updates) => {
-                    const current = celebration || { id: null, eventName: "Engagement Celebration", eventDate: "", eventTime: "", venueName: "", venueAddress: "", mapsUrl: null };
-                    onUpdate({ events: [{ ...current, ...updates }] });
-                  }}
-                  onDelete={() => onUpdate({ events: [] })}
-                  mode={mode}
-                  index={0}
-                />
+                <>
+                  {data.events.map((event, index) => (
+                    <EditableEventCard
+                      key={event.id || index}
+                      event={event}
+                      onUpdate={(updates) => updateEventAt(index, updates)}
+                      onDelete={() =>
+                        onUpdate({
+                          events: data.events.filter((_, eventIndex) => eventIndex !== index),
+                        })
+                      }
+                      mode={mode}
+                      index={index}
+                    />
+                  ))}
+                  <AddEventButton
+                    onAdd={() =>
+                      onUpdate({
+                        events: [...data.events, createEmptyEvent()],
+                      })
+                    }
+                    mode={mode}
+                    maxEvents={8}
+                    currentCount={data.events.length}
+                  />
+                </>
               ) : (
-                <div className="rounded-[28px] border p-5 sm:p-6" style={{ borderColor: C.line, background: "rgba(255,250,245,0.7)" }}>
-                  <p className="text-[10px] uppercase tracking-[0.34em]" style={{ color: C.gold, fontFamily: F.sans }}>Invitation Details</p>
-                  <h3 className="mt-3 text-3xl sm:text-4xl" style={{ color: C.ink, fontFamily: F.display }}>{celebration?.eventName || "Engagement Celebration"}</h3>
-                  <p className="mt-4 text-sm leading-7 sm:text-base" style={{ color: C.muted, fontFamily: F.sans }}>{celebration ? `${formatEventDate(celebration.eventDate)} | ${formatTime(celebration.eventTime)}` : "Date and time to be announced"}</p>
-                  <p className="mt-2 text-sm leading-7 sm:text-base" style={{ color: C.muted, fontFamily: F.sans }}>{celebration?.venueName}{celebration?.venueAddress ? `, ${celebration.venueAddress}` : ""}</p>
-                  {celebration?.mapsUrl ? <a href={celebration.mapsUrl} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-2 rounded-full border px-4 py-3 text-sm" style={{ borderColor: C.line, color: C.ink, fontFamily: F.sans }}><MapPin size={16} color={C.gold} />Open map</a> : null}
-                </div>
+                data.events.length > 0 ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {data.events.map((event, index) => (
+                      <div key={event.id || index} className="rounded-[28px] border p-5 sm:p-6" style={{ borderColor: C.line, background: "rgba(255,250,245,0.7)" }}>
+                        <p className="text-[10px] uppercase tracking-[0.34em]" style={{ color: C.gold, fontFamily: F.sans }}>Celebration {index + 1}</p>
+                        <h3 className="mt-3 text-3xl sm:text-4xl" style={{ color: C.ink, fontFamily: F.display }}>{event.eventName || "Engagement Celebration"}</h3>
+                        <p className="mt-4 text-sm leading-7 sm:text-base" style={{ color: C.muted, fontFamily: F.sans }}>
+                          {event.eventDate
+                            ? `${formatEventDate(event.eventDate)}${event.eventTime ? ` | ${formatTime(event.eventTime)}` : ""}`
+                            : "Date and time to be announced"}
+                        </p>
+                        <p className="mt-2 text-sm leading-7 sm:text-base" style={{ color: C.muted, fontFamily: F.sans }}>
+                          {event.venueName || "Venue details"}
+                          {event.venueAddress ? `, ${event.venueAddress}` : ""}
+                        </p>
+                        {event.mapsUrl ? <a href={event.mapsUrl} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-2 rounded-full border px-4 py-3 text-sm" style={{ borderColor: C.line, color: C.ink, fontFamily: F.sans }}><MapPin size={16} color={C.gold} />Open map</a> : null}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-[28px] border p-5 sm:p-6" style={{ borderColor: C.line, background: "rgba(255,250,245,0.7)" }}>
+                    <p className="text-sm leading-7 sm:text-base" style={{ color: C.muted, fontFamily: F.sans }}>Event details will appear here once added.</p>
+                  </div>
+                )
               )}
             </div>
 

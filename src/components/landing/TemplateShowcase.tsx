@@ -59,7 +59,7 @@ const DynamicTemplatePreview = ({
         </div>
       )}
       <iframe
-        src={`/templates/${templateId}/demo`}
+        src={`/templates/${templateId}/demo?embed=1&frame=1`}
         title="Template preview"
         onLoad={() => setIframeLoaded(true)}
         className="pointer-events-none border-0 origin-top-left absolute top-0 left-0"

@@ -2093,23 +2093,18 @@ const EditorialSCurveTimeline = ({ events }: { events: EventData[] }) => {
     return { x, y };
   });
 
-  let pathD = `M ${pathPoints[0]?.x ?? 246} 0`;
+  const firstPoint = pathPoints[0];
+  let pathD = `M ${firstPoint?.x ?? 246} ${firstPoint?.y ?? 88}`;
   pathPoints.forEach((pt, i) => {
-    if (i === 0) {
-      pathD += ` C ${pt.x + 4} 16, ${pt.x + 14} ${pt.y - 36}, ${pt.x} ${pt.y}`;
-      return;
-    }
+    if (i === 0) return;
     const prev = pathPoints[i - 1];
     const midY = (prev.y + pt.y) / 2;
     pathD += ` C ${prev.x} ${midY - 26}, ${pt.x} ${midY + 26}, ${pt.x} ${pt.y}`;
   });
   pathD += ` C ${pathPoints[pathPoints.length - 1].x} ${totalHeight - 44}, ${pathPoints[pathPoints.length - 1].x - 6} ${totalHeight - 20}, ${pathPoints[pathPoints.length - 1].x - 8} ${totalHeight}`;
 
-  const progressLength = useTransform(scrollYProgress, [0, 1], [0.03, 1]);
-  const heartOffset = useTransform(
-    scrollYProgress,
-    (v) => `${Math.max(3, v * 100)}%`,
-  );
+  const progressLength = useTransform(scrollYProgress, [0, 1], [0, 1]);
+  const heartOffset = useTransform(scrollYProgress, (v) => `${v * 100}%`);
 
   return (
     <div

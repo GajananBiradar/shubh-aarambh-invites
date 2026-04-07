@@ -24,12 +24,12 @@ const demoData: DemoDataOverrides = {
     { id: 0, eventName: "Engagement Celebration", eventDate: "2026-11-08", eventTime: "18:30:00", venueName: "Maison Lumiere", venueAddress: "Bund Garden Road, Pune", mapsUrl: "https://maps.google.com" },
   ],
   galleryPhotos: galleryPhotos.map((url, i) => ({ photoUrl: url, sortOrder: i, isDefault: true })),
-  musicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3",
-  musicName: "Sage Letter BGM",
+  musicUrl: "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/music/music.mp3",
+  musicName: "Default Wedding BGM",
   templateDefaults: {
     defaultPhotos: galleryPhotos.map((url, i) => ({ photoUrl: url, sortOrder: i })),
-    defaultMusicUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3",
-    defaultMusicName: "Sage Letter BGM",
+    defaultMusicUrl: "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/music/music.mp3",
+    defaultMusicName: "Default Wedding BGM",
     defaultVideoUrl: "https://cdn.coverr.co/videos/coverr-a-toast-under-string-lights-1562569482304?download=1080p",
   },
 };

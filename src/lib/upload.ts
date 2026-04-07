@@ -75,7 +75,6 @@ export const validateMusic = (file: File): string | null => {
  */
 export const getPresignedUrl = async (params: PresignedUrlParams): Promise<PresignedUrlResponse> => {
   const { file, uploadType, uploadStage, invitationId, templateId, sessionUUID } = params;
-  const jwt = localStorage.getItem('jwt');
 
   const { data } = await api.post('/api/upload/presign',
     {
@@ -86,11 +85,6 @@ export const getPresignedUrl = async (params: PresignedUrlParams): Promise<Presi
       invitationId: invitationId ?? null,
       templateId: templateId ?? null,
       sessionUUID: sessionUUID ?? null,
-    },
-    {
-      headers: {
-        'Authorization': `Bearer ${jwt}`,
-      },
     }
   );
   return data;
@@ -134,34 +128,13 @@ export const uploadToR2 = (
 };
 
 /**
- * Delete an old file from R2 (fire-and-forget, non-blocking).
- * Never throws or shows errors to user.
- */
-export const deleteOldFile = (publicUrl: string): void => {
-  const jwt = localStorage.getItem('jwt');
-  
-  // Fire and forget - no await, no error handling
-  fetch('/api/upload/file', {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${jwt}`,
-    },
-    body: JSON.stringify({ fileUrl: publicUrl }),
-  }).catch(() => {
-    // Silent fail - cleanup errors have zero UX impact
-    console.warn('Failed to delete old file, but this is non-critical');
-  });
-};
-
-/**
  * Complete upload flow: get presigned URL → upload to R2 → return publicUrl.
  * Uses uploadStage to determine folder (temp, draft, or published).
  * Optionally deletes old file after successful upload (fire-and-forget).
  * Does NOT delete temp files — they auto-expire via R2 lifecycle rule (7 days).
  */
 export const uploadFile = async (params: UploadFileParams): Promise<string> => {
-  const { file, uploadType, onProgress, uploadStage, invitationId, templateId, sessionUUID, oldPublicUrl } = params;
+  const { file, uploadType, onProgress, uploadStage, invitationId, templateId, sessionUUID } = params;
 
   // Get presigned URL with stage
   const { uploadUrl, publicUrl } = await getPresignedUrl({
@@ -178,13 +151,6 @@ export const uploadFile = async (params: UploadFileParams): Promise<string> => {
 
   // Delete old file in background (fire and forget)
   // BUT: Do NOT delete temp files — they auto-expire via R2 lifecycle
-  if (oldPublicUrl) {
-    const isOldFileTemp = oldPublicUrl.includes('/temp/');
-    if (!isOldFileTemp) {
-      deleteOldFile(oldPublicUrl);
-    }
-  }
-
   return publicUrl;
 };
 

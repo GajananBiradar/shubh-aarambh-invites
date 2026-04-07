@@ -548,7 +548,13 @@ const CreateInvitationPage = ({
           isPublishing={isPublishing}
           templateId={numTemplateId}
           sessionUUID={sessionUUID}
-          uploadStage={data.invitationId ? "draft" : "temp"}
+          uploadStage={
+            !data.invitationId
+              ? "temp"
+              : data.status === "PUBLISHED"
+                ? "published"
+                : "draft"
+          }
         />
       </div>
 

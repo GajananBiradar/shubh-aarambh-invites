@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ChevronDown, Heart, MapPin, Plus, Trash2 } from "lucide-react";
-import { TemplateProps, EventData, SectionVisibility, StoryMilestone } from "@/templates/types";
+import {
+  TemplateProps,
+  EventData,
+  SectionVisibility,
+  StoryMilestone,
+} from "@/templates/types";
 import {
   EditableText,
   EditablePhoto,
@@ -126,10 +131,13 @@ const getHeroPhoto = (data: TemplateProps["data"]) =>
   null;
 
 const getPortraitPhoto = (data: TemplateProps["data"]) =>
-  data.bridePhotoUrl || data.couplePhotoUrl || getDisplayPhotos(data)[0]?.photoUrl || null;
+  data.bridePhotoUrl ||
+  data.couplePhotoUrl ||
+  getDisplayPhotos(data)[0]?.photoUrl ||
+  null;
 
 const GANESH_IMAGE_URL =
-  "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/1/photos/ganesh.png";
+  "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/1/photos/ganesh.png?v=20260407-1";
 
 const DEFAULT_SECTION_VISIBILITY: SectionVisibility = {
   story: true,
@@ -280,7 +288,13 @@ const FloralBurst = () => (
         fill="rgba(212,175,55,0.03)"
       />
       <circle cx="180" cy="80" r="6" fill="url(#burstGrad)" opacity="0.9" />
-      <circle cx="180" cy="80" r="16" stroke="url(#burstGrad)" strokeOpacity="0.35" />
+      <circle
+        cx="180"
+        cy="80"
+        r="16"
+        stroke="url(#burstGrad)"
+        strokeOpacity="0.35"
+      />
       <circle cx="88" cy="80" r="2" fill={C.gold} opacity="0.55" />
       <circle cx="272" cy="80" r="2" fill={C.gold} opacity="0.55" />
     </g>
@@ -295,53 +309,83 @@ const FloralBurst = () => (
 );
 
 const HeroRingOrnaments = () => (
-  <svg width="420" height="220" viewBox="0 0 420 220" fill="none">
-    <g opacity="0.88">
-      <path d="M18 110H112" stroke="url(#heroRingGrad)" strokeWidth="1.2" />
-      <path d="M308 110H402" stroke="url(#heroRingGrad)" strokeWidth="1.2" />
-      <path
-        d="M62 110L112 82L130 110L112 138L62 110Z"
-        stroke="url(#heroRingGrad)"
-        strokeWidth="1"
-        fill="rgba(212,175,55,0.04)"
-      />
-      <path
-        d="M358 110L308 82L290 110L308 138L358 110Z"
-        stroke="url(#heroRingGrad)"
-        strokeWidth="1"
-        fill="rgba(212,175,55,0.04)"
-      />
-      <path
-        d="M130 110C150 94 162 84 174 68"
-        stroke="url(#heroRingGrad)"
-        strokeWidth="1"
-      />
-      <path
-        d="M290 110C270 94 258 84 246 68"
-        stroke="url(#heroRingGrad)"
-        strokeWidth="1"
-      />
-      <path
-        d="M130 110C150 126 162 136 174 152"
-        stroke="url(#heroRingGrad)"
-        strokeWidth="1"
-      />
-      <path
-        d="M290 110C270 126 258 136 246 152"
-        stroke="url(#heroRingGrad)"
-        strokeWidth="1"
-      />
-      <circle cx="210" cy="110" r="4" fill="url(#heroRingGrad)" />
-      <circle cx="80" cy="110" r="2.5" fill={C.goldLight} opacity="0.65" />
-      <circle cx="340" cy="110" r="2.5" fill={C.goldLight} opacity="0.65" />
-    </g>
+  <svg width="360" height="360" viewBox="0 0 360 360" fill="none">
     <defs>
-      <linearGradient id="heroRingGrad" x1="18" y1="38" x2="402" y2="182">
+      <linearGradient id="heroRingGrad" x1="24" y1="24" x2="336" y2="336">
         <stop offset="0%" stopColor="#8a6020" />
         <stop offset="50%" stopColor="#f6d776" />
         <stop offset="100%" stopColor="#8a6020" />
       </linearGradient>
     </defs>
+    <g opacity="0.92">
+      <circle
+        cx="180"
+        cy="180"
+        r="146"
+        stroke="url(#heroRingGrad)"
+        strokeWidth="1.2"
+        opacity="0.3"
+      />
+      <circle
+        cx="180"
+        cy="180"
+        r="132"
+        stroke="url(#heroRingGrad)"
+        strokeWidth="1.1"
+        opacity="0.55"
+      />
+      <circle
+        cx="180"
+        cy="180"
+        r="118"
+        stroke="url(#heroRingGrad)"
+        strokeWidth="1"
+        opacity="0.24"
+      />
+      {Array.from({ length: 12 }).map((_, i) => {
+        const angle = (i * Math.PI) / 6;
+        const cx = 180 + 145 * Math.cos(angle);
+        const cy = 180 + 145 * Math.sin(angle);
+        const rotation = (i * 360) / 12;
+        return (
+          <g key={i} transform={`translate(${cx} ${cy}) rotate(${rotation})`}>
+            <path
+              d="M0 -16C8 -12 12 -6 12 0C12 6 8 12 0 16C-8 12 -12 6 -12 0C-12 -6 -8 -12 0 -16Z"
+              stroke="url(#heroRingGrad)"
+              strokeWidth="1"
+              fill="rgba(212,175,55,0.07)"
+            />
+          </g>
+        );
+      })}
+      {Array.from({ length: 8 }).map((_, i) => {
+        const angle = (i * Math.PI) / 4 + Math.PI / 8;
+        const cx = 180 + 104 * Math.cos(angle);
+        const cy = 180 + 104 * Math.sin(angle);
+        return (
+          <circle
+            key={`orbit-${i}`}
+            cx={cx}
+            cy={cy}
+            r="4"
+            fill="url(#heroRingGrad)"
+            opacity="0.8"
+          />
+        );
+      })}
+      <path
+        d="M180 22C191 42 205 54 226 64C205 74 191 86 180 106C169 86 155 74 134 64C155 54 169 42 180 22Z"
+        stroke="url(#heroRingGrad)"
+        strokeWidth="1"
+        fill="rgba(212,175,55,0.06)"
+      />
+      <path
+        d="M180 254C188 268 199 278 214 286C199 294 188 304 180 318C172 304 161 294 146 286C161 278 172 268 180 254Z"
+        stroke="url(#heroRingGrad)"
+        strokeWidth="1"
+        fill="rgba(212,175,55,0.05)"
+      />
+    </g>
   </svg>
 );
 
@@ -524,7 +568,10 @@ const CrimsonShaadiTemplate = ({
                   label="Remove Section"
                   onClick={() =>
                     onUpdate({
-                      sectionVisibility: { ...sectionVisibility, footer: false },
+                      sectionVisibility: {
+                        ...sectionVisibility,
+                        footer: false,
+                      },
                     })
                   }
                 />
@@ -741,11 +788,13 @@ const MandalaFrame = ({
     className="relative inline-flex items-center justify-center"
     style={{ width: size, height: size }}
   >
-    <svg
+    <motion.svg
       className="absolute inset-0"
       viewBox="0 0 240 240"
       fill="none"
       style={{ width: size, height: size }}
+      animate={{ rotate: 360 }}
+      transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
     >
       {/* Outer decorative ring */}
       <circle
@@ -803,7 +852,7 @@ const MandalaFrame = ({
           <stop offset="100%" stopColor="#b8962e" />
         </linearGradient>
       </defs>
-    </svg>
+    </motion.svg>
     <div
       className="rounded-full overflow-hidden relative z-10"
       style={{
@@ -930,8 +979,7 @@ const SectionActionButton = ({
     onClick={onClick}
     className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] uppercase tracking-[0.22em] transition-all"
     style={{
-      borderColor:
-        variant === "add" ? `${C.gold}88` : "rgba(212,175,55,0.22)",
+      borderColor: variant === "add" ? `${C.gold}88` : "rgba(212,175,55,0.22)",
       background:
         variant === "add"
           ? "linear-gradient(135deg, rgba(246,215,118,0.16), rgba(212,175,55,0.06))"
@@ -968,7 +1016,11 @@ const HiddenSectionPlaceholder = ({
           {title} hidden
         </p>
         <div className="mt-4 flex justify-center">
-          <SectionActionButton label={`Add ${title}`} onClick={onAdd} variant="add" />
+          <SectionActionButton
+            label={`Add ${title}`}
+            onClick={onAdd}
+            variant="add"
+          />
         </div>
       </div>
     </div>
@@ -1065,7 +1117,7 @@ const HeroSection = ({
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.9 }}
-          className="relative w-full max-w-2xl rounded-[1.6rem] border px-4 pb-24 pt-8 sm:rounded-[2rem] sm:px-10 sm:pb-32 sm:pt-12"
+          className="relative w-full max-w-2xl rounded-[1.75rem] border px-4 pb-28 pt-8 sm:rounded-[2rem] sm:px-10 sm:pb-36 sm:pt-12"
           style={{
             background: `
               linear-gradient(180deg, rgba(86,32,26,0.36) 0%, rgba(64,20,18,0.48) 38%, rgba(48,14,14,0.74) 100%),
@@ -1091,7 +1143,7 @@ const HeroSection = ({
               <img
                 src={GANESH_IMAGE_URL}
                 alt="Ganesh blessing"
-                className="h-14 w-14 object-contain opacity-90 drop-shadow-[0_0_18px_rgba(212,175,55,0.3)] sm:h-16 sm:w-16"
+                className="h-20 w-20 object-contain opacity-95 drop-shadow-[0_0_24px_rgba(212,175,55,0.35)] sm:h-24 sm:w-24"
               />
             </motion.div>
             <div
@@ -1147,28 +1199,45 @@ const HeroSection = ({
             />
           </div>
 
-          <div className="absolute inset-x-0 -bottom-[6.3rem] flex justify-center sm:-bottom-[7.4rem]">
-            <div className="relative">
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 scale-[0.66] sm:scale-100">
+          <div className="absolute inset-x-0 -bottom-[7.2rem] flex justify-center sm:-bottom-[8.6rem]">
+            <div className="relative flex items-center justify-center">
+              <motion.div
+                className="absolute left-1/2 top-1/2 h-[17.5rem] w-[17.5rem] -translate-x-1/2 -translate-y-1/2 sm:h-[22rem] sm:w-[22rem]"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+              >
                 <HeroRingOrnaments />
-              </div>
+              </motion.div>
+              <motion.div
+                className="absolute left-1/2 top-1/2 h-[14.75rem] w-[14.75rem] -translate-x-1/2 -translate-y-1/2 rounded-full border sm:h-[18rem] sm:w-[18rem]"
+                style={{
+                  borderColor: "rgba(246,215,118,0.18)",
+                  boxShadow: "0 0 40px rgba(212,175,55,0.14)",
+                }}
+                animate={{ rotate: -360 }}
+                transition={{ duration: 26, repeat: Infinity, ease: "linear" }}
+              >
+                <span
+                  className="absolute left-1/2 top-0 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full sm:h-4 sm:w-4"
+                  style={{
+                    background: `radial-gradient(circle, ${C.goldLight} 0%, ${C.gold} 72%, rgba(212,175,55,0.08) 100%)`,
+                    boxShadow: "0 0 16px rgba(246,215,118,0.6)",
+                  }}
+                />
+              </motion.div>
               <motion.div
                 initial={{ opacity: 0, scale: 0.75 }}
                 animate={{
                   opacity: 1,
                   scale: 1,
-                  x: [0, 10, 0, -10, 0],
-                  y: [0, -10, 0, 10, 0],
                 }}
                 transition={{
                   opacity: { delay: 0.8, duration: 0.9, ease: "easeOut" },
                   scale: { delay: 0.8, duration: 0.9, ease: "easeOut" },
-                  x: { duration: 12, repeat: Infinity, ease: "easeInOut" },
-                  y: { duration: 12, repeat: Infinity, ease: "easeInOut" },
                 }}
                 className="relative z-10"
               >
-                <MandalaFrame size={190}>
+                <MandalaFrame size={220}>
                   {mode === "edit" ? (
                     <EditablePhoto
                       photoUrl={data.couplePhotoUrl}
@@ -1183,23 +1252,21 @@ const HeroSection = ({
                       invitationId={data.invitationId ?? undefined}
                       oldPublicUrl={data.couplePhotoUrl || undefined}
                     />
+                  ) : portraitPhoto ? (
+                    <img
+                      src={portraitPhoto}
+                      alt="Couple"
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
-                    portraitPhoto ? (
-                      <img
-                        src={portraitPhoto}
-                        alt="Couple"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center px-6 text-center">
-                        <span
-                          className="text-sm uppercase tracking-[0.28em]"
-                          style={{ color: `${C.goldLight}cc` }}
-                        >
-                          Couple Photo
-                        </span>
-                      </div>
-                    )
+                    <div className="flex h-full w-full items-center justify-center px-6 text-center">
+                      <span
+                        className="text-sm uppercase tracking-[0.28em]"
+                        style={{ color: `${C.goldLight}cc` }}
+                      >
+                        Couple Photo
+                      </span>
+                    </div>
                   )}
                 </MandalaFrame>
               </motion.div>
@@ -1246,7 +1313,10 @@ const HeroSection = ({
 
           {mode === "edit" ? (
             <div className="mt-5">
-              <label className="mb-1 block text-xs" style={{ color: C.textMuted }}>
+              <label
+                className="mb-1 block text-xs"
+                style={{ color: C.textMuted }}
+              >
                 Wedding Date
               </label>
               <input
@@ -1277,7 +1347,10 @@ const HeroSection = ({
         transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
         className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 text-center"
       >
-        <ChevronDown className="mx-auto h-6 w-6" style={{ color: C.goldLight }} />
+        <ChevronDown
+          className="mx-auto h-6 w-6"
+          style={{ color: C.goldLight }}
+        />
       </motion.div>
     </section>
   );
@@ -1303,7 +1376,9 @@ const OurStorySection = ({
   const removeMilestone = (index: number) => {
     if (milestones.length <= 1) return;
     onUpdate({
-      storyMilestones: milestones.filter((_, milestoneIndex) => milestoneIndex !== index),
+      storyMilestones: milestones.filter(
+        (_, milestoneIndex) => milestoneIndex !== index,
+      ),
     });
   };
   const addMilestone = () => {
@@ -1333,23 +1408,27 @@ const OurStorySection = ({
     >
       <BokehOverlay count={20} />
       <FloatingHearts count={3} />
-    <div className="relative z-10 mx-auto max-w-5xl px-6">
-      <div className="flex flex-col items-center gap-4">
-        <SectionTitle title="Our Story" />
-        {mode === "edit" && (
-          <div className="flex flex-wrap justify-center gap-2">
-            <SectionActionButton label="Add Story Card" onClick={addMilestone} variant="add" />
-            <SectionActionButton
-              label="Remove Section"
-              onClick={() =>
-                onUpdate({
-                  sectionVisibility: { ...sectionVisibility, story: false },
-                })
-              }
-            />
-          </div>
-        )}
-      </div>
+      <div className="relative z-10 mx-auto max-w-5xl px-6">
+        <div className="flex flex-col items-center gap-4">
+          <SectionTitle title="Our Story" />
+          {mode === "edit" && (
+            <div className="flex flex-wrap justify-center gap-2">
+              <SectionActionButton
+                label="Add Story Card"
+                onClick={addMilestone}
+                variant="add"
+              />
+              <SectionActionButton
+                label="Remove Section"
+                onClick={() =>
+                  onUpdate({
+                    sectionVisibility: { ...sectionVisibility, story: false },
+                  })
+                }
+              />
+            </div>
+          )}
+        </div>
         <motion.div
           initial={{ opacity: 0, scale: 0 }}
           whileInView={{ opacity: 1, scale: 1 }}
@@ -1386,82 +1465,91 @@ const OurStorySection = ({
               background: `linear-gradient(to bottom, transparent, ${C.gold}88 12%, ${C.goldLight}, ${C.gold}88 88%, transparent)`,
             }}
           />
-          <div className="relative grid gap-10 sm:grid-cols-3 sm:gap-6">
-          {milestones.map((m, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.2, duration: 0.7, ease: "easeOut" }}
-              className="text-center relative"
-            >
-              {mode === "edit" && milestones.length > 1 && (
-                <div className="mb-3 flex justify-center">
-                  <SectionActionButton
-                    label="Remove Card"
-                    onClick={() => removeMilestone(i)}
+          <div
+            className="relative mx-auto grid max-w-4xl gap-10 sm:gap-6"
+            style={{
+              gridTemplateColumns:
+                "repeat(auto-fit, minmax(min(100%, 220px), 1fr))",
+            }}
+          >
+            {milestones.map((m, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.2, duration: 0.7, ease: "easeOut" }}
+                className="text-center relative"
+              >
+                {mode === "edit" && milestones.length > 1 && (
+                  <div className="mb-3 flex justify-center">
+                    <SectionActionButton
+                      label="Remove Card"
+                      onClick={() => removeMilestone(i)}
+                    />
+                  </div>
+                )}
+                <motion.div
+                  className="mb-4 flex justify-center"
+                  whileInView={{ rotate: [0, 10, -10, 0] }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.5 + i * 0.2, duration: 0.6 }}
+                >
+                  <div
+                    className="flex h-14 w-14 items-center justify-center rounded-full border"
+                    style={{
+                      borderColor: `${C.gold}66`,
+                      background:
+                        "radial-gradient(circle at 50% 30%, rgba(255,223,157,0.18), rgba(91,32,30,0.72))",
+                      boxShadow: "0 0 28px rgba(212,175,55,0.12)",
+                    }}
+                  >
+                    <GoldIcon
+                      d={eventIconSVG[m.iconKey] || eventIconSVG.Wedding}
+                      size={24}
+                    />
+                  </div>
+                </motion.div>
+                <EditableText
+                  value={m.month}
+                  onSave={(val) => updateMilestone(i, { month: val })}
+                  mode={mode}
+                  placeholder="Month"
+                  className="text-xs uppercase tracking-[0.3em] block"
+                  as="p"
+                />
+                <EditableText
+                  value={m.year}
+                  onSave={(val) => updateMilestone(i, { year: val })}
+                  mode={mode}
+                  placeholder="Year"
+                  className="text-3xl sm:text-4xl font-bold"
+                  as="p"
+                />
+                <EditableText
+                  value={m.title}
+                  onSave={(val) => updateMilestone(i, { title: val })}
+                  mode={mode}
+                  placeholder="Title"
+                  className="mt-2 text-xl block"
+                  as="p"
+                />
+                <div
+                  className="mt-2 flex items-center justify-center gap-1 text-xs sm:text-sm"
+                  style={{ color: C.textMuted }}
+                >
+                  <MapPin size={10} style={{ color: C.gold }} />
+                  <EditableText
+                    value={m.venue}
+                    onSave={(val) => updateMilestone(i, { venue: val })}
+                    mode={mode}
+                    placeholder="Venue"
+                    className="block"
+                    as="span"
                   />
                 </div>
-              )}
-              <motion.div
-                className="mb-4 flex justify-center"
-                whileInView={{ rotate: [0, 10, -10, 0] }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.5 + i * 0.2, duration: 0.6 }}
-              >
-                <div
-                  className="flex h-14 w-14 items-center justify-center rounded-full border"
-                  style={{
-                    borderColor: `${C.gold}66`,
-                    background:
-                      "radial-gradient(circle at 50% 30%, rgba(255,223,157,0.18), rgba(91,32,30,0.72))",
-                    boxShadow: "0 0 28px rgba(212,175,55,0.12)",
-                  }}
-                >
-                  <GoldIcon d={eventIconSVG[m.iconKey] || eventIconSVG.Wedding} size={24} />
-                </div>
               </motion.div>
-              <EditableText
-                value={m.month}
-                onSave={(val) => updateMilestone(i, { month: val })}
-                mode={mode}
-                placeholder="Month"
-                className="text-xs uppercase tracking-[0.3em] block"
-                as="p"
-              />
-              <EditableText
-                value={m.year}
-                onSave={(val) => updateMilestone(i, { year: val })}
-                mode={mode}
-                placeholder="Year"
-                className="text-3xl sm:text-4xl font-bold"
-                as="p"
-              />
-              <EditableText
-                value={m.title}
-                onSave={(val) => updateMilestone(i, { title: val })}
-                mode={mode}
-                placeholder="Title"
-                className="mt-2 text-xl block"
-                as="p"
-              />
-              <div
-                className="mt-2 flex items-center justify-center gap-1 text-xs sm:text-sm"
-                style={{ color: C.textMuted }}
-              >
-                <MapPin size={10} style={{ color: C.gold }} />
-                <EditableText
-                  value={m.venue}
-                  onSave={(val) => updateMilestone(i, { venue: val })}
-                  mode={mode}
-                  placeholder="Venue"
-                  className="block"
-                  as="span"
-                />
-              </div>
-            </motion.div>
-          ))}
+            ))}
           </div>
         </div>
       </div>
@@ -1480,169 +1568,179 @@ const WeddingEventsSection = ({
   onUpdate: TemplateProps["onUpdate"];
 }) => {
   const sectionVisibility = getSectionVisibility(data);
+  if (mode !== "edit" && data.events.length === 0) {
+    return null;
+  }
   return (
-  <section
-    className="relative overflow-hidden py-24 sm:py-28"
-    style={{
-      background: `
+    <section
+      className="relative overflow-hidden py-24 sm:py-28"
+      style={{
+        background: `
         radial-gradient(circle at 50% 0%, rgba(255,205,130,0.08), transparent 22%),
         linear-gradient(180deg, rgba(58,16,16,0.95) 0%, rgba(76,22,20,0.98) 42%, rgba(35,9,9,1) 100%)
       `,
-    }}
-  >
-    <BokehOverlay count={18} />
-    <div className="relative z-10 mx-auto max-w-6xl px-6">
-      <div className="flex flex-col items-center gap-4">
-        <SectionTitle title="Wedding Events" />
-        {mode === "edit" && (
-          <div className="flex flex-wrap justify-center gap-2">
-            <SectionActionButton
-              label="Remove Section"
-              onClick={() =>
-                onUpdate({
-                  sectionVisibility: { ...sectionVisibility, events: false },
-                })
-              }
-            />
-          </div>
-        )}
-      </div>
+      }}
+    >
+      <BokehOverlay count={18} />
+      <div className="relative z-10 mx-auto max-w-6xl px-6">
+        <div className="flex flex-col items-center gap-4">
+          <SectionTitle title="Wedding Events" />
+          {mode === "edit" && (
+            <div className="flex flex-wrap justify-center gap-2">
+              <SectionActionButton
+                label="Remove Section"
+                onClick={() =>
+                  onUpdate({
+                    sectionVisibility: { ...sectionVisibility, events: false },
+                  })
+                }
+              />
+            </div>
+          )}
+        </div>
 
-      {mode === "edit" ? (
-        <div className="space-y-4 mt-10">
-          {data.events.map((event, i) => (
-            <EditableEventCard
-              key={event.id || i}
-              event={event}
-              onUpdate={(updates) => {
-                const newEvents = [...data.events];
-                newEvents[i] = { ...newEvents[i], ...updates };
-                onUpdate({ events: newEvents });
-              }}
-              onDelete={() => {
-                const newEvents = data.events.filter((_, idx) => idx !== i);
-                onUpdate({ events: newEvents });
+        {mode === "edit" ? (
+          <div className="space-y-4 mt-10">
+            {data.events.map((event, i) => (
+              <EditableEventCard
+                key={event.id || i}
+                event={event}
+                onUpdate={(updates) => {
+                  const newEvents = [...data.events];
+                  newEvents[i] = { ...newEvents[i], ...updates };
+                  onUpdate({ events: newEvents });
+                }}
+                onDelete={() => {
+                  const newEvents = data.events.filter((_, idx) => idx !== i);
+                  onUpdate({ events: newEvents });
+                }}
+                mode={mode}
+                index={i}
+              />
+            ))}
+            <AddEventButton
+              onAdd={() => {
+                const newEvent: EventData = {
+                  id: null,
+                  eventName: "New Event",
+                  eventDate: "",
+                  eventTime: "",
+                  venueName: "",
+                  venueAddress: "",
+                  mapsUrl: null,
+                };
+                onUpdate({ events: [...data.events, newEvent] });
               }}
               mode={mode}
-              index={i}
+              maxEvents={8}
+              currentCount={data.events.length}
             />
-          ))}
-          <AddEventButton
-            onAdd={() => {
-              const newEvent: EventData = {
-                id: null,
-                eventName: "New Event",
-                eventDate: "",
-                eventTime: "",
-                venueName: "",
-                venueAddress: "",
-                mapsUrl: null,
-              };
-              onUpdate({ events: [...data.events, newEvent] });
+          </div>
+        ) : data.events.length > 0 ? (
+          <div
+            className="mt-12 grid justify-center gap-3 sm:gap-4"
+            style={{
+              gridTemplateColumns:
+                "repeat(auto-fit, minmax(min(100%, 220px), 240px))",
             }}
-            mode={mode}
-            maxEvents={8}
-            currentCount={data.events.length}
-          />
-        </div>
-      ) : (
-        <div className="mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
-          {data.events.map((event, i) => (
-            <motion.button
-              key={event.id || i}
-              type="button"
-              onClick={() => {
-                if (event.mapsUrl) {
-                  window.open(event.mapsUrl, "_blank", "noopener,noreferrer");
-                }
-              }}
-              initial={{ opacity: 0, scale: 0.8, y: 30 }}
-              whileInView={{ opacity: 1, scale: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ delay: i * 0.1, duration: 0.6, ease: "easeOut" }}
-              whileHover={{
-                scale: 1.05,
-                y: -5,
-                boxShadow: "0 8px 40px rgba(212,175,55,0.4)",
-              }}
-              className="relative min-h-[158px] overflow-hidden rounded-[1.25rem] p-3 text-center sm:min-h-[170px] sm:rounded-2xl sm:p-5"
-              style={{
-                background:
-                  "radial-gradient(circle at 50% 18%, rgba(255,219,141,0.16), transparent 36%), linear-gradient(145deg, rgba(106,56,24,0.95), rgba(82,30,14,0.96) 45%, rgba(56,16,12,0.96) 100%)",
-                border: `1.6px solid ${C.gold}75`,
-                boxShadow: `0 18px 32px rgba(0,0,0,0.28), 0 0 20px ${C.gold}1f, inset 0 1px 0 rgba(255,233,185,0.18)`,
-                cursor: event.mapsUrl ? "pointer" : "default",
-              }}
-            >
-              <div
-                className="pointer-events-none absolute inset-2 rounded-[1.1rem] border"
-                style={{ borderColor: "rgba(246,215,118,0.16)" }}
-              />
-              <div
-                className="absolute left-2 top-2 h-6 w-6 rounded-tl-xl border-l border-t"
-                style={{ borderColor: `${C.gold}80` }}
-              />
-              <div
-                className="absolute right-2 top-2 h-6 w-6 rounded-tr-xl border-r border-t"
-                style={{ borderColor: `${C.gold}80` }}
-              />
-              <div
-                className="absolute bottom-2 left-2 h-6 w-6 rounded-bl-xl border-b border-l"
-                style={{ borderColor: `${C.gold}80` }}
-              />
-              <div
-                className="absolute bottom-2 right-2 h-6 w-6 rounded-br-xl border-b border-r"
-                style={{ borderColor: `${C.gold}80` }}
-              />
-              <div className="relative z-10 flex h-full flex-col items-center justify-center">
-              <motion.div
-                whileInView={{ rotate: [0, 360] }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3 + i * 0.1, duration: 0.8 }}
-                className="mb-2"
-              >
-                <GoldIcon
-                  d={eventIconSVG[event.eventName] || eventIconSVG.Wedding}
-                  size={20}
-                />
-              </motion.div>
-              <h3
-                className="text-[11px] font-bold uppercase sm:text-sm"
+          >
+            {data.events.map((event, i) => (
+              <motion.button
+                key={event.id || i}
+                type="button"
+                onClick={() => {
+                  if (event.mapsUrl) {
+                    window.open(event.mapsUrl, "_blank", "noopener,noreferrer");
+                  }
+                }}
+                initial={{ opacity: 0, scale: 0.8, y: 30 }}
+                whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ delay: i * 0.1, duration: 0.6, ease: "easeOut" }}
+                whileHover={{
+                  scale: 1.05,
+                  y: -5,
+                  boxShadow: "0 8px 40px rgba(212,175,55,0.4)",
+                }}
+                className="relative min-h-[158px] w-full overflow-hidden rounded-[1.25rem] p-3 text-center sm:min-h-[170px] sm:rounded-2xl sm:p-5"
                 style={{
-                  fontFamily: FONTS.heading,
-                  color: C.cream,
-                  letterSpacing: "0.05em",
+                  background:
+                    "radial-gradient(circle at 50% 18%, rgba(255,219,141,0.16), transparent 36%), linear-gradient(145deg, rgba(106,56,24,0.95), rgba(82,30,14,0.96) 45%, rgba(56,16,12,0.96) 100%)",
+                  border: `1.6px solid ${C.gold}75`,
+                  boxShadow: `0 18px 32px rgba(0,0,0,0.28), 0 0 20px ${C.gold}1f, inset 0 1px 0 rgba(255,233,185,0.18)`,
+                  cursor: event.mapsUrl ? "pointer" : "default",
                 }}
               >
-                {event.eventName}
-              </h3>
-              <p
-                className="mt-2 text-xs font-semibold sm:mt-3 sm:text-sm"
-                style={{ color: C.gold }}
-              >
-                {formatEventDate(event.eventDate)}
-              </p>
-              <p
-                className="mt-2 flex items-center justify-center gap-1 text-[10px] sm:text-xs"
-                style={{ color: C.textMuted }}
-              >
-                <MapPin size={9} style={{ color: C.gold }} /> {event.venueName}
-              </p>
-              {event.mapsUrl && (
-                <span
-                  className="inline-flex items-center gap-1 mt-2 text-[10px]"
-                  style={{ color: C.goldLight }}
-                >
-                  Tap for directions
-                </span>
-              )}
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      )}
-    </div>
-  </section>
+                <div
+                  className="pointer-events-none absolute inset-2 rounded-[1.1rem] border"
+                  style={{ borderColor: "rgba(246,215,118,0.16)" }}
+                />
+                <div
+                  className="absolute left-2 top-2 h-6 w-6 rounded-tl-xl border-l border-t"
+                  style={{ borderColor: `${C.gold}80` }}
+                />
+                <div
+                  className="absolute right-2 top-2 h-6 w-6 rounded-tr-xl border-r border-t"
+                  style={{ borderColor: `${C.gold}80` }}
+                />
+                <div
+                  className="absolute bottom-2 left-2 h-6 w-6 rounded-bl-xl border-b border-l"
+                  style={{ borderColor: `${C.gold}80` }}
+                />
+                <div
+                  className="absolute bottom-2 right-2 h-6 w-6 rounded-br-xl border-b border-r"
+                  style={{ borderColor: `${C.gold}80` }}
+                />
+                <div className="relative z-10 flex h-full flex-col items-center justify-center">
+                  <motion.div
+                    whileInView={{ rotate: [0, 360] }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 + i * 0.1, duration: 0.8 }}
+                    className="mb-2"
+                  >
+                    <GoldIcon
+                      d={eventIconSVG[event.eventName] || eventIconSVG.Wedding}
+                      size={20}
+                    />
+                  </motion.div>
+                  <h3
+                    className="text-[11px] font-bold uppercase sm:text-sm"
+                    style={{
+                      fontFamily: FONTS.heading,
+                      color: C.cream,
+                      letterSpacing: "0.05em",
+                    }}
+                  >
+                    {event.eventName}
+                  </h3>
+                  <p
+                    className="mt-2 text-xs font-semibold sm:mt-3 sm:text-sm"
+                    style={{ color: C.gold }}
+                  >
+                    {formatEventDate(event.eventDate)}
+                  </p>
+                  <p
+                    className="mt-2 flex items-center justify-center gap-1 text-[10px] sm:text-xs"
+                    style={{ color: C.textMuted }}
+                  >
+                    <MapPin size={9} style={{ color: C.gold }} />{" "}
+                    {event.venueName}
+                  </p>
+                  {event.mapsUrl && (
+                    <span
+                      className="inline-flex items-center gap-1 mt-2 text-[10px]"
+                      style={{ color: C.goldLight }}
+                    >
+                      Tap for directions
+                    </span>
+                  )}
+                </div>
+              </motion.button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </section>
   );
 };
 
@@ -1745,7 +1843,8 @@ const GallerySection = ({
                     style={{ borderColor: "rgba(246,215,118,0.14)" }}
                   />
                   {showcasePhotos.map((photo, index) => {
-                    const isActive = index === activePhotoIndex % showcasePhotos.length;
+                    const isActive =
+                      index === activePhotoIndex % showcasePhotos.length;
                     return (
                       <motion.div
                         key={`${photo.photoUrl}-${index}`}
@@ -1781,7 +1880,9 @@ const GallerySection = ({
                         style={{
                           width: index === activePhotoIndex ? 28 : 10,
                           backgroundColor:
-                            index === activePhotoIndex ? C.goldLight : "rgba(246,215,118,0.35)",
+                            index === activePhotoIndex
+                              ? C.goldLight
+                              : "rgba(246,215,118,0.35)",
                         }}
                       />
                     ))}
@@ -1808,126 +1909,129 @@ const FamiliesSection = ({
 }) => {
   const sectionVisibility = getSectionVisibility(data);
   return (
-  <section
-    className="relative overflow-hidden py-24 sm:py-28"
-    style={{
-      background: `
+    <section
+      className="relative overflow-hidden py-24 sm:py-28"
+      style={{
+        background: `
         radial-gradient(circle at 50% 0%, rgba(255,205,130,0.06), transparent 20%),
         linear-gradient(180deg, rgba(64,18,18,0.96) 0%, rgba(78,24,22,0.98) 38%, rgba(30,8,8,1) 100%)
       `,
-    }}
-  >
-    <BokehOverlay count={12} />
-    <div className="relative z-10 mx-auto max-w-5xl px-6">
-      <div className="flex flex-col items-center gap-4">
-        <SectionTitle title="Our Families" />
-        {mode === "edit" && (
-          <div className="flex flex-wrap justify-center gap-2">
-            <SectionActionButton
-              label="Remove Section"
-              onClick={() =>
-                onUpdate({
-                  sectionVisibility: { ...sectionVisibility, families: false },
-                })
-              }
+      }}
+    >
+      <BokehOverlay count={12} />
+      <div className="relative z-10 mx-auto max-w-5xl px-6">
+        <div className="flex flex-col items-center gap-4">
+          <SectionTitle title="Our Families" />
+          {mode === "edit" && (
+            <div className="flex flex-wrap justify-center gap-2">
+              <SectionActionButton
+                label="Remove Section"
+                onClick={() =>
+                  onUpdate({
+                    sectionVisibility: {
+                      ...sectionVisibility,
+                      families: false,
+                    },
+                  })
+                }
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2">
+          <motion.div
+            initial={{ opacity: 0, x: -40 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+            whileHover={{ y: -4, boxShadow: `0 8px 30px ${C.gold}25` }}
+            className="text-center rounded-[1.75rem] p-8"
+            style={{
+              background:
+                "radial-gradient(circle at 50% 18%, rgba(255,223,157,0.08), transparent 28%), linear-gradient(160deg, rgba(74,24,20,0.88), rgba(46,12,12,0.92))",
+              border: `1.5px solid ${C.gold}35`,
+              boxShadow: `0 18px 35px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,233,185,0.12)`,
+            }}
+          >
+            <div
+              className="mx-auto mb-5 h-px w-40"
+              style={{
+                background: `linear-gradient(to right, transparent, ${C.gold}, transparent)`,
+              }}
             />
-          </div>
-        )}
-      </div>
+            <h3
+              className="mb-4 text-2xl font-bold"
+              style={{ fontFamily: FONTS.heading, ...goldGradient }}
+            >
+              Bride's Family
+            </h3>
+            <EditableText
+              value={data.brideFamilyNames || ""}
+              onSave={(val) => onUpdate({ brideFamilyNames: val })}
+              mode={mode}
+              placeholder="Daughter of..."
+              className="mb-4 block text-sm sm:text-base"
+              as="p"
+            />
+            <EditableText
+              value={data.brideBio}
+              onSave={(val) => onUpdate({ brideBio: val })}
+              mode={mode}
+              placeholder="Mother & Father of the Bride..."
+              className="text-lg leading-relaxed"
+              multiline
+              as="p"
+            />
+          </motion.div>
 
-      <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2">
-        <motion.div
-          initial={{ opacity: 0, x: -40 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7 }}
-          whileHover={{ y: -4, boxShadow: `0 8px 30px ${C.gold}25` }}
-          className="text-center rounded-[1.75rem] p-8"
-          style={{
-            background:
-              "radial-gradient(circle at 50% 18%, rgba(255,223,157,0.08), transparent 28%), linear-gradient(160deg, rgba(74,24,20,0.88), rgba(46,12,12,0.92))",
-            border: `1.5px solid ${C.gold}35`,
-            boxShadow: `0 18px 35px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,233,185,0.12)`,
-          }}
-        >
-          <div
-            className="mx-auto mb-5 h-px w-40"
+          <motion.div
+            initial={{ opacity: 0, x: 40 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+            whileHover={{ y: -4, boxShadow: `0 8px 30px ${C.gold}25` }}
+            className="text-center rounded-[1.75rem] p-8"
             style={{
-              background: `linear-gradient(to right, transparent, ${C.gold}, transparent)`,
+              background:
+                "radial-gradient(circle at 50% 18%, rgba(255,223,157,0.08), transparent 28%), linear-gradient(160deg, rgba(74,24,20,0.88), rgba(46,12,12,0.92))",
+              border: `1.5px solid ${C.gold}35`,
+              boxShadow: `0 18px 35px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,233,185,0.12)`,
             }}
-          />
-          <h3
-            className="mb-4 text-2xl font-bold"
-            style={{ fontFamily: FONTS.heading, ...goldGradient }}
           >
-            Bride's Family
-          </h3>
-          <EditableText
-            value={data.brideFamilyNames || ""}
-            onSave={(val) => onUpdate({ brideFamilyNames: val })}
-            mode={mode}
-            placeholder="Daughter of..."
-            className="mb-4 block text-sm sm:text-base"
-            as="p"
-          />
-          <EditableText
-            value={data.brideBio}
-            onSave={(val) => onUpdate({ brideBio: val })}
-            mode={mode}
-            placeholder="Mother & Father of the Bride..."
-            className="text-lg leading-relaxed"
-            multiline
-            as="p"
-          />
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, x: 40 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7 }}
-          whileHover={{ y: -4, boxShadow: `0 8px 30px ${C.gold}25` }}
-          className="text-center rounded-[1.75rem] p-8"
-          style={{
-            background:
-              "radial-gradient(circle at 50% 18%, rgba(255,223,157,0.08), transparent 28%), linear-gradient(160deg, rgba(74,24,20,0.88), rgba(46,12,12,0.92))",
-            border: `1.5px solid ${C.gold}35`,
-            boxShadow: `0 18px 35px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,233,185,0.12)`,
-          }}
-        >
-          <div
-            className="mx-auto mb-5 h-px w-40"
-            style={{
-              background: `linear-gradient(to right, transparent, ${C.gold}, transparent)`,
-            }}
-          />
-          <h3
-            className="mb-4 text-2xl font-bold"
-            style={{ fontFamily: FONTS.heading, ...goldGradient }}
-          >
-            Groom's Family
-          </h3>
-          <EditableText
-            value={data.groomFamilyNames || ""}
-            onSave={(val) => onUpdate({ groomFamilyNames: val })}
-            mode={mode}
-            placeholder="Son of..."
-            className="mb-4 block text-sm sm:text-base"
-            as="p"
-          />
-          <EditableText
-            value={data.groomBio}
-            onSave={(val) => onUpdate({ groomBio: val })}
-            mode={mode}
-            placeholder="Mother & Father of the Groom..."
-            className="text-lg leading-relaxed"
-            multiline
-            as="p"
-          />
-        </motion.div>
+            <div
+              className="mx-auto mb-5 h-px w-40"
+              style={{
+                background: `linear-gradient(to right, transparent, ${C.gold}, transparent)`,
+              }}
+            />
+            <h3
+              className="mb-4 text-2xl font-bold"
+              style={{ fontFamily: FONTS.heading, ...goldGradient }}
+            >
+              Groom's Family
+            </h3>
+            <EditableText
+              value={data.groomFamilyNames || ""}
+              onSave={(val) => onUpdate({ groomFamilyNames: val })}
+              mode={mode}
+              placeholder="Son of..."
+              className="mb-4 block text-sm sm:text-base"
+              as="p"
+            />
+            <EditableText
+              value={data.groomBio}
+              onSave={(val) => onUpdate({ groomBio: val })}
+              mode={mode}
+              placeholder="Mother & Father of the Groom..."
+              className="text-lg leading-relaxed"
+              multiline
+              as="p"
+            />
+          </motion.div>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
   );
 };
 
@@ -2040,7 +2144,8 @@ const RsvpSection = ({
             background:
               "linear-gradient(180deg, rgba(77,22,22,0.5) 0%, rgba(45,12,12,0.72) 100%)",
             borderColor: "rgba(212,175,55,0.16)",
-            boxShadow: "0 20px 38px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,233,185,0.1)",
+            boxShadow:
+              "0 20px 38px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,233,185,0.1)",
           }}
         >
           <div className="flex flex-wrap justify-center gap-2 sm:gap-3">

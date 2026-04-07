@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { TemplateMode } from "@/templates/types";
 import { Music, Upload, Link, X, Loader2, Play, Pause } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { uploadFile, validateMusic, deleteOldFile } from "@/lib/upload";
+import { uploadFile, validateMusic } from "@/lib/upload";
 import toast from "react-hot-toast";
 
 interface EditableMusicPlayerProps {
@@ -117,9 +117,6 @@ const EditableMusicPlayer = ({
   };
 
   const handleRemoveCustom = () => {
-    if (musicUrl) {
-      deleteOldFile(musicUrl);
-    }
     onUpdate(null, null);
     toast.success("Reverted to default music");
   };

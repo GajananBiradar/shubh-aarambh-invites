@@ -26,11 +26,11 @@ const demoData: DemoDataOverrides = {
     { id: 2, eventName: "Moonlight Reception", eventDate: "2027-06-14", eventTime: "20:30:00", venueName: "Cypress Courtyard", venueAddress: "Tuscany, Italy", mapsUrl: "https://maps.google.com" },
   ],
   galleryPhotos: galleryPhotos.map((url, i) => ({ photoUrl: url, sortOrder: i, isDefault: true })),
-  musicUrl: "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/music/music.mp3",
+  musicUrl: "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/music/music.mp3?v=2026-04-08-2",
   musicName: "Default Wedding BGM",
   templateDefaults: {
     defaultPhotos: galleryPhotos.map((url, i) => ({ photoUrl: url, sortOrder: i })),
-    defaultMusicUrl: "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/music/music.mp3",
+    defaultMusicUrl: "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/music/music.mp3?v=2026-04-08-2",
     defaultMusicName: "Default Wedding BGM",
     defaultVideoUrl: null,
   },

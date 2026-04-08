@@ -111,12 +111,16 @@ const crimsonDemoData = {
       mapsUrl: defaultMaps.reception,
     },
   ],
+  musicUrl:
+    "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/music/music.mp3?v=2026-04-08-2",
+  musicName: "Default Wedding BGM",
   templateDefaults: {
     defaultPhotos: galleryPhotos.map((photoUrl, sortOrder) => ({
       photoUrl,
       sortOrder,
     })),
-    defaultMusicUrl: "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/music/music.mp3",
+    defaultMusicUrl:
+      "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/music/music.mp3?v=2026-04-08-2",
     defaultMusicName: "Default Wedding BGM",
     defaultVideoUrl: null,
   },

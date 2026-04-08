@@ -220,18 +220,56 @@ const HeartPin = ({ className = "" }: { className?: string }) => (
 const InlineMusicToggle = ({ musicUrl }: { musicUrl: string | null }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   useEffect(() => {
     if (!musicUrl) return;
     const audio = new Audio(musicUrl);
     audio.loop = true;
     audio.volume = 0.4;
+    audio.autoplay = true;
     audioRef.current = audio;
+
+    const timer = window.setTimeout(() => {
+      audio
+        .play()
+        .then(() => {
+          setPlaying(true);
+          setHasInteracted(true);
+        })
+        .catch(() => {});
+    }, 250);
+
     return () => {
+      window.clearTimeout(timer);
       audio.pause();
       audio.src = "";
     };
   }, [musicUrl]);
+
+  useEffect(() => {
+    if (hasInteracted || !audioRef.current) return;
+
+    const handleFirstInteraction = () => {
+      audioRef.current
+        ?.play()
+        .then(() => {
+          setPlaying(true);
+          setHasInteracted(true);
+        })
+        .catch(() => {});
+    };
+
+    document.addEventListener("click", handleFirstInteraction);
+    document.addEventListener("touchstart", handleFirstInteraction);
+    document.addEventListener("keydown", handleFirstInteraction);
+
+    return () => {
+      document.removeEventListener("click", handleFirstInteraction);
+      document.removeEventListener("touchstart", handleFirstInteraction);
+      document.removeEventListener("keydown", handleFirstInteraction);
+    };
+  }, [hasInteracted]);
 
   const toggle = () => {
     if (!audioRef.current) return;
@@ -239,6 +277,7 @@ const InlineMusicToggle = ({ musicUrl }: { musicUrl: string | null }) => {
       audioRef.current.pause();
     } else {
       audioRef.current.play().catch(() => {});
+      setHasInteracted(true);
     }
     setPlaying(!playing);
   };

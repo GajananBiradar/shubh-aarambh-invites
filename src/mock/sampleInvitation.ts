@@ -11,7 +11,7 @@ export const SAMPLE_INVITATION: Invitation = {
   slug: 'ananya-weds-vikram',
   code: 'AV26X',
   welcomeMessage: 'Together with our families, Ananya & Vikram joyfully invite you to be part of our celebration of love and new beginnings.',
-  musicUrl: 'https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/music/music.mp3',
+  musicUrl: 'https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/music/music.mp3',
   musicName: 'Default Wedding BGM',
   showCountdown: true,
   weddingDate: '2026-02-14',

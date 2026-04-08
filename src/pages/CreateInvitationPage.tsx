@@ -18,6 +18,7 @@ import { useInvitationEditor } from "@/hooks/useInvitationEditor";
 import { useSessionManager } from "@/hooks/useSessionManager";
 import { usePayment } from "@/hooks/usePayment";
 import { EditModeToolbar } from "@/components/inline-editor";
+import { resolveWorkingMusic } from "@/lib/defaultMusic";
 import { Loader2, X, Copy, Check, Eye, Heart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -223,9 +224,14 @@ const CreateInvitationPage = ({
         ),
         musicUrl: editData.musicUrl || null,
         musicName: editData.musicName || null,
-        effectiveMusicUrl: editData.musicUrl || template?.defaultMusicUrl || "",
-        effectiveMusicName:
+        effectiveMusicUrl: resolveWorkingMusic(
+          editData.musicUrl || template?.defaultMusicUrl || "",
           editData.musicName || template?.defaultMusicName || "",
+        ).url,
+        effectiveMusicName: resolveWorkingMusic(
+          editData.musicUrl || template?.defaultMusicUrl || "",
+          editData.musicName || template?.defaultMusicName || "",
+        ).name,
         locale: "en",
         slug: editData.slug || "",
         accessCode: editData.accessCode || editData.code || null,
@@ -233,8 +239,14 @@ const CreateInvitationPage = ({
         rsvpEnabled: editData.invitationData?.rsvp_enabled !== false,
         templateDefaults: {
           defaultPhotos: [],
-          defaultMusicUrl: template?.defaultMusicUrl || "",
-          defaultMusicName: template?.defaultMusicName || "",
+          defaultMusicUrl: resolveWorkingMusic(
+            template?.defaultMusicUrl || "",
+            template?.defaultMusicName || "",
+          ).url,
+          defaultMusicName: resolveWorkingMusic(
+            template?.defaultMusicUrl || "",
+            template?.defaultMusicName || "",
+          ).name,
           defaultVideoUrl: null,
         },
       };
@@ -243,10 +255,10 @@ const CreateInvitationPage = ({
     // New invitation - use empty data with template defaults from demo data
     const demoEvents = demoData?.events || [];
     const demoPhotos = demoData?.defaultPhotos || [];
-    const defaultMusicUrl =
-      demoData?.musicUrl || template?.defaultMusicUrl || "";
-    const defaultMusicName =
-      demoData?.musicName || template?.defaultMusicName || "";
+    const resolvedDefaultMusic = resolveWorkingMusic(
+      demoData?.musicUrl || template?.defaultMusicUrl || "",
+      demoData?.musicName || template?.defaultMusicName || "",
+    );
     const defaultVideoUrl = demoData?.defaultVideoUrl || null;
 
     const initialData = createEmptyInvitationData(
@@ -254,8 +266,8 @@ const CreateInvitationPage = ({
       theme,
       {
         defaultPhotos: demoPhotos,
-        defaultMusicUrl: defaultMusicUrl,
-        defaultMusicName: defaultMusicName,
+        defaultMusicUrl: resolvedDefaultMusic.url,
+        defaultMusicName: resolvedDefaultMusic.name,
       },
     );
 
@@ -283,10 +295,8 @@ const CreateInvitationPage = ({
     }
 
     // Set music from demo data
-    if (defaultMusicUrl) {
-      initialData.effectiveMusicUrl = defaultMusicUrl;
-      initialData.effectiveMusicName = defaultMusicName;
-    }
+    initialData.effectiveMusicUrl = resolvedDefaultMusic.url;
+    initialData.effectiveMusicName = resolvedDefaultMusic.name;
 
     return initialData;
   };
@@ -313,10 +323,10 @@ const CreateInvitationPage = ({
     if (!editMode && demoData && !data.invitationId) {
       const demoPhotos = demoData?.defaultPhotos || [];
       const demoEvents = demoData?.events || [];
-      const defaultMusicUrl =
-        demoData?.musicUrl || template?.defaultMusicUrl || "";
-      const defaultMusicName =
-        demoData?.musicName || template?.defaultMusicName || "";
+      const resolvedDefaultMusic = resolveWorkingMusic(
+        demoData?.musicUrl || template?.defaultMusicUrl || "",
+        demoData?.musicName || template?.defaultMusicName || "",
+      );
       const defaultVideoUrl = demoData?.defaultVideoUrl || null;
 
       const updates: Partial<InvitationData> = {};
@@ -345,10 +355,8 @@ const CreateInvitationPage = ({
       }
 
       // Set music from demo data
-      if (defaultMusicUrl) {
-        updates.effectiveMusicUrl = defaultMusicUrl;
-        updates.effectiveMusicName = defaultMusicName;
-      }
+      updates.effectiveMusicUrl = resolvedDefaultMusic.url;
+      updates.effectiveMusicName = resolvedDefaultMusic.name;
 
       if (Object.keys(updates).length > 0) {
         updateData(updates);

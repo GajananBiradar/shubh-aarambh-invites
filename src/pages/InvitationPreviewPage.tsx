@@ -11,6 +11,7 @@ import GallerySection from "@/components/invitation/GallerySection";
 import RsvpSection from "@/components/invitation/RsvpSection";
 import InvitationFooter from "@/components/invitation/InvitationFooter";
 import FloatingMusicPlayer from "@/components/invitation/FloatingMusicPlayer";
+import { resolveWorkingMusic } from "@/lib/defaultMusic";
 import {
   Loader2,
   Pencil,
@@ -127,8 +128,16 @@ const InvitationPreviewPage = () => {
 
   if (!invitation) return null;
 
-  const effectiveMusicUrl =
-    (invitation as any).effectiveMusicUrl || invitation.musicUrl;
+  const resolvedMusic = resolveWorkingMusic(
+    (invitation as any).effectiveMusicUrl ||
+      invitation.musicUrl ||
+      invitation.template?.defaultMusicUrl ||
+      "",
+    invitation.musicName ||
+      (invitation as any).effectiveMusicName ||
+      invitation.template?.defaultMusicName ||
+      "",
+  );
 
   // Map invitation data for rendering
   const displayInvitation = {
@@ -162,8 +171,8 @@ const InvitationPreviewPage = () => {
     galleryPhotos: (invitation.galleryPhotos || []).map((p: any) =>
       typeof p === "string" ? p : p.photoUrl,
     ),
-    musicUrl: effectiveMusicUrl,
-    musicName: invitation.musicName || "",
+    musicUrl: resolvedMusic.url,
+    musicName: resolvedMusic.name,
   };
 
   const isFree = invitation.template?.isFree;
@@ -238,9 +247,9 @@ const InvitationPreviewPage = () => {
         <InvitationFooter invitation={displayInvitation} />
       </div>
 
-      {effectiveMusicUrl && (
+      {resolvedMusic.url && (
         <FloatingMusicPlayer
-          musicUrl={effectiveMusicUrl}
+          musicUrl={resolvedMusic.url}
           musicName={displayInvitation.musicName}
         />
       )}

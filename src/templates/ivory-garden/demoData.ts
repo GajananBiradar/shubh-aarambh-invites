@@ -63,11 +63,11 @@ const demoData: DemoDataOverrides = {
       photoUrl,
       sortOrder,
     })),
-    defaultMusicUrl: "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/music/music.mp3",
+    defaultMusicUrl: "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/music/music.mp3?v=2026-04-08-2",
     defaultMusicName: "Default Wedding BGM",
     defaultVideoUrl: null,
   },
-  musicUrl: "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/templates/music/music.mp3",
+  musicUrl: "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/music/music.mp3?v=2026-04-08-2",
   musicName: "Default Wedding BGM",
 };
 

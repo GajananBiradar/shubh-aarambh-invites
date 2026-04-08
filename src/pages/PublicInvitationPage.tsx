@@ -10,6 +10,7 @@ import {
 import { getInvitationBySlug } from "@/api/invitations";
 import { SAMPLE_INVITATION } from "@/mock/sampleInvitation";
 import api from "@/api/axios";
+import { resolveWorkingMusic } from "@/lib/defaultMusic";
 import { Heart } from "lucide-react";
 
 const PublicInvitationPage = () => {
@@ -109,6 +110,28 @@ const PublicInvitationPage = () => {
         const galleryPhotos: PhotoData[] =
           userPhotos.length > 0 ? userPhotos : templateDefaultPhotos;
 
+        const resolvedMusic = resolveWorkingMusic(
+          (invitation as any).effectiveMusicUrl ||
+            invitation.musicUrl ||
+            (invitation as any).templateDefaultMusicUrl ||
+            invitation.template?.defaultMusicUrl ||
+            "",
+          (invitation as any).effectiveMusicName ||
+            invitation.musicName ||
+            (invitation as any).templateDefaultMusicName ||
+            invitation.template?.defaultMusicName ||
+            "Wedding BGM",
+        );
+
+        const resolvedTemplateMusic = resolveWorkingMusic(
+          (invitation as any).templateDefaultMusicUrl ||
+            invitation.template?.defaultMusicUrl ||
+            "",
+          (invitation as any).templateDefaultMusicName ||
+            invitation.template?.defaultMusicName ||
+            "Wedding BGM",
+        );
+
         const data: InvitationData = {
           invitationId: invitation.id ? Number(invitation.id) : null,
           templateId: invitation.templateId
@@ -158,12 +181,8 @@ const PublicInvitationPage = () => {
           galleryPhotos,
           musicUrl: invitation.musicUrl || null,
           musicName: invitation.musicName || null,
-          effectiveMusicUrl:
-            (invitation as any).effectiveMusicUrl || invitation.musicUrl || "",
-          effectiveMusicName:
-            (invitation as any).effectiveMusicName ||
-            invitation.musicName ||
-            "Wedding BGM",
+          effectiveMusicUrl: resolvedMusic.url,
+          effectiveMusicName: resolvedMusic.name,
           locale: "en",
           slug: invitation.slug || "",
           accessCode: invitation.accessCode || invitation.code || code || null,
@@ -177,14 +196,8 @@ const PublicInvitationPage = () => {
               invitation.templateDefaultPhotos ||
               invitation.template?.defaultPhotos ||
               [],
-            defaultMusicUrl:
-              (invitation as any).templateDefaultMusicUrl ||
-              invitation.template?.defaultMusicUrl ||
-              "",
-            defaultMusicName:
-              (invitation as any).templateDefaultMusicName ||
-              invitation.template?.defaultMusicName ||
-              "",
+            defaultMusicUrl: resolvedTemplateMusic.url,
+            defaultMusicName: resolvedTemplateMusic.name,
             defaultVideoUrl:
               (invitation as any).templateDefaultVideoUrl ||
               invitation.template?.defaultVideoUrl ||

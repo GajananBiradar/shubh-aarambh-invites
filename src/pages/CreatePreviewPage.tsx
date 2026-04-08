@@ -231,6 +231,7 @@ const CreatePreviewPage = () => {
               src={`/create/${numTemplateId}/preview?frame=1`}
               title="Mobile invitation preview"
               className="block h-[844px] w-full border-0"
+              scrolling="no"
             />
           </div>
         </div>

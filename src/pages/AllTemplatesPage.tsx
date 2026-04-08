@@ -77,6 +77,7 @@ const DynamicTemplatePreview = ({
         title="Template preview"
         onLoad={() => setIframeLoaded(true)}
         className="pointer-events-none border-0 origin-top-left absolute top-0 left-0"
+        scrolling="no"
         style={{
           width: `${MOBILE_WIDTH}px`,
           height: `${MOBILE_HEIGHT}px`,

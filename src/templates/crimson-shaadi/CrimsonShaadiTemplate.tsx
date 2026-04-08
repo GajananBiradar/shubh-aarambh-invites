@@ -1454,15 +1454,17 @@ const OurStorySection = ({
           }}
         >
           <div
-            className="absolute left-8 right-8 top-[4.65rem] hidden h-px sm:block"
+            className="pointer-events-none absolute left-8 right-8 top-[4.65rem] hidden h-px sm:block"
             style={{
               background: `linear-gradient(to right, transparent, ${C.gold}88 12%, ${C.goldLight}, ${C.gold}88 88%, transparent)`,
+              zIndex: 0,
             }}
           />
           <div
-            className="absolute bottom-8 left-1/2 top-8 w-px -translate-x-1/2 sm:hidden"
+            className="pointer-events-none absolute bottom-8 left-1/2 top-8 w-px -translate-x-1/2 sm:hidden"
             style={{
               background: `linear-gradient(to bottom, transparent, ${C.gold}88 12%, ${C.goldLight}, ${C.gold}88 88%, transparent)`,
+              zIndex: 0,
             }}
           />
           <div
@@ -1479,7 +1481,7 @@ const OurStorySection = ({
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.2, duration: 0.7, ease: "easeOut" }}
-                className="text-center relative"
+                className="relative z-10 text-center"
               >
                 {mode === "edit" && milestones.length > 1 && (
                   <div className="mb-3 flex justify-center">
@@ -1510,43 +1512,54 @@ const OurStorySection = ({
                     />
                   </div>
                 </motion.div>
-                <EditableText
-                  value={m.month}
-                  onSave={(val) => updateMilestone(i, { month: val })}
-                  mode={mode}
-                  placeholder="Month"
-                  className="text-xs uppercase tracking-[0.3em] block"
-                  as="p"
-                />
-                <EditableText
-                  value={m.year}
-                  onSave={(val) => updateMilestone(i, { year: val })}
-                  mode={mode}
-                  placeholder="Year"
-                  className="text-3xl sm:text-4xl font-bold"
-                  as="p"
-                />
-                <EditableText
-                  value={m.title}
-                  onSave={(val) => updateMilestone(i, { title: val })}
-                  mode={mode}
-                  placeholder="Title"
-                  className="mt-2 text-xl block"
-                  as="p"
-                />
                 <div
-                  className="mt-2 flex items-center justify-center gap-1 text-xs sm:text-sm"
-                  style={{ color: C.textMuted }}
+                  className="mx-auto max-w-[14rem] rounded-[1.5rem] px-4 py-4"
+                  style={{
+                    background:
+                      "linear-gradient(180deg, rgba(74,20,20,0.72) 0%, rgba(48,12,12,0.78) 100%)",
+                    border: "1px solid rgba(212,175,55,0.12)",
+                    boxShadow:
+                      "0 12px 26px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,233,185,0.06)",
+                  }}
                 >
-                  <MapPin size={10} style={{ color: C.gold }} />
                   <EditableText
-                    value={m.venue}
-                    onSave={(val) => updateMilestone(i, { venue: val })}
+                    value={m.month}
+                    onSave={(val) => updateMilestone(i, { month: val })}
                     mode={mode}
-                    placeholder="Venue"
-                    className="block"
-                    as="span"
+                    placeholder="Month"
+                    className="block text-xs uppercase tracking-[0.3em]"
+                    as="p"
                   />
+                  <EditableText
+                    value={m.year}
+                    onSave={(val) => updateMilestone(i, { year: val })}
+                    mode={mode}
+                    placeholder="Year"
+                    className="text-3xl font-bold sm:text-4xl"
+                    as="p"
+                  />
+                  <EditableText
+                    value={m.title}
+                    onSave={(val) => updateMilestone(i, { title: val })}
+                    mode={mode}
+                    placeholder="Title"
+                    className="mt-2 block text-xl"
+                    as="p"
+                  />
+                  <div
+                    className="mt-2 flex items-center justify-center gap-1 text-xs sm:text-sm"
+                    style={{ color: C.textMuted }}
+                  >
+                    <MapPin size={10} style={{ color: C.gold }} />
+                    <EditableText
+                      value={m.venue}
+                      onSave={(val) => updateMilestone(i, { venue: val })}
+                      mode={mode}
+                      placeholder="Venue"
+                      className="block"
+                      as="span"
+                    />
+                  </div>
                 </div>
               </motion.div>
             ))}

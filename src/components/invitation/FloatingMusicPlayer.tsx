@@ -1,5 +1,9 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { Music } from "lucide-react";
+import {
+  EMBEDDED_TEST_MUSIC_NAME,
+  EMBEDDED_TEST_MUSIC_URL,
+} from "@/lib/defaultMusic";
 
 interface FloatingMusicPlayerProps {
   musicUrl: string;
@@ -13,6 +17,13 @@ const FloatingMusicPlayer = ({
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [resolvedMusicUrl, setResolvedMusicUrl] = useState(musicUrl);
+
+  useEffect(() => {
+    setResolvedMusicUrl(musicUrl);
+    setPlaying(false);
+    setHasInteracted(false);
+  }, [musicUrl]);
 
   const tryPlay = useCallback(() => {
     if (!audioRef.current) return;
@@ -27,14 +38,39 @@ const FloatingMusicPlayer = ({
 
   // Try autoplay on mount
   useEffect(() => {
-    if (!musicUrl) return;
+    if (!resolvedMusicUrl) return;
     const audio = audioRef.current;
     if (!audio) return;
+
+    audio.autoplay = true;
+    audio.muted = false;
+    audio.volume = 0.5;
 
     // Attempt immediate autoplay (works if browser allows)
     const timer = setTimeout(() => tryPlay(), 300);
     return () => clearTimeout(timer);
-  }, [musicUrl, tryPlay]);
+  }, [resolvedMusicUrl, tryPlay]);
+
+  useEffect(() => {
+    if (hasInteracted || !resolvedMusicUrl) return;
+
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const retryPlay = () => {
+      tryPlay();
+    };
+
+    audio.addEventListener("canplay", retryPlay);
+    window.addEventListener("focus", retryPlay);
+    document.addEventListener("visibilitychange", retryPlay);
+
+    return () => {
+      audio.removeEventListener("canplay", retryPlay);
+      window.removeEventListener("focus", retryPlay);
+      document.removeEventListener("visibilitychange", retryPlay);
+    };
+  }, [hasInteracted, resolvedMusicUrl, tryPlay]);
 
   // Fallback: play on first user interaction if autoplay was blocked
   useEffect(() => {
@@ -63,6 +99,21 @@ const FloatingMusicPlayer = ({
     };
   }, [hasInteracted, tryPlay]);
 
+  const handleAudioError = () => {
+    if (resolvedMusicUrl === EMBEDDED_TEST_MUSIC_URL) return;
+
+    console.warn("Music failed to load, falling back to embedded test audio.", {
+      musicUrl,
+    });
+    setResolvedMusicUrl(EMBEDDED_TEST_MUSIC_URL);
+    setPlaying(false);
+  };
+
+  const displayMusicName =
+    resolvedMusicUrl === EMBEDDED_TEST_MUSIC_URL
+      ? EMBEDDED_TEST_MUSIC_NAME
+      : musicName || "Background Music";
+
   const toggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!audioRef.current) return;
@@ -82,13 +133,20 @@ const FloatingMusicPlayer = ({
 
   return (
     <>
-      <audio ref={audioRef} src={musicUrl} loop preload="auto" />
+      <audio
+        ref={audioRef}
+        src={resolvedMusicUrl}
+        loop
+        preload="auto"
+        playsInline
+        onError={handleAudioError}
+      />
       <div className="fixed bottom-6 right-6 z-50 group">
         {/* Tooltip */}
         <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
           <div className="bg-card rounded-lg px-3 py-1.5 shadow-lg border border-border whitespace-nowrap">
             <p className="font-body text-xs text-foreground">
-              {musicName || "Background Music"}
+              {displayMusicName}
             </p>
           </div>
         </div>

@@ -72,6 +72,7 @@ const EditableEventCard = ({
     )}>
       {/* Delete button */}
       <button
+        type="button"
         onClick={onDelete}
         className="absolute top-3 right-3 p-2 rounded-lg bg-destructive/10 text-destructive opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/20"
         title="Delete event"
@@ -96,6 +97,7 @@ const EditableEventCard = ({
         {/* Date picker */}
         <div className="relative">
           <button
+            type="button"
             onClick={() => setShowDatePicker(!showDatePicker)}
             className="flex items-center gap-1 hover:text-primary transition-colors"
           >
@@ -111,7 +113,7 @@ const EditableEventCard = ({
                   onUpdate({ eventDate: e.target.value });
                   setShowDatePicker(false);
                 }}
-                className="bg-transparent font-body text-sm outline-none"
+                className="bg-transparent font-body text-sm text-foreground outline-none"
               />
             </div>
           )}
@@ -122,6 +124,7 @@ const EditableEventCard = ({
         {/* Time picker */}
         <div className="relative">
           <button
+            type="button"
             onClick={() => setShowTimePicker(!showTimePicker)}
             className="flex items-center gap-1 hover:text-primary transition-colors"
           >
@@ -137,7 +140,7 @@ const EditableEventCard = ({
                   onUpdate({ eventTime: e.target.value + ':00' });
                   setShowTimePicker(false);
                 }}
-                className="bg-transparent font-body text-sm outline-none"
+                className="bg-transparent font-body text-sm text-foreground outline-none"
               />
             </div>
           )}

@@ -67,6 +67,7 @@ export interface InvitationData {
   brideFamilyNames: string;
   groomFamilyNames: string;
   footerNote: string;
+  customTexts: Record<string, string>;
   storyMilestones: StoryMilestone[];
   sectionVisibility: SectionVisibility;
   showCountdown: boolean;
@@ -132,6 +133,7 @@ export const createEmptyInvitationData = (
   brideFamilyNames: '',
   groomFamilyNames: '',
   footerNote: 'Made with love on ShubhAarambh',
+  customTexts: {},
   storyMilestones: [
     {
       month: 'March',

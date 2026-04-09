@@ -151,6 +151,7 @@ const PublicInvitationPage = () => {
           footerNote:
             invitation.invitationData?.footer_note ||
             "Made with love on ShubhAarambh",
+          customTexts: invitation.invitationData?.custom_texts || {},
           storyMilestones: invitation.invitationData?.story_milestones || [],
           sectionVisibility: invitation.invitationData?.section_visibility || {
             story: true,

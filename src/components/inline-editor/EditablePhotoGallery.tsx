@@ -347,10 +347,10 @@ const EditablePhotoGallery = ({
         {!isAtCapacity && uploadingCount === 0 && (
           <button
             onClick={handleAddClick}
-            className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+            className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center bg-background/30 hover:bg-background/50 transition-colors cursor-pointer"
           >
-            <Plus className="w-6 h-6 text-muted-foreground mb-1" />
-            <span className="font-body text-[10px] text-muted-foreground">
+            <Plus className="w-6 h-6 text-primary mb-1" />
+            <span className="font-body text-[10px] text-foreground/80">
               Add Photo
             </span>
           </button>

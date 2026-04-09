@@ -10,6 +10,9 @@ const galleryPhotos = [
   `${R2}/couple6.jpg`,
 ];
 
+const palaceMapsUrl =
+  "https://www.google.com/maps/search/?api=1&query=The+Leela+Palace+Jaipur+Kukas";
+
 const demoData: DemoDataOverrides = {
   brideName: "Aarohi",
   groomName: "Vihaan",
@@ -34,27 +37,36 @@ const demoData: DemoDataOverrides = {
       eventName: "Welcome Lunch",
       eventDate: "2027-02-14",
       eventTime: "12:30:00",
-      venueName: "Château de Vaux-le-Vicomte",
-      venueAddress: "77950 Maincy, Île-de-France, France",
-      mapsUrl: "https://maps.google.com/?q=Chateau+de+Vaux-le-Vicomte,+77950+Maincy,+France",
+      venueName: "The Leela Palace Jaipur",
+      venueAddress: "Delhi Jaipur Highway, Kukas, Jaipur, Rajasthan",
+      mapsUrl: palaceMapsUrl,
     },
     {
       id: 2,
       eventName: "Ring Ceremony",
       eventDate: "2027-02-14",
-      eventTime: "18:30:00",
-      venueName: "Villa Cora",
-      venueAddress: "Viale Niccolò Machiavelli 18, 50125 Florence, Italy",
-      mapsUrl: "https://maps.google.com/?q=Villa+Cora,+Viale+Niccolo+Machiavelli+18,+50125+Florence,+Italy",
+      eventTime: "16:30:00",
+      venueName: "Sheesh Mahal Lawn, The Leela Palace Jaipur",
+      venueAddress: "The Leela Palace Jaipur, Kukas, Jaipur, Rajasthan",
+      mapsUrl: palaceMapsUrl,
     },
     {
       id: 3,
       eventName: "Music Sundowner",
       eventDate: "2027-02-14",
+      eventTime: "18:00:00",
+      venueName: "Terrace Courtyard, The Leela Palace Jaipur",
+      venueAddress: "The Leela Palace Jaipur, Kukas, Jaipur, Rajasthan",
+      mapsUrl: palaceMapsUrl,
+    },
+    {
+      id: 4,
+      eventName: "Dinner Celebration",
+      eventDate: "2027-02-14",
       eventTime: "20:00:00",
-      venueName: "Belmond Hotel Cipriani",
-      venueAddress: "Giudecca 10, 30133 Venice, Italy",
-      mapsUrl: "https://maps.google.com/?q=Belmond+Hotel+Cipriani,+Giudecca+10,+30133+Venice,+Italy",
+      venueName: "Maharaja Ballroom, The Leela Palace Jaipur",
+      venueAddress: "The Leela Palace Jaipur, Kukas, Jaipur, Rajasthan",
+      mapsUrl: palaceMapsUrl,
     },
   ],
   templateDefaults: {
@@ -62,11 +74,13 @@ const demoData: DemoDataOverrides = {
       photoUrl,
       sortOrder,
     })),
-    defaultMusicUrl: "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/music/music.mp3?v=2026-04-08-2",
+    defaultMusicUrl:
+      "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/music/music.mp3?v=2026-04-08-2",
     defaultMusicName: "Default Wedding BGM",
     defaultVideoUrl: null,
   },
-  musicUrl: "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/music/music.mp3?v=2026-04-08-2",
+  musicUrl:
+    "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/music/music.mp3?v=2026-04-08-2",
   musicName: "Default Wedding BGM",
 };
 

@@ -146,6 +146,7 @@ export const useInvitationEditor = ({
         bride_family_names: data.brideFamilyNames || null,
         groom_family_names: data.groomFamilyNames || null,
         footer_note: data.footerNote || null,
+        custom_texts: data.customTexts || {},
         story_milestones: data.storyMilestones || [],
         section_visibility: data.sectionVisibility || null,
         show_countdown: data.showCountdown,

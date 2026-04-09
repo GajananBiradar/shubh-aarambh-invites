@@ -26,14 +26,15 @@ import {
 import toast from "react-hot-toast";
 
 const C = {
-  bg: "#090909",
-  surface: "rgba(255,255,255,0.05)",
-  surfaceStrong: "rgba(255,255,255,0.08)",
-  border: "rgba(255,255,255,0.12)",
-  text: "#f6efe7",
-  muted: "rgba(246,239,231,0.74)",
-  gold: "#d9ad67",
-  goldSoft: "rgba(217,173,103,0.16)",
+  bg: "#0c110f",
+  surface: "rgba(20, 28, 24, 0.8)",
+  surfaceStrong: "rgba(28, 38, 33, 0.92)",
+  border: "rgba(222, 198, 154, 0.18)",
+  text: "#f5ecdf",
+  muted: "rgba(231, 219, 200, 0.72)",
+  gold: "#d8b178",
+  goldSoft: "rgba(216, 177, 120, 0.16)",
+  sage: "rgba(142, 166, 143, 0.18)",
 };
 
 const F = {
@@ -62,19 +63,20 @@ const generateBokeh = (count: number) =>
     blur: 1 + Math.random() * 3,
   }));
 
-/* Floating gold hearts */
-const generateHearts = (count: number) =>
+/* Floating floral accents */
+const generateFlowers = (count: number) =>
   Array.from({ length: count }, (_, i) => ({
     id: i,
     left: `${10 + Math.random() * 80}%`,
-    size: 8 + Math.random() * 10,
-    duration: 5 + Math.random() * 7,
+    size: 18 + Math.random() * 18,
+    duration: 10 + Math.random() * 8,
     delay: Math.random() * 8,
-    drift: -20 + Math.random() * 40,
+    drift: -40 + Math.random() * 80,
+    rotate: -20 + Math.random() * 40,
   }));
 
 const BOKEH = generateBokeh(30);
-const HEARTS = generateHearts(8);
+const FLOWERS = generateFlowers(10);
 
 /* Decorative gold ornament SVG */
 const GoldOrnament = ({ className = "" }: { className?: string }) => (
@@ -132,6 +134,59 @@ const FloatingHearts = () => (
   </div>
 );
 
+const FloatingFlowers = () => (
+  <div className="pointer-events-none absolute inset-0 overflow-hidden">
+    {FLOWERS.map((flower) => (
+      <motion.div
+        key={flower.id}
+        className="absolute"
+        style={{ left: flower.left, bottom: -48, opacity: 0.22 }}
+        animate={{
+          y: [0, -720],
+          x: [0, flower.drift],
+          rotate: [0, flower.rotate, flower.rotate * -1],
+          opacity: [0, 0.24, 0],
+        }}
+        transition={{
+          duration: flower.duration,
+          delay: flower.delay,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      >
+        <svg
+          width={flower.size}
+          height={flower.size}
+          viewBox="0 0 64 64"
+          fill="none"
+        >
+          <ellipse cx="32" cy="14" rx="9" ry="14" fill={C.gold} fillOpacity="0.36" />
+          <ellipse
+            cx="50"
+            cy="32"
+            rx="9"
+            ry="14"
+            fill={C.gold}
+            fillOpacity="0.28"
+            transform="rotate(90 50 32)"
+          />
+          <ellipse cx="32" cy="50" rx="9" ry="14" fill={C.gold} fillOpacity="0.24" />
+          <ellipse
+            cx="14"
+            cy="32"
+            rx="9"
+            ry="14"
+            fill={C.gold}
+            fillOpacity="0.28"
+            transform="rotate(90 14 32)"
+          />
+          <circle cx="32" cy="32" r="6" fill="#f8e5bc" fillOpacity="0.7" />
+        </svg>
+      </motion.div>
+    ))}
+  </div>
+);
+
 const getDisplayPhotos = (data: TemplateProps["data"]) =>
   (data.galleryPhotos.length > 0
     ? data.galleryPhotos
@@ -153,11 +208,16 @@ const shortDate = (value: string) => {
   }).format(parsed);
 };
 
-const cityFromEvent = (event?: EventData | null) => {
-  if (!event?.venueAddress) return "Venue details";
-  const parts = event.venueAddress.split(",");
-  return parts[parts.length - 1]?.trim() || event.venueAddress;
+const getEventTimeLabel = (event?: EventData | null) => {
+  if (!event?.eventTime) return "Time to be announced";
+  return formatTime(event.eventTime);
 };
+
+const getText = (
+  data: TemplateProps["data"],
+  key: string,
+  fallback: string,
+) => data.customTexts?.[key] || fallback;
 
 const SectionHeading = ({
   kicker,
@@ -230,7 +290,12 @@ const CountDownStrip = ({ weddingDate }: { weddingDate: string }) => {
           key={item.label}
           whileHover={{ y: -4 }}
           className="rounded-[26px] border px-4 py-6 text-center"
-          style={{ borderColor: C.border, background: C.goldSoft }}
+          style={{
+            borderColor: "rgba(216, 177, 120, 0.28)",
+            background:
+              "linear-gradient(180deg, rgba(32,45,39,0.96), rgba(61,56,37,0.9))",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
+          }}
         >
           <motion.div
             key={item.value}
@@ -536,6 +601,8 @@ const VelvetPromiseEngagementTemplate = ({
   sessionUUID,
   uploadStage = "temp",
 }: TemplateProps) => {
+  const [showHeroDatePicker, setShowHeroDatePicker] = useState(false);
+  const [showHeroTimePicker, setShowHeroTimePicker] = useState(false);
   const effectiveMusicUrl =
     data.musicUrl ||
     data.effectiveMusicUrl ||
@@ -549,6 +616,14 @@ const VelvetPromiseEngagementTemplate = ({
   const bridePhoto = data.bridePhotoUrl || photos[1]?.photoUrl || heroPhoto;
   const groomPhoto = data.groomPhotoUrl || photos[2]?.photoUrl || heroPhoto;
   const firstEvent = data.events[0];
+  const customText = (key: string, fallback: string) => getText(data, key, fallback);
+  const updateCustomText = (key: string, value: string) =>
+    onUpdate({
+      customTexts: {
+        ...data.customTexts,
+        [key]: value,
+      },
+    });
   const updateEventAt = (index: number, updates: Partial<EventData>) => {
     const nextEvents = [...data.events];
     nextEvents[index] = { ...nextEvents[index], ...updates };
@@ -561,14 +636,14 @@ const VelvetPromiseEngagementTemplate = ({
       className="relative min-h-screen overflow-x-hidden"
       style={{
         background:
-          "radial-gradient(circle at top, rgba(126,39,39,0.18), transparent 24%), linear-gradient(180deg, #080808, #121010 38%, #080808)",
+          "radial-gradient(circle at top, rgba(120, 153, 126, 0.16), transparent 26%), radial-gradient(circle at 85% 10%, rgba(216, 177, 120, 0.12), transparent 20%), linear-gradient(180deg, #08100d, #111916 38%, #090d0b)",
         color: C.text,
       }}
     >
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500;6..96,700&family=Cormorant+Garamond:wght@400;500;600;700&family=Sora:wght@300;400;500;600&display=swap');`}</style>
 
       <BokehOverlay />
-      <FloatingHearts />
+      <FloatingFlowers />
 
       {mode !== "edit" && effectiveMusicUrl && (
         <FloatingMusicPlayer
@@ -583,19 +658,19 @@ const VelvetPromiseEngagementTemplate = ({
             animate={{ x: [0, 30, 0], y: [0, 20, 0] }}
             transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
             className="absolute left-[-8%] top-[-4%] h-64 w-64 rounded-full blur-3xl"
-            style={{ background: "rgba(190,75,75,0.22)" }}
+            style={{ background: "rgba(112, 151, 118, 0.22)" }}
           />
           <motion.div
             animate={{ x: [0, -24, 0], y: [0, 26, 0] }}
             transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
             className="absolute right-[-6%] top-[18%] h-72 w-72 rounded-full blur-3xl"
-            style={{ background: "rgba(217,173,103,0.16)" }}
+            style={{ background: "rgba(216, 177, 120, 0.16)" }}
           />
           <motion.div
             animate={{ x: [0, 18, 0], y: [0, -16, 0] }}
             transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
             className="absolute bottom-[-8%] left-[30%] h-56 w-56 rounded-full blur-3xl"
-            style={{ background: "rgba(217,173,103,0.10)" }}
+            style={{ background: "rgba(142, 166, 143, 0.14)" }}
           />
         </div>
 
@@ -610,16 +685,13 @@ const VelvetPromiseEngagementTemplate = ({
             style={{ borderColor: C.border, background: C.surface }}
           >
             <div className="flex flex-wrap gap-3">
-              {[
-                "Engagement Celebration",
-                "Premium Editorial",
-              ].map((item) => (
+              {["Engagement Celebration"].map((item) => (
                 <span
                   key={item}
                   className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] uppercase tracking-[0.32em]"
                   style={{
                     borderColor: C.border,
-                    color: item === "Premium Editorial" ? C.muted : C.gold,
+                    color: C.gold,
                     fontFamily: F.sans,
                   }}
                 >
@@ -677,19 +749,102 @@ const VelvetPromiseEngagementTemplate = ({
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               {[
                 {
-                  label: "Celebration Date",
-                  value: shortDate(data.weddingDate),
+                  label: "Engagement Date",
+                  value: firstEvent?.eventDate
+                    ? shortDate(firstEvent.eventDate)
+                    : "Date to be announced",
                   href: undefined as string | undefined,
+                  note: customText("heroDateNote", "Celebrate with us"),
+                  edit: mode === "edit" ? (
+                    <div className="relative mt-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowHeroDatePicker((current) => !current)}
+                        className="rounded-full border px-3 py-2 text-xs"
+                        style={{ borderColor: C.border, color: C.gold, fontFamily: F.sans }}
+                      >
+                        Change date
+                      </button>
+                      {showHeroDatePicker && (
+                        <div
+                          className="absolute left-0 top-full z-20 mt-2 rounded-xl border p-3"
+                          style={{ borderColor: C.border, background: C.surface }}
+                        >
+                          <input
+                            type="date"
+                            value={firstEvent?.eventDate || ""}
+                            onChange={(event) => {
+                              updateEventAt(0, { eventDate: event.target.value });
+                              setShowHeroDatePicker(false);
+                            }}
+                            className="bg-transparent text-sm outline-none"
+                            style={{ color: C.text, fontFamily: F.sans }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ) : null,
                 },
                 {
                   label: "Venue",
-                  value: cityFromEvent(firstEvent),
+                  value: firstEvent?.venueName || "Venue Name",
                   href: firstEvent?.mapsUrl || undefined,
+                  note: firstEvent?.venueAddress || "City, State",
+                  edit: mode === "edit" ? (
+                    <div className="mt-3 space-y-2">
+                      <EditableText
+                        value={firstEvent?.venueName || ""}
+                        onSave={(value) => updateEventAt(0, { venueName: value })}
+                        mode={mode}
+                        as="p"
+                        className="text-sm"
+                        placeholder="Venue name"
+                      />
+                      <EditableText
+                        value={firstEvent?.venueAddress || ""}
+                        onSave={(value) => updateEventAt(0, { venueAddress: value })}
+                        mode={mode}
+                        as="p"
+                        className="text-xs"
+                        placeholder="Venue address"
+                      />
+                    </div>
+                  ) : null,
                 },
                 {
-                  label: "Hashtag",
-                  value: data.hashtag || "#ForeverStartsNow",
+                  label: "Engagement Time",
+                  value: getEventTimeLabel(firstEvent),
                   href: undefined as string | undefined,
+                  note: firstEvent?.eventName || "Ring ceremony",
+                  edit: mode === "edit" ? (
+                    <div className="relative mt-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowHeroTimePicker((current) => !current)}
+                        className="rounded-full border px-3 py-2 text-xs"
+                        style={{ borderColor: C.border, color: C.gold, fontFamily: F.sans }}
+                      >
+                        Change time
+                      </button>
+                      {showHeroTimePicker && (
+                        <div
+                          className="absolute left-0 top-full z-20 mt-2 rounded-xl border p-3"
+                          style={{ borderColor: C.border, background: C.surface }}
+                        >
+                          <input
+                            type="time"
+                            value={firstEvent?.eventTime?.slice(0, 5) || ""}
+                            onChange={(event) => {
+                              updateEventAt(0, { eventTime: `${event.target.value}:00` });
+                              setShowHeroTimePicker(false);
+                            }}
+                            className="bg-transparent text-sm outline-none"
+                            style={{ color: C.text, fontFamily: F.sans }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ) : null,
                 },
               ].map((item, idx) => {
                 const inner = (
@@ -707,9 +862,18 @@ const VelvetPromiseEngagementTemplate = ({
                       {item.href && <MapPin size={12} />}
                       {item.label}
                     </p>
+                    {"note" in item && item.note ? (
+                      <p
+                        className="mt-2 text-xs leading-5"
+                        style={{ color: C.muted, fontFamily: F.sans }}
+                      >
+                        {item.note}
+                      </p>
+                    ) : null}
+                    {"edit" in item ? item.edit : null}
                   </>
                 );
-                return item.href ? (
+                return item.href && mode !== "edit" ? (
                   <motion.a
                     key={item.label}
                     href={item.href}
@@ -830,11 +994,39 @@ const VelvetPromiseEngagementTemplate = ({
 
       <section className="px-4 py-12 sm:py-16">
         <div className="mx-auto max-w-6xl">
-          <SectionHeading
-            kicker="Celebrations"
-            title="A premium schedule for every event."
-            body="Add or remove each function the same way you now do in Crimson, while keeping the editorial Ivory Garden look."
-          />
+          <motion.div {...reveal} className="mx-auto max-w-3xl text-center">
+            <p
+              className="text-[11px] uppercase tracking-[0.38em]"
+              style={{ color: C.gold, fontFamily: F.sans }}
+            >
+              Celebrations
+            </p>
+            <EditableText
+              value={customText(
+                "eventsTitle",
+                "A thoughtfully planned engagement celebration.",
+              )}
+              onSave={(value) => updateCustomText("eventsTitle", value)}
+              mode={mode}
+              as="h2"
+              multiline
+              className="mt-4 text-4xl leading-[0.96] sm:text-5xl md:text-6xl"
+              inputClassName="text-4xl sm:text-5xl md:text-6xl"
+              placeholder="Events section title"
+            />
+            <EditableText
+              value={customText(
+                "eventsBody",
+                "From the first welcome to the final toast, share each engagement moment with the timing and venue your guests need.",
+              )}
+              onSave={(value) => updateCustomText("eventsBody", value)}
+              mode={mode}
+              multiline
+              as="p"
+              className="mx-auto mt-4 max-w-2xl text-sm leading-7 sm:text-base"
+              placeholder="Events section description"
+            />
+          </motion.div>
           <div className="mt-8 grid gap-4">
             {mode === "edit" ? (
               <>
@@ -850,6 +1042,7 @@ const VelvetPromiseEngagementTemplate = ({
                     }
                     mode={mode}
                     index={index}
+                    className="bg-[#f8f1e7] text-[#2f261f] border-[#d6bc93] shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
                   />
                 ))}
                 <AddEventButton
@@ -861,6 +1054,7 @@ const VelvetPromiseEngagementTemplate = ({
                   mode={mode}
                   maxEvents={8}
                   currentCount={data.events.length}
+                  className="border-[#d6bc93] bg-[rgba(216,177,120,0.08)] text-[#e8c48a] hover:border-[#e8c48a] hover:text-[#f5ecdf] hover:bg-[rgba(216,177,120,0.14)]"
                 />
               </>
             ) : data.events.length > 0 ? (
@@ -944,12 +1138,19 @@ const VelvetPromiseEngagementTemplate = ({
             >
               About The Couple
             </p>
-            <h2
+            <EditableText
+              value={customText(
+                "aboutTitle",
+                "A joyful beginning, shared with the people who matter most.",
+              )}
+              onSave={(value) => updateCustomText("aboutTitle", value)}
+              mode={mode}
+              multiline
+              as="h2"
               className="mt-4 text-4xl leading-[0.96] sm:text-5xl"
-              style={{ color: C.text, fontFamily: F.display }}
-            >
-              A joyful beginning, shared with the people who matter most.
-            </h2>
+              inputClassName="text-4xl sm:text-5xl"
+              placeholder="About section title"
+            />
             <div className="mt-6 grid gap-5 sm:grid-cols-2">
               <div>
                 <h3
@@ -995,20 +1196,32 @@ const VelvetPromiseEngagementTemplate = ({
           >
             {[
               {
-                title: "Proposal Story",
-                text: "A quiet yes, a happy family call, and now a date we cannot wait to celebrate with everyone we love.",
+                key: "infoCard1",
+                title: customText("infoCard1Title", "Proposal Story"),
+                text: customText(
+                  "infoCard1Body",
+                  "A quiet yes, a happy family call, and now a date we cannot wait to celebrate with everyone we love.",
+                ),
               },
               {
-                title: "Dress Code",
-                text: "Elegant festive wear in jewel tones, soft metallics, or classic neutrals for an evening celebration.",
+                key: "infoCard2",
+                title: customText("infoCard2Title", "Dress Code"),
+                text: customText(
+                  "infoCard2Body",
+                  "Elegant festive wear in jewel tones, soft metallics, or classic neutrals for an evening celebration.",
+                ),
               },
               {
-                title: "Guest Note",
-                text: "Please arrive 20 minutes early for welcome drinks, ring ceremony seating, and family portraits.",
+                key: "infoCard3",
+                title: customText("infoCard3Title", "Guest Note"),
+                text: customText(
+                  "infoCard3Body",
+                  "Please arrive 20 minutes early for welcome drinks, ring ceremony seating, and family portraits.",
+                ),
               },
             ].map((item, idx) => (
               <motion.div
-                key={item.title}
+                key={item.key}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -1021,14 +1234,23 @@ const VelvetPromiseEngagementTemplate = ({
                   className="text-[11px] uppercase tracking-[0.34em]"
                   style={{ color: C.gold, fontFamily: F.sans }}
                 >
-                  {item.title}
+                  <EditableText
+                    value={item.title}
+                    onSave={(value) => updateCustomText(`${item.key}Title`, value)}
+                    mode={mode}
+                    as="span"
+                    placeholder="Card title"
+                  />
                 </p>
-                <p
+                <EditableText
+                  value={item.text}
+                  onSave={(value) => updateCustomText(`${item.key}Body`, value)}
+                  mode={mode}
+                  multiline
+                  as="p"
                   className="mt-4 text-sm leading-7"
-                  style={{ color: C.muted, fontFamily: F.sans }}
-                >
-                  {item.text}
-                </p>
+                  placeholder="Card text"
+                />
               </motion.div>
             ))}
           </motion.div>
@@ -1044,10 +1266,7 @@ const VelvetPromiseEngagementTemplate = ({
             style={{ borderColor: C.border, background: C.surface }}
           >
             {mode === "edit" && (
-              <div className="mb-6 flex items-center justify-between">
-                <p style={{ color: C.muted, fontFamily: F.sans }}>
-                  Show countdown
-                </p>
+              <div className="mb-6 flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() =>
@@ -1067,17 +1286,48 @@ const VelvetPromiseEngagementTemplate = ({
                     style={{ background: C.gold }}
                   />
                 </button>
+                <p style={{ color: C.muted, fontFamily: F.sans }}>
+                  Show countdown
+                </p>
               </div>
             )}
             {data.showCountdown && (
               <>
-                <SectionHeading
-                  kicker="Countdown"
-                  title="The evening is getting closer."
-                  body="Mark the date and let the excitement build. We will be sharing our first celebration as an engaged couple with family and friends."
-                />
+                <motion.div {...reveal} className="mx-auto max-w-3xl text-center">
+                  <p
+                    className="text-[11px] uppercase tracking-[0.38em]"
+                    style={{ color: C.gold, fontFamily: F.sans }}
+                  >
+                    Countdown
+                  </p>
+                  <EditableText
+                    value={customText(
+                      "countdownTitle",
+                      "The engagement evening is getting closer.",
+                    )}
+                    onSave={(value) => updateCustomText("countdownTitle", value)}
+                    mode={mode}
+                    multiline
+                    as="h2"
+                    className="mt-4 text-4xl leading-[0.96] sm:text-5xl md:text-6xl"
+                    inputClassName="text-4xl sm:text-5xl md:text-6xl"
+                    placeholder="Countdown title"
+                  />
+                  <EditableText
+                    value={customText(
+                      "countdownBody",
+                      "Mark the engagement date and let the excitement build. We cannot wait to celebrate this special evening with family and friends.",
+                    )}
+                    onSave={(value) => updateCustomText("countdownBody", value)}
+                    mode={mode}
+                    multiline
+                    as="p"
+                    className="mx-auto mt-4 max-w-2xl text-sm leading-7 sm:text-base"
+                    placeholder="Countdown description"
+                  />
+                </motion.div>
                 <div className="mt-8">
-                  <CountDownStrip weddingDate={data.weddingDate} />
+                  <CountDownStrip weddingDate={firstEvent?.eventDate || data.weddingDate} />
                 </div>
               </>
             )}
@@ -1192,14 +1442,8 @@ const VelvetPromiseEngagementTemplate = ({
           className="mx-auto max-w-6xl rounded-[32px] border p-8 text-center"
           style={{ borderColor: C.border, background: C.surface }}
         >
-          <p
-            className="text-[11px] uppercase tracking-[0.38em]"
-            style={{ color: C.gold, fontFamily: F.sans }}
-          >
-            Velvet Promise
-          </p>
           <h2
-            className="mt-4 text-4xl sm:text-5xl"
+            className="text-4xl sm:text-5xl"
             style={{ color: C.text, fontFamily: F.display }}
           >
             {data.brideName} &amp; {data.groomName}

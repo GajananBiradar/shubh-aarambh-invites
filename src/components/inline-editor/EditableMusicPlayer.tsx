@@ -133,11 +133,13 @@ const EditableMusicPlayer = ({
     >
       <div className="flex items-center gap-3 mb-4">
         <Music className="w-5 h-5 text-primary" />
-        <h3 className="font-heading text-lg font-semibold">Background Music</h3>
+        <h3 className="font-heading text-lg font-semibold text-foreground">
+          Background Music
+        </h3>
       </div>
 
       {/* Current music preview */}
-      <div className="flex items-center gap-3 mb-4 p-3 bg-muted rounded-xl">
+      <div className="flex items-center gap-3 mb-4 rounded-xl border border-border bg-background/40 p-3">
         <button
           onClick={togglePlay}
           className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center"
@@ -149,7 +151,7 @@ const EditableMusicPlayer = ({
           )}
         </button>
         <div className="flex-1 min-w-0">
-          <p className="font-body text-sm font-medium truncate">
+          <p className="font-body text-sm font-medium truncate text-foreground">
             {effectiveName}
           </p>
           <p className="font-body text-xs text-muted-foreground">
@@ -168,7 +170,7 @@ const EditableMusicPlayer = ({
         <div className="flex gap-2">
           <button
             onClick={() => setIsChanging(true)}
-            className="btn-outline-accent px-4 py-2 rounded-xl text-sm flex-1"
+            className="btn-outline-accent px-4 py-2 rounded-xl text-sm flex-1 text-foreground"
           >
             Change Music
           </button>

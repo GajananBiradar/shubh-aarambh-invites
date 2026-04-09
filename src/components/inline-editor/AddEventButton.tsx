@@ -29,15 +29,15 @@ const AddEventButton = ({
       className={cn(
         'w-full py-4 rounded-2xl border-2 border-dashed border-border',
         'flex items-center justify-center gap-2',
-        'font-body text-sm text-muted-foreground',
+        'font-body text-sm text-foreground/85 bg-background/20',
         'transition-all',
         isDisabled
           ? 'opacity-50 cursor-not-allowed'
-          : 'hover:border-primary/50 hover:text-primary hover:bg-primary/5 cursor-pointer',
+          : 'hover:border-primary/60 hover:text-primary hover:bg-primary/10 cursor-pointer',
         className
       )}
     >
-      <Plus size={18} />
+      <Plus size={18} className="text-current" />
       {isDisabled ? `Maximum ${maxEvents} events` : 'Add Event'}
     </button>
   );

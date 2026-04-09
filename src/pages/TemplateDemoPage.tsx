@@ -123,11 +123,49 @@ const TemplateDemoPage = () => {
   const theme = getTemplateTheme(templateId || "1");
   const metadata = getTemplateMetadata(templateId || "1");
 
-  // Merge: API demoData > per-template overrides > generic defaults
+  const mergedDemoData = {
+    ...demoData,
+    ...templateOverrides,
+    events:
+      templateOverrides.events?.length ? templateOverrides.events : demoData?.events,
+    galleryPhotos:
+      templateOverrides.galleryPhotos?.length
+        ? templateOverrides.galleryPhotos
+        : demoData?.galleryPhotos,
+    couplePhotoUrl:
+      templateOverrides.couplePhotoUrl ?? demoData?.couplePhotoUrl ?? null,
+    bridePhotoUrl:
+      templateOverrides.bridePhotoUrl ?? demoData?.bridePhotoUrl ?? null,
+    groomPhotoUrl:
+      templateOverrides.groomPhotoUrl ?? demoData?.groomPhotoUrl ?? null,
+    welcomeMessage:
+      templateOverrides.welcomeMessage ?? demoData?.welcomeMessage ?? "",
+    weddingDate: templateOverrides.weddingDate ?? demoData?.weddingDate ?? "",
+    hashtag: templateOverrides.hashtag ?? demoData?.hashtag ?? "",
+    brideName: templateOverrides.brideName ?? demoData?.brideName ?? "",
+    groomName: templateOverrides.groomName ?? demoData?.groomName ?? "",
+    brideBio: templateOverrides.brideBio ?? demoData?.brideBio ?? "",
+    groomBio: templateOverrides.groomBio ?? demoData?.groomBio ?? "",
+    brideFamilyNames:
+      templateOverrides.brideFamilyNames ?? demoData?.brideFamilyNames ?? "",
+    groomFamilyNames:
+      templateOverrides.groomFamilyNames ?? demoData?.groomFamilyNames ?? "",
+    footerNote: templateOverrides.footerNote ?? demoData?.footerNote ?? "",
+    storyMilestones:
+      templateOverrides.storyMilestones?.length
+        ? templateOverrides.storyMilestones
+        : demoData?.storyMilestones,
+    sectionVisibility:
+      templateOverrides.sectionVisibility ?? demoData?.sectionVisibility,
+    templateDefaults:
+      templateOverrides.templateDefaults ?? demoData?.templateDefaults,
+    musicUrl: templateOverrides.musicUrl ?? demoData?.musicUrl,
+    musicName: templateOverrides.musicName ?? demoData?.musicName,
+  };
 
-  const effectiveGallery = demoData?.galleryPhotos ||
-    demoData?.defaultPhotos ||
-    templateOverrides.galleryPhotos || [
+  const effectiveGallery = mergedDemoData.galleryPhotos ||
+    mergedDemoData.defaultPhotos ||
+    mergedDemoData.templateDefaults?.defaultPhotos || [
       "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600",
       "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600",
       "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=600",
@@ -136,8 +174,7 @@ const TemplateDemoPage = () => {
       "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600",
     ];
 
-  const effectiveEvents = demoData?.events ||
-    templateOverrides.events || [
+  const effectiveEvents = mergedDemoData.events || [
       {
         eventName: "Haldi",
         eventDate: "2027-02-11",
@@ -173,15 +210,14 @@ const TemplateDemoPage = () => {
     ];
 
   const effectiveMusicUrl =
-    templateOverrides.musicUrl ||
-    demoData?.musicUrl ||
-    templateOverrides.templateDefaults?.defaultMusicUrl ||
+    mergedDemoData.musicUrl ||
+    mergedDemoData.templateDefaults?.defaultMusicUrl ||
     SHARED_TEMPLATE_MUSIC_URL;
   const effectiveMusicName =
-    templateOverrides.musicName ||
+    mergedDemoData.musicName ||
     (metadata?.name ? `${metadata.name} BGM` : "Wedding BGM");
 
-  const defaultDefaults = templateOverrides.templateDefaults || {
+  const defaultDefaults = mergedDemoData.templateDefaults || {
     defaultPhotos: [] as { photoUrl: string; sortOrder: number }[],
     defaultMusicUrl: "",
     defaultMusicName: "",
@@ -192,18 +228,19 @@ const TemplateDemoPage = () => {
     invitationId: null,
     templateId: parseInt(templateId || "1"),
     templateSlug: theme,
-    brideName: templateOverrides.brideName || "Ananya",
-    groomName: templateOverrides.groomName || "Vikram",
+    brideName: mergedDemoData.brideName || "Ananya",
+    groomName: mergedDemoData.groomName || "Vikram",
     brideBio:
-      templateOverrides.brideBio || "Designer who paints sunsets & dreams",
+      mergedDemoData.brideBio || "Designer who paints sunsets & dreams",
     groomBio:
-      templateOverrides.groomBio || "Architect who builds worlds & love",
-    brideFamilyNames: templateOverrides.brideFamilyNames || "Sharma Family",
-    groomFamilyNames: templateOverrides.groomFamilyNames || "Mehta Family",
+      mergedDemoData.groomBio || "Architect who builds worlds & love",
+    brideFamilyNames: mergedDemoData.brideFamilyNames || "Sharma Family",
+    groomFamilyNames: mergedDemoData.groomFamilyNames || "Mehta Family",
     footerNote:
-      templateOverrides.footerNote || "Made with love on ShubhAarambh",
-    storyMilestones: templateOverrides.storyMilestones || [],
-    sectionVisibility: templateOverrides.sectionVisibility || {
+      mergedDemoData.footerNote || "Made with love on ShubhAarambh",
+    customTexts: mergedDemoData.customTexts || {},
+    storyMilestones: mergedDemoData.storyMilestones || [],
+    sectionVisibility: mergedDemoData.sectionVisibility || {
       story: true,
       events: true,
       gallery: true,
@@ -211,16 +248,15 @@ const TemplateDemoPage = () => {
       footer: true,
       music: !shouldMutePreviewMusic,
     },
-    couplePhotoUrl:
-      demoData?.couplePhotoUrl ?? templateOverrides.couplePhotoUrl ?? null,
-    bridePhotoUrl: templateOverrides.bridePhotoUrl ?? null,
-    groomPhotoUrl: templateOverrides.groomPhotoUrl ?? null,
-    hashtag: templateOverrides.hashtag || "#AnanyaWedVikram",
+    couplePhotoUrl: mergedDemoData.couplePhotoUrl ?? null,
+    bridePhotoUrl: mergedDemoData.bridePhotoUrl ?? null,
+    groomPhotoUrl: mergedDemoData.groomPhotoUrl ?? null,
+    hashtag: mergedDemoData.hashtag || "#AnanyaWedVikram",
     welcomeMessage:
-      templateOverrides.welcomeMessage ||
+      mergedDemoData.welcomeMessage ||
       "Together with our families, Ananya & Vikram joyfully invite you to be part of our celebration of love and new beginnings.",
     showCountdown: true,
-    weddingDate: templateOverrides.weddingDate || "2027-02-14",
+    weddingDate: mergedDemoData.weddingDate || "2027-02-14",
     events: effectiveEvents.map((e: any, i: number) => ({
       id: e.id ?? i,
       eventName: e.eventName,
@@ -257,7 +293,7 @@ const TemplateDemoPage = () => {
   };
 
   const showWatermark =
-    demoData?.showWatermark !== false && !isEmbeddedPreview;
+    mergedDemoData.showWatermark !== false && !isEmbeddedPreview;
   const isFree = template?.isFree ?? false;
   const priceInr = template?.priceInr ?? 0;
   const showPhoneFramePreview =

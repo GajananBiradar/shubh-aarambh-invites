@@ -98,6 +98,7 @@ const CreatePreviewPage = () => {
         brideFamilyNames: parsed.brideFamilyNames || "",
         groomFamilyNames: parsed.groomFamilyNames || "",
         footerNote: parsed.footerNote || "Made with love on ShubhAarambh",
+        customTexts: parsed.customTexts || {},
         storyMilestones: parsed.storyMilestones || [],
         sectionVisibility: parsed.sectionVisibility || {
           story: true,
@@ -170,6 +171,7 @@ const CreatePreviewPage = () => {
           bride_family_names: data.brideFamilyNames,
           groom_family_names: data.groomFamilyNames,
           footer_note: data.footerNote,
+          custom_texts: data.customTexts,
           story_milestones: data.storyMilestones,
           section_visibility: data.sectionVisibility,
         },

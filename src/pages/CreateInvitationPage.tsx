@@ -29,6 +29,116 @@ interface CreateInvitationPageProps {
   editInvitationId?: string;
 }
 
+const buildDemoDataUpdates = (
+  demoData: any,
+  currentData?: InvitationData,
+): Partial<InvitationData> => {
+  if (!demoData) return {};
+
+  const updates: Partial<InvitationData> = {};
+
+  const maybeAssignString = (key: keyof InvitationData) => {
+    const incoming = demoData[key];
+    const current = currentData ? String(currentData[key] || "").trim() : "";
+
+    if (typeof incoming === "string" && incoming.trim() && !current) {
+      (updates as any)[key] = incoming;
+    }
+  };
+
+  maybeAssignString("brideName");
+  maybeAssignString("groomName");
+  maybeAssignString("brideBio");
+  maybeAssignString("groomBio");
+  maybeAssignString("brideFamilyNames");
+  maybeAssignString("groomFamilyNames");
+  maybeAssignString("footerNote");
+  maybeAssignString("hashtag");
+  maybeAssignString("welcomeMessage");
+  maybeAssignString("weddingDate");
+
+  if (
+    Array.isArray(demoData.storyMilestones) &&
+    demoData.storyMilestones.length > 0 &&
+    (!currentData || currentData.storyMilestones.length === 0)
+  ) {
+    updates.storyMilestones = demoData.storyMilestones;
+  }
+
+  if (
+    demoData.sectionVisibility &&
+    (!currentData || !currentData.sectionVisibility)
+  ) {
+    updates.sectionVisibility = demoData.sectionVisibility;
+  }
+
+  if (
+    typeof demoData.couplePhotoUrl === "string" &&
+    demoData.couplePhotoUrl &&
+    (!currentData || !currentData.couplePhotoUrl)
+  ) {
+    updates.couplePhotoUrl = demoData.couplePhotoUrl;
+  }
+
+  if (
+    typeof demoData.bridePhotoUrl === "string" &&
+    demoData.bridePhotoUrl &&
+    (!currentData || !currentData.bridePhotoUrl)
+  ) {
+    updates.bridePhotoUrl = demoData.bridePhotoUrl;
+  }
+
+  if (
+    typeof demoData.groomPhotoUrl === "string" &&
+    demoData.groomPhotoUrl &&
+    (!currentData || !currentData.groomPhotoUrl)
+  ) {
+    updates.groomPhotoUrl = demoData.groomPhotoUrl;
+  }
+
+  if (
+    Array.isArray(demoData.events) &&
+    demoData.events.length > 0 &&
+    (!currentData ||
+      currentData.events.length === 0 ||
+      currentData.events.every((event) => !event.eventName))
+  ) {
+    updates.events = demoData.events.map((event: any, index: number) => ({
+      id: event.id ?? index,
+      eventName: event.eventName || "",
+      eventDate: event.eventDate || "",
+      eventTime: event.eventTime || "",
+      venueName: event.venueName || "",
+      venueAddress: event.venueAddress || "",
+      mapsUrl: event.mapsUrl || null,
+    }));
+  }
+
+  if (
+    Array.isArray(demoData.galleryPhotos) &&
+    demoData.galleryPhotos.length > 0 &&
+    (!currentData || currentData.galleryPhotos.length === 0)
+  ) {
+    updates.galleryPhotos = demoData.galleryPhotos.map(
+      (photo: any, index: number) => ({
+        photoUrl: typeof photo === "string" ? photo : photo.photoUrl || "",
+        sortOrder: typeof photo === "string" ? index : photo.sortOrder ?? index,
+        isDefault: true,
+      }),
+    );
+  }
+
+  if (demoData.musicUrl && (!currentData || !currentData.musicUrl)) {
+    updates.musicUrl = demoData.musicUrl;
+  }
+
+  if (demoData.musicName && (!currentData || !currentData.musicName)) {
+    updates.musicName = demoData.musicName;
+  }
+
+  return updates;
+};
+
 const CreateInvitationPage = ({
   editMode = false,
   editData,
@@ -80,30 +190,30 @@ const CreateInvitationPage = ({
       const slug = getTemplateTheme(effectiveTemplateId);
       const frontendData = await loadTemplateDemoData(slug);
 
-      if (slug === "crimson" && frontendData) {
-        if (frontendData.galleryPhotos?.length) {
-          backendData.defaultPhotos = frontendData.galleryPhotos;
-        }
-        if (frontendData.events?.length) {
-          backendData.events = frontendData.events;
-        }
-        if (frontendData.musicUrl) {
-          backendData.musicUrl = frontendData.musicUrl;
-          backendData.musicName = frontendData.musicName;
-        }
-      }
+      const mergedData = {
+        ...backendData,
+        ...frontendData,
+        events:
+          frontendData?.events?.length ? frontendData.events : backendData?.events,
+        defaultPhotos:
+          frontendData?.galleryPhotos?.length
+            ? frontendData.galleryPhotos
+            : backendData?.defaultPhotos,
+        galleryPhotos:
+          frontendData?.galleryPhotos?.length
+            ? frontendData.galleryPhotos
+            : backendData?.galleryPhotos,
+        musicUrl: frontendData?.musicUrl || backendData?.musicUrl,
+        musicName: frontendData?.musicName || backendData?.musicName,
+        couplePhotoUrl:
+          frontendData?.couplePhotoUrl || backendData?.couplePhotoUrl || null,
+        bridePhotoUrl:
+          frontendData?.bridePhotoUrl || backendData?.bridePhotoUrl || null,
+        groomPhotoUrl:
+          frontendData?.groomPhotoUrl || backendData?.groomPhotoUrl || null,
+      };
 
-      // If backend returned no default photos, merge in frontend demo data
-      if (!backendData?.defaultPhotos?.length) {
-        if (frontendData?.galleryPhotos?.length) {
-          backendData.defaultPhotos = frontendData.galleryPhotos;
-        }
-        if (!backendData.musicUrl && frontendData?.musicUrl) {
-          backendData.musicUrl = frontendData.musicUrl;
-          backendData.musicName = frontendData.musicName;
-        }
-      }
-      return backendData;
+      return mergedData;
     },
     enabled: !editMode, // Only fetch if not in edit mode
   });
@@ -168,6 +278,7 @@ const CreateInvitationPage = ({
         groomFamilyNames: editData.invitationData?.groom_family_names || "",
         footerNote:
           editData.invitationData?.footer_note || "Made with love on ShubhAarambh",
+        customTexts: editData.invitationData?.custom_texts || {},
         storyMilestones: editData.invitationData?.story_milestones || [
           {
             month: "March",
@@ -271,28 +382,7 @@ const CreateInvitationPage = ({
       },
     );
 
-    // If we have demo events, populate them in the initial data
-    if (demoEvents.length > 0) {
-      initialData.events = demoEvents.map((e: any, i: number) => ({
-        id: i,
-        eventName: e.eventName || "",
-        eventDate: e.eventDate || "",
-        eventTime: e.eventTime || "",
-        venueName: e.venueName || "",
-        venueAddress: e.venueAddress || "",
-        mapsUrl: e.mapsUrl || null,
-      }));
-    }
-
-    // Add demo photos as gallery photos
-    if (demoPhotos.length > 0) {
-      initialData.galleryPhotos = demoPhotos.map((p: any, i: number) => ({
-        photoUrl: p.photoUrl || "",
-        sortOrder: i,
-        caption: p.caption || "",
-        isDefault: true,
-      }));
-    }
+    Object.assign(initialData, buildDemoDataUpdates(demoData));
 
     // Set music from demo data
     initialData.effectiveMusicUrl = resolvedDefaultMusic.url;
@@ -321,38 +411,16 @@ const CreateInvitationPage = ({
   // Populate form with demo data once it's available (for new invitations only)
   useEffect(() => {
     if (!editMode && demoData && !data.invitationId) {
-      const demoPhotos = demoData?.defaultPhotos || [];
-      const demoEvents = demoData?.events || [];
       const resolvedDefaultMusic = resolveWorkingMusic(
         demoData?.musicUrl || template?.defaultMusicUrl || "",
         demoData?.musicName || template?.defaultMusicName || "",
       );
       const defaultVideoUrl = demoData?.defaultVideoUrl || null;
 
-      const updates: Partial<InvitationData> = {};
-
-      // Update events from demo data
-      if (demoEvents.length > 0) {
-        updates.events = demoEvents.map((e: any, i: number) => ({
-          id: i,
-          eventName: e.eventName || "",
-          eventDate: e.eventDate || "",
-          eventTime: e.eventTime || "",
-          venueName: e.venueName || "",
-          venueAddress: e.venueAddress || "",
-          mapsUrl: e.mapsUrl || null,
-        }));
-      }
-
-      // Add demo photos as gallery photos
-      if (demoPhotos.length > 0) {
-        updates.galleryPhotos = demoPhotos.map((p: any, i: number) => ({
-          photoUrl: p.photoUrl || "",
-          sortOrder: i,
-          caption: p.caption || "",
-          isDefault: true,
-        }));
-      }
+      const updates: Partial<InvitationData> = buildDemoDataUpdates(
+        demoData,
+        data,
+      );
 
       // Set music from demo data
       updates.effectiveMusicUrl = resolvedDefaultMusic.url;
@@ -415,6 +483,7 @@ const CreateInvitationPage = ({
         brideFamilyNames: data.brideFamilyNames,
         groomFamilyNames: data.groomFamilyNames,
         footerNote: data.footerNote,
+        customTexts: data.customTexts,
         storyMilestones: data.storyMilestones,
         sectionVisibility: data.sectionVisibility,
         musicUrl: data.musicUrl,

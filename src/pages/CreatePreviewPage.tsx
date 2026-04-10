@@ -237,12 +237,20 @@ const CreatePreviewPage = () => {
       <div className="mx-auto flex h-[calc(100vh-4rem)] w-full items-center justify-center overflow-hidden px-4">
         <div className="relative w-full max-w-[280px] rounded-[2rem] border-[3px] border-neutral-900 bg-neutral-950 p-[4px] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
           <div className="absolute left-1/2 top-[7px] z-20 h-[12px] w-[60px] -translate-x-1/2 rounded-full bg-neutral-900" />
-          <div className="overflow-hidden rounded-[1.7rem] bg-background" style={{ height: 'calc(100vh - 8rem)' }}>
+          <div
+            className="overflow-hidden rounded-[1.7rem] bg-background"
+            style={{ height: "calc(100vh - 8rem)" }}
+          >
             <iframe
               src={`/create/${numTemplateId}/preview?frame=1`}
               title="Mobile invitation preview"
               className="block border-0"
-              style={{ width: '420px', height: 'calc(100% / 0.648)', transform: 'scale(0.648)', transformOrigin: 'top left' }}
+              style={{
+                width: "420px",
+                height: "calc(100% / 0.648)",
+                transform: "scale(0.648)",
+                transformOrigin: "top left",
+              }}
             />
           </div>
         </div>
@@ -286,42 +294,42 @@ const CreatePreviewPage = () => {
 
       {/* Preview Toolbar */}
       {!isFrameOnly && (
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border shadow-lg">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4 max-w-4xl">
-          <button
-            onClick={handleBackToEditing}
-            className="flex items-center gap-2 font-body text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <X size={18} />
-            Back to Editing
-          </button>
-
-          {!showSuccessModal && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border shadow-lg">
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between gap-4 max-w-4xl">
             <button
-              onClick={handleSaveDraft}
-              disabled={saving}
-              className="btn-primary px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleBackToEditing}
+              className="flex items-center gap-2 font-body text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              {saving ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <motion.span
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ repeat: Infinity, duration: 1.5 }}
-                  >
-                    ✨
-                  </motion.span>
-                  Save as Draft
-                </>
-              )}
+              <X size={18} />
+              Back to Editing
             </button>
-          )}
+
+            {!showSuccessModal && (
+              <button
+                onClick={handleSaveDraft}
+                disabled={saving}
+                className="btn-primary px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <motion.span
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ repeat: Infinity, duration: 1.5 }}
+                    >
+                      ✨
+                    </motion.span>
+                    Save as Draft
+                  </>
+                )}
+              </button>
+            )}
+          </div>
         </div>
-      </div>
       )}
 
       {/* Success Modal */}

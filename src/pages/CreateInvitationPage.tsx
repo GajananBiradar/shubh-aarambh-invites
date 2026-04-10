@@ -122,7 +122,8 @@ const buildDemoDataUpdates = (
     updates.galleryPhotos = demoData.galleryPhotos.map(
       (photo: any, index: number) => ({
         photoUrl: typeof photo === "string" ? photo : photo.photoUrl || "",
-        sortOrder: typeof photo === "string" ? index : photo.sortOrder ?? index,
+        sortOrder:
+          typeof photo === "string" ? index : (photo.sortOrder ?? index),
         isDefault: true,
       }),
     );
@@ -134,6 +135,17 @@ const buildDemoDataUpdates = (
 
   if (demoData.musicName && (!currentData || !currentData.musicName)) {
     updates.musicName = demoData.musicName;
+  }
+
+  if (
+    demoData.customTexts &&
+    typeof demoData.customTexts === "object" &&
+    Object.keys(demoData.customTexts).length > 0 &&
+    (!currentData ||
+      !currentData.customTexts ||
+      Object.keys(currentData.customTexts).length === 0)
+  ) {
+    updates.customTexts = demoData.customTexts;
   }
 
   return updates;
@@ -193,16 +205,15 @@ const CreateInvitationPage = ({
       const mergedData = {
         ...backendData,
         ...frontendData,
-        events:
-          frontendData?.events?.length ? frontendData.events : backendData?.events,
-        defaultPhotos:
-          frontendData?.galleryPhotos?.length
-            ? frontendData.galleryPhotos
-            : backendData?.defaultPhotos,
-        galleryPhotos:
-          frontendData?.galleryPhotos?.length
-            ? frontendData.galleryPhotos
-            : backendData?.galleryPhotos,
+        events: frontendData?.events?.length
+          ? frontendData.events
+          : backendData?.events,
+        defaultPhotos: frontendData?.galleryPhotos?.length
+          ? frontendData.galleryPhotos
+          : backendData?.defaultPhotos,
+        galleryPhotos: frontendData?.galleryPhotos?.length
+          ? frontendData.galleryPhotos
+          : backendData?.galleryPhotos,
         musicUrl: frontendData?.musicUrl || backendData?.musicUrl,
         musicName: frontendData?.musicName || backendData?.musicName,
         couplePhotoUrl:
@@ -257,15 +268,41 @@ const CreateInvitationPage = ({
           // Only restore if it's from the same template
           if (cachedData.templateId === parseInt(effectiveTemplateId)) {
             // Clear stale default photo URLs so demo data can provide fresh ones
-            const isUnsplash = (url: string | null) => url?.includes('unsplash.com');
-            if (isUnsplash(cachedData.couplePhotoUrl)) cachedData.couplePhotoUrl = null;
-            if (isUnsplash(cachedData.bridePhotoUrl)) cachedData.bridePhotoUrl = null;
-            if (isUnsplash(cachedData.groomPhotoUrl)) cachedData.groomPhotoUrl = null;
-            if (cachedData.galleryPhotos?.some(p => p.photoUrl?.includes('unsplash.com'))) {
+            const isStaleUrl = (url: string | null) =>
+              url?.includes("unsplash.com") || false;
+            if (isStaleUrl(cachedData.couplePhotoUrl))
+              cachedData.couplePhotoUrl = null;
+            if (isStaleUrl(cachedData.bridePhotoUrl))
+              cachedData.bridePhotoUrl = null;
+            if (isStaleUrl(cachedData.groomPhotoUrl))
+              cachedData.groomPhotoUrl = null;
+            // Clear default gallery photos so fresh demo data can repopulate
+            if (
+              cachedData.galleryPhotos?.every((p) => p.isDefault) ||
+              cachedData.galleryPhotos?.some((p) => isStaleUrl(p.photoUrl))
+            ) {
               cachedData.galleryPhotos = [];
             }
-            if (cachedData.templateDefaults?.defaultPhotos?.some((p: any) => p.photoUrl?.includes('unsplash.com'))) {
+            if (
+              cachedData.templateDefaults?.defaultPhotos?.some(
+                (p: any) => p.isDefault !== false,
+              )
+            ) {
               cachedData.templateDefaults.defaultPhotos = [];
+            }
+            // Clear stale customTexts so demo data can provide fresh ones
+            if (
+              cachedData.customTexts &&
+              Object.keys(cachedData.customTexts).length > 0
+            ) {
+              const hasOnlyDefaultPhotoKeys = Object.keys(
+                cachedData.customTexts,
+              ).every(
+                (k) => k.startsWith("heroPhoto") || k.startsWith("memoryPhoto"),
+              );
+              if (hasOnlyDefaultPhotoKeys) {
+                cachedData.customTexts = {};
+              }
             }
             return cachedData;
           }
@@ -288,7 +325,8 @@ const CreateInvitationPage = ({
         brideFamilyNames: editData.invitationData?.bride_family_names || "",
         groomFamilyNames: editData.invitationData?.groom_family_names || "",
         footerNote:
-          editData.invitationData?.footer_note || "Made with love on ShubhAarambh",
+          editData.invitationData?.footer_note ||
+          "Made with love on ShubhAarambh",
         customTexts: editData.invitationData?.custom_texts || {},
         storyMilestones: editData.invitationData?.story_milestones || [
           {
@@ -526,7 +564,9 @@ const CreateInvitationPage = ({
   const metadata = getTemplateMetadata(effectiveTemplateId);
 
   const isLoading =
-    loading || (!editMode && (templateLoading || demoDataLoading)) || (!editMode && !sessionInitialized);
+    loading ||
+    (!editMode && (templateLoading || demoDataLoading)) ||
+    (!editMode && !sessionInitialized);
 
   // Loading state
   if (isLoading || !TemplateComp) {

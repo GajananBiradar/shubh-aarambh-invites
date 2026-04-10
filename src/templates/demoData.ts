@@ -25,6 +25,7 @@ export type DemoDataOverrides = Partial<
     | 'galleryPhotos'
     | 'templateDefaults'
     | 'events'
+    | 'customTexts'
   >
 > & {
   musicUrl?: string;

@@ -107,8 +107,8 @@ const TemplateDemoPage = () => {
       "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600",
     ];
 
-  const effectiveEvents = demoData?.events ||
-    templateOverrides.events || [
+  const effectiveEvents = templateOverrides.events ||
+    demoData?.events || [
       {
         eventName: "Haldi",
         eventDate: "2027-02-11",
@@ -206,6 +206,7 @@ const TemplateDemoPage = () => {
       sortOrder: typeof url === "string" ? i : (url.sortOrder ?? i),
       isDefault: true,
     })),
+    customTexts: templateOverrides.customTexts || {},
     musicUrl: null,
     musicName: null,
     effectiveMusicUrl: shouldMutePreviewMusic ? "" : effectiveMusicUrl,
@@ -328,4 +329,13 @@ const TemplateDemoPage = () => {
               className={`${isFree ? "btn-emerald" : "btn-gold"} rounded-full px-5 py-2 text-sm flex items-center gap-1.5`}
             >
               <Sparkles size={14} />
-              {isFree
+              {isFree ? "Start for Free →" : `Get This for ₹${priceInr} →`}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default TemplateDemoPage;

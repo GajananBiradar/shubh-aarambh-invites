@@ -48,7 +48,7 @@ import {
 import toast from "react-hot-toast";
 
 const R2_BASE = "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev";
-const DEFAULT_COUPLE_PHOTO = `${R2_BASE}/templates/7/photos/Pose.png`;
+const DEFAULT_COUPLE_PHOTO = `${R2_BASE}/templates/5/photos/couple1.jpg`;
 
 const C = {
   blush: "#f6eee5",
@@ -352,15 +352,7 @@ const HeroCurvedCarousel = ({
 
   const uniquePhotos = useMemo(() => {
     const base = photos.filter(Boolean) as string[];
-    const fallback = base.length > 0 ? base : [DEFAULT_COUPLE_PHOTO];
-    const result: string[] = [];
-    while (result.length < 7) {
-      for (const p of fallback) {
-        result.push(p);
-        if (result.length >= 7) break;
-      }
-    }
-    return result.slice(0, 7);
+    return base.length > 0 ? base : [DEFAULT_COUPLE_PHOTO];
   }, [photos]);
 
   // Triple the set for seamless infinite scroll
@@ -739,9 +731,10 @@ const HeroSection = ({
   uploadStage: "temp" | "draft" | "published";
 }) => {
   const heroPhotos = Array.from(
-    { length: 6 },
+    { length: 5 },
     (_, i) =>
       data.customTexts?.[`heroPhoto${i}`] ||
+      photos[i]?.photoUrl ||
       data.couplePhotoUrl ||
       photos[0]?.photoUrl ||
       DEFAULT_COUPLE_PHOTO,
@@ -770,9 +763,9 @@ const HeroSection = ({
               className="mb-3 text-center text-[11px] uppercase tracking-[0.3em]"
               style={{ color: C.gold, fontFamily: FONTS.sans }}
             >
-              Edit Carousel Photos (up to 6)
+              Edit Carousel Photos (up to 5)
             </p>
-            <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
               {heroPhotos.map((photoUrl, i) => (
                 <EditablePhoto
                   key={`hero-edit-${i}`}
@@ -992,21 +985,21 @@ const StoryMemorySection = ({
             </div>
 
             {mode === "edit" ? (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 {memoryPhotos.map((photoUrl, i) => (
                   <div
                     key={`memory-photo-edit-${i}`}
-                    className="relative rounded-[30px] border bg-[#fffefb] p-3 sm:p-4"
+                    className="relative rounded-[22px] border bg-[#fffefb] p-2 sm:p-3"
                     style={{
                       borderColor: C.border,
-                      boxShadow: "0 32px 80px rgba(43,23,24,0.12)",
+                      boxShadow: "0 20px 50px rgba(43,23,24,0.10)",
                     }}
                   >
                     <EditablePhoto
                       photoUrl={photoUrl || null}
                       onSave={(url) => updateCustomText(`memoryPhoto${i}`, url)}
                       mode={mode}
-                      className="aspect-[4/5] w-full rounded-[22px]"
+                      className="aspect-[3/4] w-full rounded-[16px]"
                       alt={`Story frame ${i + 1}`}
                       templateId={templateId}
                       sessionUUID={sessionUUID}
@@ -1017,19 +1010,19 @@ const StoryMemorySection = ({
                       }
                     />
                     <div
-                      className="absolute bottom-7 left-7 right-7 flex items-center justify-between rounded-full px-4 py-2"
+                      className="absolute bottom-4 left-4 right-4 flex items-center justify-between rounded-full px-3 py-1.5"
                       style={{
                         backgroundColor: "rgba(255,254,251,0.9)",
                         backdropFilter: "blur(10px)",
                       }}
                     >
                       <p
-                        className="text-xs uppercase tracking-[0.28em]"
+                        className="text-[10px] uppercase tracking-[0.28em]"
                         style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
                       >
-                        Memory {String(i + 1).padStart(2, "0")} Photo
+                        Memory {String(i + 1).padStart(2, "0")}
                       </p>
-                      <Sparkle size={14} style={{ color: C.gold }} />
+                      <Sparkle size={12} style={{ color: C.gold }} />
                     </div>
                   </div>
                 ))}
@@ -1603,8 +1596,14 @@ const EventsSection = ({
                       </span>
                     </div>
                     {event.venueName && (
-                      <div
-                        className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors"
+                      <a
+                        href={
+                          event.mapsUrl ||
+                          `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([event.venueName, event.venueAddress].filter(Boolean).join(", "))}`
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors hover:opacity-80"
                         style={{
                           color: C.inkMuted,
                           fontFamily: FONTS.sans,
@@ -1612,13 +1611,20 @@ const EventsSection = ({
                         }}
                       >
                         <div
-                          className="flex h-8 w-8 items-center justify-center rounded-full"
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
                           style={{ backgroundColor: "rgba(182,129,63,0.1)" }}
                         >
                           <MapPin size={14} style={{ color: C.gold }} />
                         </div>
-                        <span className="font-medium">{event.venueName}</span>
-                      </div>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{event.venueName}</span>
+                          {event.venueAddress && (
+                            <span className="text-xs opacity-70">
+                              {event.venueAddress}
+                            </span>
+                          )}
+                        </div>
+                      </a>
                     )}
                   </div>
                 </div>

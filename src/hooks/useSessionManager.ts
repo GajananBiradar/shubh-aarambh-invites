@@ -23,6 +23,7 @@ interface SessionData {
   brideFamilyNames?: string;
   groomFamilyNames?: string;
   footerNote?: string;
+  customTexts?: Record<string, string>;
   storyMilestones?: any[];
   sectionVisibility?: any;
   showCountdown?: boolean;

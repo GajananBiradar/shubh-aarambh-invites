@@ -256,6 +256,17 @@ const CreateInvitationPage = ({
           const cachedData = JSON.parse(cached) as InvitationData;
           // Only restore if it's from the same template
           if (cachedData.templateId === parseInt(effectiveTemplateId)) {
+            // Clear stale default photo URLs so demo data can provide fresh ones
+            const isUnsplash = (url: string | null) => url?.includes('unsplash.com');
+            if (isUnsplash(cachedData.couplePhotoUrl)) cachedData.couplePhotoUrl = null;
+            if (isUnsplash(cachedData.bridePhotoUrl)) cachedData.bridePhotoUrl = null;
+            if (isUnsplash(cachedData.groomPhotoUrl)) cachedData.groomPhotoUrl = null;
+            if (cachedData.galleryPhotos?.some(p => p.photoUrl?.includes('unsplash.com'))) {
+              cachedData.galleryPhotos = [];
+            }
+            if (cachedData.templateDefaults?.defaultPhotos?.some((p: any) => p.photoUrl?.includes('unsplash.com'))) {
+              cachedData.templateDefaults.defaultPhotos = [];
+            }
             return cachedData;
           }
         } catch (e) {
@@ -466,38 +477,46 @@ const CreateInvitationPage = ({
   // Handle preview - opens preview in new tab WITHOUT saving to draft
   const handlePreview = () => {
     // Save current form data to sessionStorage so preview can read it
-    if (sessionUUID) {
-      saveSessionData({
-        sessionUUID,
-        templateId: numTemplateId,
-        brideName: data.brideName,
-        groomName: data.groomName,
-        brideBio: data.brideBio,
-        groomBio: data.groomBio,
-        weddingDate: data.weddingDate,
-        bridePhotoUrl: data.bridePhotoUrl,
-        groomPhotoUrl: data.groomPhotoUrl,
-        couplePhotoUrl: data.couplePhotoUrl,
-        events: data.events,
-        galleryPhotos: data.galleryPhotos,
-        brideFamilyNames: data.brideFamilyNames,
-        groomFamilyNames: data.groomFamilyNames,
-        footerNote: data.footerNote,
-        customTexts: data.customTexts,
-        storyMilestones: data.storyMilestones,
-        sectionVisibility: data.sectionVisibility,
-        musicUrl: data.musicUrl,
-        musicName: data.musicName,
-        effectiveMusicUrl: data.effectiveMusicUrl,
-        effectiveMusicName: data.effectiveMusicName,
-        templateDefaults: data.templateDefaults,
-        hashtag: data.hashtag,
-        welcomeMessage: data.welcomeMessage,
-        showCountdown: data.showCountdown,
-        rsvpEnabled: data.rsvpEnabled,
-        invitationId: data.invitationId || null,
-      });
-    }
+    const previewData = {
+      sessionUUID,
+      templateId: numTemplateId,
+      brideName: data.brideName,
+      groomName: data.groomName,
+      brideBio: data.brideBio,
+      groomBio: data.groomBio,
+      weddingDate: data.weddingDate,
+      bridePhotoUrl: data.bridePhotoUrl,
+      groomPhotoUrl: data.groomPhotoUrl,
+      couplePhotoUrl: data.couplePhotoUrl,
+      events: data.events,
+      galleryPhotos: data.galleryPhotos,
+      brideFamilyNames: data.brideFamilyNames,
+      groomFamilyNames: data.groomFamilyNames,
+      footerNote: data.footerNote,
+      customTexts: data.customTexts,
+      storyMilestones: data.storyMilestones,
+      sectionVisibility: data.sectionVisibility,
+      musicUrl: data.musicUrl,
+      musicName: data.musicName,
+      effectiveMusicUrl: data.effectiveMusicUrl,
+      effectiveMusicName: data.effectiveMusicName,
+      templateDefaults: data.templateDefaults,
+      hashtag: data.hashtag,
+      welcomeMessage: data.welcomeMessage,
+      showCountdown: data.showCountdown,
+      rsvpEnabled: data.rsvpEnabled,
+      invitationId: data.invitationId || null,
+    };
+
+    // Always save to sessionStorage (for same-tab and cloned-tab scenarios)
+    saveSessionData(previewData);
+
+    // Also save to localStorage as fallback (shared across all tabs reliably)
+    localStorage.setItem(
+      `invitation-draft-${numTemplateId}-new`,
+      JSON.stringify({ ...data, ...previewData }),
+    );
+
     // Open preview in new tab - NO API CALL
     window.open(`/create/${numTemplateId}/preview`, "_blank");
   };
@@ -507,7 +526,7 @@ const CreateInvitationPage = ({
   const metadata = getTemplateMetadata(effectiveTemplateId);
 
   const isLoading =
-    loading || (!editMode && (templateLoading || demoDataLoading));
+    loading || (!editMode && (templateLoading || demoDataLoading)) || (!editMode && !sessionInitialized);
 
   // Loading state
   if (isLoading || !TemplateComp) {

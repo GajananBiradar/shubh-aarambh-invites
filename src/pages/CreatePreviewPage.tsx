@@ -72,9 +72,18 @@ const CreatePreviewPage = () => {
     loadTemplate();
   }, [templateId]);
 
-  // Load form data from sessionStorage on mount
+  // Load form data from sessionStorage (or localStorage fallback) on mount
   useEffect(() => {
-    const sessionData = sessionStorage.getItem(sessionKey);
+    // Try sessionStorage first (cloned from opener via window.open)
+    let sessionData = sessionStorage.getItem(sessionKey);
+
+    // Fallback: try localStorage (useInvitationEditor persists data there)
+    // This handles browsers that don't clone sessionStorage on window.open
+    if (!sessionData) {
+      const localKey = `invitation-draft-${numTemplateId}-new`;
+      sessionData = localStorage.getItem(localKey);
+    }
+
     if (!sessionData) {
       toast.error("No form data found. Going back to editor...");
       setTimeout(() => window.close(), 2000);
@@ -225,15 +234,15 @@ const CreatePreviewPage = () => {
 
   const previewContent =
     showMobilePreview && !isFrameOnly ? (
-      <div className="mx-auto flex min-h-screen w-full items-start justify-center px-4 py-20">
-        <div className="relative w-full max-w-[420px] rounded-[2.5rem] border-[4px] border-neutral-900 bg-neutral-950 p-[6px] shadow-[0_32px_90px_rgba(0,0,0,0.28)]">
-          <div className="absolute left-1/2 top-[10px] z-20 h-[18px] w-[88px] -translate-x-1/2 rounded-full bg-neutral-900" />
-          <div className="overflow-hidden rounded-[2rem] bg-background">
+      <div className="mx-auto flex h-[calc(100vh-4rem)] w-full items-center justify-center overflow-hidden px-4">
+        <div className="relative w-full max-w-[280px] rounded-[2rem] border-[3px] border-neutral-900 bg-neutral-950 p-[4px] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+          <div className="absolute left-1/2 top-[7px] z-20 h-[12px] w-[60px] -translate-x-1/2 rounded-full bg-neutral-900" />
+          <div className="overflow-hidden rounded-[1.7rem] bg-background" style={{ height: 'calc(100vh - 8rem)' }}>
             <iframe
               src={`/create/${numTemplateId}/preview?frame=1`}
               title="Mobile invitation preview"
-              className="block h-[844px] w-full border-0"
-              scrolling="no"
+              className="block border-0"
+              style={{ width: '420px', height: 'calc(100% / 0.648)', transform: 'scale(0.648)', transformOrigin: 'top left' }}
             />
           </div>
         </div>
@@ -257,6 +266,9 @@ const CreatePreviewPage = () => {
     >
       {!isFrameOnly && (
         <style>{`.preview-page-wrapper .fixed.bottom-6.right-6 { bottom: 5rem !important; }`}</style>
+      )}
+      {isFrameOnly && (
+        <style>{`html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; } html, body { scrollbar-width: none; -ms-overflow-style: none; overflow-x: hidden; }`}</style>
       )}
 
       {!isFrameOnly && (

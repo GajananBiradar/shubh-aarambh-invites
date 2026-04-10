@@ -71,9 +71,14 @@ const EditablePhoto = ({
       });
       onSave(publicUrl);
       toast.success("Photo uploaded!");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Upload failed:", err);
-      toast.error("Failed to upload photo");
+      const message =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to upload photo";
+      toast.error(message);
     } finally {
       setIsUploading(false);
       setUploadProgress(0);

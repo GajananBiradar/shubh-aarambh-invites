@@ -39,7 +39,12 @@ import {
   formatTime,
   formatWeddingDate,
 } from "@/utils/formatDate";
-import { createEmptyEvent, EventData, SectionVisibility, TemplateProps } from "@/templates/types";
+import {
+  createEmptyEvent,
+  EventData,
+  SectionVisibility,
+  TemplateProps,
+} from "@/templates/types";
 import toast from "react-hot-toast";
 
 const R2_BASE = "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev";
@@ -207,8 +212,7 @@ const SectionActionButton = ({
     onClick={onClick}
     className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] uppercase tracking-[0.22em] transition-all"
     style={{
-      borderColor:
-        variant === "add" ? `${C.gold}88` : "rgba(182,129,63,0.22)",
+      borderColor: variant === "add" ? `${C.gold}88` : "rgba(182,129,63,0.22)",
       background:
         variant === "add"
           ? "linear-gradient(135deg, rgba(182,129,63,0.16), rgba(182,129,63,0.06))"
@@ -633,9 +637,7 @@ const GoldenMemoTemplate = ({
           >
             <div style={{ color: C.gold, fontFamily: FONTS.sans }}>
               <EditableText
-                value={
-                  data.customTexts?.footerKicker || "Made for Celebration"
-                }
+                value={data.customTexts?.footerKicker || "Made for Celebration"}
                 onSave={(val) =>
                   onUpdate({
                     customTexts: {
@@ -736,8 +738,13 @@ const HeroSection = ({
   sessionUUID?: string;
   uploadStage: "temp" | "draft" | "published";
 }) => {
-  const heroPhotos = Array.from({ length: 6 }, (_, i) =>
-    data.customTexts?.[`heroPhoto${i}`] || data.couplePhotoUrl || photos[0]?.photoUrl || DEFAULT_COUPLE_PHOTO,
+  const heroPhotos = Array.from(
+    { length: 6 },
+    (_, i) =>
+      data.customTexts?.[`heroPhoto${i}`] ||
+      data.couplePhotoUrl ||
+      photos[0]?.photoUrl ||
+      DEFAULT_COUPLE_PHOTO,
   );
   const floatingPhotos = heroPhotos;
 
@@ -778,7 +785,9 @@ const HeroSection = ({
                   sessionUUID={sessionUUID}
                   uploadStage={uploadStage}
                   invitationId={data.invitationId ?? undefined}
-                  oldPublicUrl={data.customTexts?.[`heroPhoto${i}`] || undefined}
+                  oldPublicUrl={
+                    data.customTexts?.[`heroPhoto${i}`] || undefined
+                  }
                 />
               ))}
             </div>
@@ -873,7 +882,8 @@ const StoryMemorySection = ({
   sessionUUID?: string;
   uploadStage: "temp" | "draft" | "published";
 }) => {
-  const defaultPhoto = photos[0]?.photoUrl || data.couplePhotoUrl || DEFAULT_COUPLE_PHOTO;
+  const defaultPhoto =
+    photos[0]?.photoUrl || data.couplePhotoUrl || DEFAULT_COUPLE_PHOTO;
   const memoryPhotos = [
     data.customTexts?.memoryPhoto0 || photos[1]?.photoUrl || defaultPhoto,
     data.customTexts?.memoryPhoto1 || photos[2]?.photoUrl || defaultPhoto,
@@ -994,9 +1004,7 @@ const StoryMemorySection = ({
                   >
                     <EditablePhoto
                       photoUrl={photoUrl || null}
-                      onSave={(url) =>
-                        updateCustomText(`memoryPhoto${i}`, url)
-                      }
+                      onSave={(url) => updateCustomText(`memoryPhoto${i}`, url)}
                       mode={mode}
                       className="aspect-[4/5] w-full rounded-[22px]"
                       alt={`Story frame ${i + 1}`}
@@ -1004,7 +1012,9 @@ const StoryMemorySection = ({
                       sessionUUID={sessionUUID}
                       uploadStage={uploadStage}
                       invitationId={data.invitationId ?? undefined}
-                      oldPublicUrl={data.customTexts?.[`memoryPhoto${i}`] || undefined}
+                      oldPublicUrl={
+                        data.customTexts?.[`memoryPhoto${i}`] || undefined
+                      }
                     />
                     <div
                       className="absolute bottom-7 left-7 right-7 flex items-center justify-between rounded-full px-4 py-2"
@@ -1025,52 +1035,55 @@ const StoryMemorySection = ({
                 ))}
               </div>
             ) : (
-            <motion.div
-              key={`featured-memory-${activeIndex}`}
-              initial={{ opacity: 0, y: 20, scale: 0.985 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ once: true, margin: "-10% 0px" }}
-              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-              className="mx-auto w-full max-w-[520px]"
-            >
-              <div
-                className="relative rounded-[30px] border bg-[#fffefb] p-3 sm:p-4"
-                style={{
-                  borderColor: C.border,
-                  boxShadow: "0 32px 80px rgba(43,23,24,0.12)",
-                }}
+              <motion.div
+                key={`featured-memory-${activeIndex}`}
+                initial={{ opacity: 0, y: 20, scale: 0.985 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, margin: "-10% 0px" }}
+                transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                className="mx-auto w-full max-w-[520px]"
               >
-                <EditablePhoto
-                  photoUrl={memoryPhotos[activeIndex] || null}
-                  onSave={(url) =>
-                    updateCustomText(`memoryPhoto${activeIndex}`, url)
-                  }
-                  mode={mode}
-                  className="aspect-[4/5] w-full rounded-[22px]"
-                  alt={`Story frame ${activeIndex + 1}`}
-                  templateId={templateId}
-                  sessionUUID={sessionUUID}
-                  uploadStage={uploadStage}
-                  invitationId={data.invitationId ?? undefined}
-                  oldPublicUrl={data.customTexts?.[`memoryPhoto${activeIndex}`] || undefined}
-                />
                 <div
-                  className="absolute bottom-7 left-7 right-7 flex items-center justify-between rounded-full px-4 py-2"
+                  className="relative rounded-[30px] border bg-[#fffefb] p-3 sm:p-4"
                   style={{
-                    backgroundColor: "rgba(255,254,251,0.9)",
-                    backdropFilter: "blur(10px)",
+                    borderColor: C.border,
+                    boxShadow: "0 32px 80px rgba(43,23,24,0.12)",
                   }}
                 >
-                  <p
-                    className="text-xs uppercase tracking-[0.28em]"
-                    style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+                  <EditablePhoto
+                    photoUrl={memoryPhotos[activeIndex] || null}
+                    onSave={(url) =>
+                      updateCustomText(`memoryPhoto${activeIndex}`, url)
+                    }
+                    mode={mode}
+                    className="aspect-[4/5] w-full rounded-[22px]"
+                    alt={`Story frame ${activeIndex + 1}`}
+                    templateId={templateId}
+                    sessionUUID={sessionUUID}
+                    uploadStage={uploadStage}
+                    invitationId={data.invitationId ?? undefined}
+                    oldPublicUrl={
+                      data.customTexts?.[`memoryPhoto${activeIndex}`] ||
+                      undefined
+                    }
+                  />
+                  <div
+                    className="absolute bottom-7 left-7 right-7 flex items-center justify-between rounded-full px-4 py-2"
+                    style={{
+                      backgroundColor: "rgba(255,254,251,0.9)",
+                      backdropFilter: "blur(10px)",
+                    }}
                   >
-                    Chapter {activeIndex + 1}
-                  </p>
-                  <Sparkle size={14} style={{ color: C.gold }} />
+                    <p
+                      className="text-xs uppercase tracking-[0.28em]"
+                      style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+                    >
+                      Chapter {activeIndex + 1}
+                    </p>
+                    <Sparkle size={14} style={{ color: C.gold }} />
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
             )}
           </div>
         </div>
@@ -1845,9 +1858,7 @@ const VenueSection = ({
                   boxShadow: "0 12px 40px rgba(43,23,24,0.06)",
                 }}
               >
-                <div
-                  style={{ color: C.gold, fontFamily: FONTS.sans }}
-                >
+                <div style={{ color: C.gold, fontFamily: FONTS.sans }}>
                   <EditableText
                     value={data.customTexts?.[card.key] || card.defaultTitle}
                     onSave={(val) => updateCustomText(card.key, val)}
@@ -1859,9 +1870,7 @@ const VenueSection = ({
                 </div>
                 <div style={{ color: C.inkMuted }}>
                   <EditableText
-                    value={
-                      data.customTexts?.[card.bodyKey] || card.defaultBody
-                    }
+                    value={data.customTexts?.[card.bodyKey] || card.defaultBody}
                     onSave={(val) => updateCustomText(card.bodyKey, val)}
                     mode={mode}
                     placeholder="Add details here"
@@ -2149,8 +2158,7 @@ const GiftsSection = ({
                   <p>
                     <EditableText
                       value={
-                        data.customTexts?.giftsUpi ||
-                        "UPI ID: yourname@upi"
+                        data.customTexts?.giftsUpi || "UPI ID: yourname@upi"
                       }
                       onSave={(val) => updateCustomText("giftsUpi", val)}
                       mode={mode}
@@ -2178,9 +2186,7 @@ const GiftsSection = ({
                         data.customTexts?.giftsAccountNo ||
                         "A/C No: XXXX XXXX XXXX"
                       }
-                      onSave={(val) =>
-                        updateCustomText("giftsAccountNo", val)
-                      }
+                      onSave={(val) => updateCustomText("giftsAccountNo", val)}
                       mode={mode}
                       placeholder="A/C No: XXXX XXXX XXXX"
                       as="span"
@@ -2188,9 +2194,7 @@ const GiftsSection = ({
                   </p>
                   <p>
                     <EditableText
-                      value={
-                        data.customTexts?.giftsIfsc || "IFSC: XXXX0001234"
-                      }
+                      value={data.customTexts?.giftsIfsc || "IFSC: XXXX0001234"}
                       onSave={(val) => updateCustomText("giftsIfsc", val)}
                       mode={mode}
                       placeholder="IFSC: XXXX0001234"
@@ -2200,109 +2204,114 @@ const GiftsSection = ({
                 </div>
               </div>
             ) : (
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setRevealed((prev) => !prev)}
-              className="w-full max-w-sm rounded-[28px] border px-6 py-10"
-              style={{
-                borderColor: revealed ? "rgba(184,138,65,0.4)" : C.border,
-                backgroundColor: revealed
-                  ? "rgba(184,138,65,0.08)"
-                  : "rgba(255,255,255,0.7)",
-              }}
-            >
-              {!revealed ? (
-                <div className="space-y-4">
-                  <Gift
-                    className="mx-auto"
-                    size={28}
-                    style={{ color: C.gold }}
-                  />
-                  <p
-                    className="text-[11px] uppercase tracking-[0.34em]"
-                    style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
-                  >
-                    Bank Details
-                  </p>
-                  <p className="text-2xl" style={{ fontFamily: FONTS.display }}>
-                    Tap to reveal
-                  </p>
-                </div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0, y: 18 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-3"
-                >
-                  <p
-                    className="text-[11px] uppercase tracking-[0.34em]"
-                    style={{ color: C.gold, fontFamily: FONTS.sans }}
-                  >
-                    Payment Option
-                  </p>
-                  <p className="text-2xl" style={{ fontFamily: FONTS.display }}>
-                    UPI / Bank Transfer
-                  </p>
-                  <div
-                    className="space-y-1 text-base"
-                    style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
-                  >
-                    <p>
-                      <EditableText
-                        value={
-                          data.customTexts?.giftsUpi ||
-                          "UPI ID: yourname@upi"
-                        }
-                        onSave={(val) => updateCustomText("giftsUpi", val)}
-                        mode={mode}
-                        placeholder="UPI ID: yourname@upi"
-                        as="span"
-                      />
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setRevealed((prev) => !prev)}
+                className="w-full max-w-sm rounded-[28px] border px-6 py-10"
+                style={{
+                  borderColor: revealed ? "rgba(184,138,65,0.4)" : C.border,
+                  backgroundColor: revealed
+                    ? "rgba(184,138,65,0.08)"
+                    : "rgba(255,255,255,0.7)",
+                }}
+              >
+                {!revealed ? (
+                  <div className="space-y-4">
+                    <Gift
+                      className="mx-auto"
+                      size={28}
+                      style={{ color: C.gold }}
+                    />
+                    <p
+                      className="text-[11px] uppercase tracking-[0.34em]"
+                      style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+                    >
+                      Bank Details
                     </p>
-                    <p>
-                      <EditableText
-                        value={
-                          data.customTexts?.giftsAccountName ||
-                          "A/C Name: Account Holder Name"
-                        }
-                        onSave={(val) =>
-                          updateCustomText("giftsAccountName", val)
-                        }
-                        mode={mode}
-                        placeholder="A/C Name: Account Holder Name"
-                        as="span"
-                      />
-                    </p>
-                    <p>
-                      <EditableText
-                        value={
-                          data.customTexts?.giftsAccountNo ||
-                          "A/C No: XXXX XXXX XXXX"
-                        }
-                        onSave={(val) =>
-                          updateCustomText("giftsAccountNo", val)
-                        }
-                        mode={mode}
-                        placeholder="A/C No: XXXX XXXX XXXX"
-                        as="span"
-                      />
-                    </p>
-                    <p>
-                      <EditableText
-                        value={
-                          data.customTexts?.giftsIfsc || "IFSC: XXXX0001234"
-                        }
-                        onSave={(val) => updateCustomText("giftsIfsc", val)}
-                        mode={mode}
-                        placeholder="IFSC: XXXX0001234"
-                        as="span"
-                      />
+                    <p
+                      className="text-2xl"
+                      style={{ fontFamily: FONTS.display }}
+                    >
+                      Tap to reveal
                     </p>
                   </div>
-                </motion.div>
-              )}
-            </motion.button>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-3"
+                  >
+                    <p
+                      className="text-[11px] uppercase tracking-[0.34em]"
+                      style={{ color: C.gold, fontFamily: FONTS.sans }}
+                    >
+                      Payment Option
+                    </p>
+                    <p
+                      className="text-2xl"
+                      style={{ fontFamily: FONTS.display }}
+                    >
+                      UPI / Bank Transfer
+                    </p>
+                    <div
+                      className="space-y-1 text-base"
+                      style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+                    >
+                      <p>
+                        <EditableText
+                          value={
+                            data.customTexts?.giftsUpi || "UPI ID: yourname@upi"
+                          }
+                          onSave={(val) => updateCustomText("giftsUpi", val)}
+                          mode={mode}
+                          placeholder="UPI ID: yourname@upi"
+                          as="span"
+                        />
+                      </p>
+                      <p>
+                        <EditableText
+                          value={
+                            data.customTexts?.giftsAccountName ||
+                            "A/C Name: Account Holder Name"
+                          }
+                          onSave={(val) =>
+                            updateCustomText("giftsAccountName", val)
+                          }
+                          mode={mode}
+                          placeholder="A/C Name: Account Holder Name"
+                          as="span"
+                        />
+                      </p>
+                      <p>
+                        <EditableText
+                          value={
+                            data.customTexts?.giftsAccountNo ||
+                            "A/C No: XXXX XXXX XXXX"
+                          }
+                          onSave={(val) =>
+                            updateCustomText("giftsAccountNo", val)
+                          }
+                          mode={mode}
+                          placeholder="A/C No: XXXX XXXX XXXX"
+                          as="span"
+                        />
+                      </p>
+                      <p>
+                        <EditableText
+                          value={
+                            data.customTexts?.giftsIfsc || "IFSC: XXXX0001234"
+                          }
+                          onSave={(val) => updateCustomText("giftsIfsc", val)}
+                          mode={mode}
+                          placeholder="IFSC: XXXX0001234"
+                          as="span"
+                        />
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+              </motion.button>
             )}
           </div>
         </motion.div>
@@ -2442,8 +2451,8 @@ const RsvpSection = ({
               className="mt-5 max-w-md text-lg leading-8"
               style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
             >
-              We'd love to know if you can make it. Please fill in your
-              details so we can prepare everything just right for you.
+              We'd love to know if you can make it. Please fill in your details
+              so we can prepare everything just right for you.
             </p>
             <div className="mt-8 space-y-4">
               {[
@@ -2540,27 +2549,27 @@ const RsvpSection = ({
               </div>
             </div>
             {attending !== "no" && (
-            <label className="grid gap-2">
-              <span
-                className="text-[11px] uppercase tracking-[0.3em]"
-                style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
-              >
-                Guest Count
-              </span>
-              <input
-                type="number"
-                min={1}
-                max={10}
-                value={guestCount}
-                onChange={(e) => setGuestCount(Number(e.target.value))}
-                className="rounded-[20px] border px-5 py-4 outline-none"
-                style={{
-                  borderColor: C.border,
-                  backgroundColor: C.white,
-                  fontFamily: FONTS.sans,
-                }}
-              />
-            </label>
+              <label className="grid gap-2">
+                <span
+                  className="text-[11px] uppercase tracking-[0.3em]"
+                  style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+                >
+                  Guest Count
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={guestCount}
+                  onChange={(e) => setGuestCount(Number(e.target.value))}
+                  className="rounded-[20px] border px-5 py-4 outline-none"
+                  style={{
+                    borderColor: C.border,
+                    backgroundColor: C.white,
+                    fontFamily: FONTS.sans,
+                  }}
+                />
+              </label>
             )}
             <label className="grid gap-2">
               <span

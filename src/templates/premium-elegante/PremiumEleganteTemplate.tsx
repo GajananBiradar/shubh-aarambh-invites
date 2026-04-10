@@ -11,6 +11,7 @@ import {
   Minus,
   Plus,
   Send,
+  Gift,
 } from "lucide-react";
 import { TemplateProps, EventData } from "@/templates/types";
 import {
@@ -66,6 +67,89 @@ const SECTION_REVEAL = {
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, amount: 0.25 },
 };
+
+import type { SectionVisibility } from "@/templates/types";
+
+const DEFAULT_SECTION_VISIBILITY: SectionVisibility = {
+  story: true,
+  events: true,
+  gallery: true,
+  families: true,
+  footer: true,
+  music: true,
+  venue: true,
+  countdown: true,
+  welcome: true,
+  gifts: true,
+  rsvp: true,
+};
+
+const getSectionVisibility = (data: TemplateProps["data"]) => ({
+  ...DEFAULT_SECTION_VISIBILITY,
+  ...(data.sectionVisibility || {}),
+});
+
+const SectionActionButton = ({
+  label,
+  onClick,
+  variant = "remove",
+}: {
+  label: string;
+  onClick: () => void;
+  variant?: "remove" | "add";
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] uppercase tracking-[0.22em] transition-all"
+    style={{
+      borderColor: variant === "add" ? `${C.gold}88` : `${C.gold}38`,
+      background:
+        variant === "add"
+          ? `linear-gradient(135deg, ${C.gold}28, ${C.gold}10)`
+          : "rgba(92,74,50,0.08)",
+      color: variant === "add" ? C.gold : C.textMuted,
+    }}
+  >
+    {variant === "add" ? <Plus size={14} /> : <Trash2 size={14} />}
+    {label}
+  </button>
+);
+
+const HiddenSectionPlaceholder = ({
+  title,
+  onAdd,
+}: {
+  title: string;
+  onAdd: () => void;
+}) => (
+  <section className="py-10 sm:py-12">
+    <div className="mx-auto max-w-5xl px-6">
+      <div
+        className="rounded-[1.5rem] border px-6 py-8 text-center"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(243,237,227,0.6) 0%, rgba(228,216,198,0.4) 100%)",
+          borderColor: `${C.gold}30`,
+        }}
+      >
+        <p
+          className="text-xs uppercase tracking-[0.32em]"
+          style={{ color: C.textLight }}
+        >
+          {title} hidden
+        </p>
+        <div className="mt-4 flex justify-center">
+          <SectionActionButton
+            label={`Add ${title}`}
+            onClick={onAdd}
+            variant="add"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+);
 
 const PremiumBackground = () => (
   <>
@@ -178,6 +262,8 @@ const PremiumEleganteTemplate = ({
     data.effectiveMusicName ||
     data.templateDefaults.defaultMusicName;
 
+  const sectionVisibility = getSectionVisibility(data);
+
   return (
     <div
       data-theme="premium"
@@ -202,55 +288,119 @@ const PremiumEleganteTemplate = ({
       />
 
       {/* ═══════════ COUNTDOWN ═══════════ */}
-      {(data.showCountdown || mode === "edit") && (
+      {sectionVisibility.countdown && (data.showCountdown || mode === "edit") && (
         <CountdownSection
           mode={mode}
           weddingDate={data.weddingDate}
           showCountdown={data.showCountdown}
           onUpdate={onUpdate}
+          sectionVisibility={sectionVisibility}
+        />
+      )}
+      {mode === "edit" && !sectionVisibility.countdown && (
+        <HiddenSectionPlaceholder
+          title="Countdown"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, countdown: true },
+            })
+          }
         />
       )}
 
       {/* ═══════════ WELCOME ═══════════ */}
-      <WelcomeSection
-        mode={mode}
-        welcomeMessage={data.welcomeMessage}
-        onUpdate={onUpdate}
-      />
+      {sectionVisibility.welcome && (
+        <WelcomeSection
+          mode={mode}
+          welcomeMessage={data.welcomeMessage}
+          onUpdate={onUpdate}
+          sectionVisibility={sectionVisibility}
+        />
+      )}
+      {mode === "edit" && !sectionVisibility.welcome && (
+        <HiddenSectionPlaceholder
+          title="Welcome"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, welcome: true },
+            })
+          }
+        />
+      )}
 
       {/* ═══════════ PHOTO GALLERY ═══════════ */}
-      <GallerySection
-        mode={mode}
-        data={data}
-        onUpdate={onUpdate}
-        templateId={templateId}
-        sessionUUID={sessionUUID}
-        uploadStage={uploadStage}
-      />
+      {sectionVisibility.gallery && (
+        <GallerySection
+          mode={mode}
+          data={data}
+          onUpdate={onUpdate}
+          templateId={templateId}
+          sessionUUID={sessionUUID}
+          uploadStage={uploadStage}
+          sectionVisibility={sectionVisibility}
+        />
+      )}
+      {mode === "edit" && !sectionVisibility.gallery && (
+        <HiddenSectionPlaceholder
+          title="Gallery"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, gallery: true },
+            })
+          }
+        />
+      )}
 
       {/* ═══════════ ORNAMENT DIVIDER ═══════════ */}
-      <FloralVaseOrnament />
+      {sectionVisibility.gallery && <FloralVaseOrnament />}
 
       {/* ═══════════ THE VENUE ═══════════ */}
-      {data.events[0] && (
-        <VenueSection event={data.events[0]} weddingDate={data.weddingDate} />
+      {sectionVisibility.venue && data.events[0] && (
+        <VenueSection event={data.events[0]} weddingDate={data.weddingDate} mode={mode} sectionVisibility={sectionVisibility} onUpdate={onUpdate} />
+      )}
+      {mode === "edit" && !sectionVisibility.venue && (
+        <HiddenSectionPlaceholder
+          title="Venue"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, venue: true },
+            })
+          }
+        />
       )}
 
       {/* ═══════════ DAY PROGRAMME ═══════════ */}
-      <DayProgrammeSection mode={mode} data={data} onUpdate={onUpdate} />
+      {sectionVisibility.events && (
+        <DayProgrammeSection mode={mode} data={data} onUpdate={onUpdate} sectionVisibility={sectionVisibility} />
+      )}
+      {mode === "edit" && !sectionVisibility.events && (
+        <HiddenSectionPlaceholder
+          title="Day Programme"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, events: true },
+            })
+          }
+        />
+      )}
 
       {/* ═══════════ RIBBON BOW ═══════════ */}
       <RibbonBowOrnament />
 
-      {/* ═══════════ PRE-WEDDING EVENTS ═══════════ */}
-      {(data.events.length > 1 || mode === "edit") && (
-        <PreWeddingEventsSection mode={mode} data={data} onUpdate={onUpdate} />
-      )}
-
       {/* ═══════════ MUSIC (Edit only) ═══════════ */}
-      {mode === "edit" && (
+      {mode === "edit" && sectionVisibility.music && (
         <section className="py-20" style={{ backgroundColor: C.bg }}>
           <div className="max-w-xl mx-auto px-6">
+            <div className="mb-4 flex justify-center">
+              <SectionActionButton
+                label="Remove Music"
+                onClick={() =>
+                  onUpdate({
+                    sectionVisibility: { ...sectionVisibility, music: false },
+                  })
+                }
+              />
+            </div>
             <EditableMusicPlayer
               musicUrl={data.musicUrl}
               musicName={data.musicName}
@@ -268,9 +418,34 @@ const PremiumEleganteTemplate = ({
           </div>
         </section>
       )}
+      {mode === "edit" && !sectionVisibility.music && (
+        <HiddenSectionPlaceholder
+          title="Music"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, music: true },
+            })
+          }
+        />
+      )}
+
+      {/* ═══════════ GIFTS & BLESSINGS ═══════════ */}
+      {sectionVisibility.gifts && (
+        <GiftsBlessingsSection mode={mode} data={data} onUpdate={onUpdate} sectionVisibility={sectionVisibility} />
+      )}
+      {mode === "edit" && !sectionVisibility.gifts && (
+        <HiddenSectionPlaceholder
+          title="Gifts & Blessings"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, gifts: true },
+            })
+          }
+        />
+      )}
 
       {/* ═══════════ RSVP ═══════════ */}
-      {mode !== "edit" && data.rsvpEnabled !== false && (
+      {sectionVisibility.rsvp !== false && mode !== "edit" && data.rsvpEnabled !== false && (
         <RsvpSection
           invitationId={data.invitationId}
           isDemo={mode === "demo"}
@@ -278,6 +453,7 @@ const PremiumEleganteTemplate = ({
       )}
 
       {/* ═══════════ FOOTER ═══════════ */}
+      {sectionVisibility.footer && (
       <footer
         className={cn(
           "relative py-20 text-center overflow-hidden",
@@ -310,6 +486,18 @@ const PremiumEleganteTemplate = ({
         </div>
 
         <div className="max-w-md mx-auto px-6 relative z-10">
+          {mode === "edit" && (
+            <div className="mb-6 flex justify-center">
+              <SectionActionButton
+                label="Remove Section"
+                onClick={() =>
+                  onUpdate({
+                    sectionVisibility: { ...sectionVisibility, footer: false },
+                  })
+                }
+              />
+            </div>
+          )}
           {/* Ending flowers illustration */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -365,8 +553,8 @@ const PremiumEleganteTemplate = ({
             className="font-script text-4xl md:text-5xl mb-2"
             style={{ color: C.text }}
           >
-            {data.brideName?.split(" ")[0] || "Bride"} &amp;{" "}
-            {data.groomName?.split(" ")[0] || "Groom"}
+            {data.brideName?.split(" ")[0] || "Partner"} &amp;{" "}
+            {data.groomName?.split(" ")[0] || "Partner"}
           </motion.p>
 
           <motion.div
@@ -444,6 +632,17 @@ const PremiumEleganteTemplate = ({
           </p>
         </div>
       </footer>
+      )}
+      {mode === "edit" && !sectionVisibility.footer && (
+        <HiddenSectionPlaceholder
+          title="Footer"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, footer: true },
+            })
+          }
+        />
+      )}
 
       {/* ═══════════ TOOLBAR ═══════════ */}
       {mode === "edit" && (
@@ -564,8 +763,8 @@ const HeroSection = ({
             fontFamily: FONTS.body,
           }}
         >
-          {(data.brideName?.trim()?.charAt(0)?.toUpperCase() || "B") +
-            (data.groomName?.trim()?.charAt(0)?.toUpperCase() || "G")}
+          {(data.brideName?.trim()?.charAt(0)?.toUpperCase() || "P") +
+            (data.groomName?.trim()?.charAt(0)?.toUpperCase() || "P")}
         </motion.div>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -587,7 +786,7 @@ const HeroSection = ({
             value={data.brideName}
             onSave={(val) => onUpdate({ brideName: val })}
             mode={mode}
-            placeholder="Bride"
+            placeholder="First Partner"
             className="block font-script text-6xl sm:text-7xl md:text-8xl leading-tight text-white drop-shadow-lg"
             as="h1"
           />
@@ -598,7 +797,7 @@ const HeroSection = ({
             value={data.groomName}
             onSave={(val) => onUpdate({ groomName: val })}
             mode={mode}
-            placeholder="Groom"
+            placeholder="Second Partner"
             className="block font-script text-6xl sm:text-7xl md:text-8xl leading-tight text-white drop-shadow-lg"
             as="h1"
           />
@@ -688,34 +887,48 @@ const CountdownSection = ({
   weddingDate,
   showCountdown,
   onUpdate,
+  sectionVisibility,
 }: {
   mode: TemplateProps["mode"];
   weddingDate: string;
   showCountdown: boolean;
   onUpdate: TemplateProps["onUpdate"];
+  sectionVisibility: SectionVisibility;
 }) => (
   <section className="py-20 md:py-28" style={{ backgroundColor: C.bg }}>
     <div className="max-w-2xl mx-auto px-6 text-center">
       {mode === "edit" && (
-        <div className="mb-6 flex items-center justify-center gap-3">
-          <label className="font-body text-sm" style={{ color: C.text }}>
-            Show Countdown
-          </label>
-          <button
-            onClick={() => onUpdate({ showCountdown: !showCountdown })}
-            className={cn(
-              "w-12 h-7 rounded-full transition-colors relative",
-              showCountdown ? "bg-[#8a7656]" : "bg-[#d4c4a8]",
-            )}
-          >
-            <div
-              className={cn(
-                "absolute top-1 w-5 h-5 rounded-full bg-white transition-transform",
-                showCountdown ? "left-6" : "left-1",
-              )}
+        <>
+          <div className="mb-4 flex justify-center">
+            <SectionActionButton
+              label="Remove Section"
+              onClick={() =>
+                onUpdate({
+                  sectionVisibility: { ...sectionVisibility, countdown: false },
+                })
+              }
             />
-          </button>
-        </div>
+          </div>
+          <div className="mb-6 flex items-center justify-center gap-3">
+            <label className="font-body text-sm" style={{ color: C.text }}>
+              Show Countdown
+            </label>
+            <button
+              onClick={() => onUpdate({ showCountdown: !showCountdown })}
+              className={cn(
+                "w-12 h-7 rounded-full transition-colors relative",
+                showCountdown ? "bg-[#8a7656]" : "bg-[#d4c4a8]",
+              )}
+            >
+              <div
+                className={cn(
+                  "absolute top-1 w-5 h-5 rounded-full bg-white transition-transform",
+                  showCountdown ? "left-6" : "left-1",
+                )}
+              />
+            </button>
+          </div>
+        </>
       )}
 
       {showCountdown && (
@@ -769,7 +982,7 @@ const CountdownDisplay = ({ weddingDate }: { weddingDate: string }) => {
         return;
       }
       setCountdown({
-        days: Math.floor(diff / 86400000),
+        days: Math.min(200, Math.floor(diff / 86400000)),
         hours: Math.floor((diff % 86400000) / 3600000),
         minutes: Math.floor((diff % 3600000) / 60000),
         seconds: Math.floor((diff % 60000) / 1000),
@@ -790,24 +1003,24 @@ const CountdownDisplay = ({ weddingDate }: { weddingDate: string }) => {
   ];
 
   return (
-    <div className="flex items-center justify-center">
+    <div className="flex items-center justify-center flex-wrap gap-y-4">
       {items.map((item, i) => (
         <div key={item.label} className="flex items-center">
           {i > 0 && (
             <div
-              className="w-[1px] h-14 mx-8 md:mx-12"
+              className="w-[1px] h-10 mx-4 sm:mx-8 md:mx-12 sm:h-14"
               style={{ backgroundColor: C.goldLight }}
             />
           )}
-          <div className="text-center">
+          <div className="text-center min-w-[3rem]">
             <span
-              className="block text-5xl md:text-6xl font-light italic"
+              className="block text-3xl sm:text-5xl md:text-6xl font-light italic"
               style={{ color: C.text, fontFamily: FONTS.serif }}
             >
               {item.value}
             </span>
             <span
-              className="block text-[10px] tracking-[0.3em] uppercase mt-2"
+              className="block text-[9px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.3em] uppercase mt-2"
               style={{ color: C.textLight, fontFamily: FONTS.body }}
             >
               {item.label}
@@ -826,13 +1039,27 @@ const WelcomeSection = ({
   mode,
   welcomeMessage,
   onUpdate,
+  sectionVisibility,
 }: {
   mode: TemplateProps["mode"];
   welcomeMessage: string;
   onUpdate: TemplateProps["onUpdate"];
+  sectionVisibility: SectionVisibility;
 }) => (
   <section className="py-20 md:py-28" style={{ backgroundColor: C.cream }}>
     <div className="mx-auto max-w-4xl px-6 text-center">
+      {mode === "edit" && (
+        <div className="mb-6 flex justify-center">
+          <SectionActionButton
+            label="Remove Section"
+            onClick={() =>
+              onUpdate({
+                sectionVisibility: { ...sectionVisibility, welcome: false },
+              })
+            }
+          />
+        </div>
+      )}
       <SectionFlourish />
       <motion.div
         {...SECTION_REVEAL}
@@ -881,6 +1108,7 @@ const GallerySection = ({
   templateId,
   sessionUUID,
   uploadStage,
+  sectionVisibility,
 }: {
   mode: TemplateProps["mode"];
   data: TemplateProps["data"];
@@ -888,9 +1116,22 @@ const GallerySection = ({
   templateId?: number;
   sessionUUID?: string;
   uploadStage?: "temp" | "draft" | "published";
+  sectionVisibility: SectionVisibility;
 }) => (
   <section className="pb-0 pt-0" style={{ backgroundColor: C.bg }}>
     <div className="max-w-7xl mx-auto px-6">
+      {mode === "edit" && (
+        <div className="mb-4 flex justify-center">
+          <SectionActionButton
+            label="Remove Section"
+            onClick={() =>
+              onUpdate({
+                sectionVisibility: { ...sectionVisibility, gallery: false },
+              })
+            }
+          />
+        </div>
+      )}
       {mode === "edit" ? (
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-8">
@@ -1055,15 +1296,33 @@ const VENUE_IMAGE_URL =
 const VenueSection = ({
   event,
   weddingDate,
+  mode,
+  sectionVisibility,
+  onUpdate,
 }: {
   event: EventData;
   weddingDate: string;
+  mode: TemplateProps["mode"];
+  sectionVisibility: SectionVisibility;
+  onUpdate: TemplateProps["onUpdate"];
 }) => (
   <section
     className="py-20 md:py-28 relative overflow-hidden"
     style={{ backgroundColor: C.gold }}
   >
     <div className="max-w-3xl mx-auto px-6 text-center">
+      {mode === "edit" && (
+        <div className="mb-6 flex justify-center">
+          <SectionActionButton
+            label="Remove Section"
+            onClick={() =>
+              onUpdate({
+                sectionVisibility: { ...sectionVisibility, venue: false },
+              })
+            }
+          />
+        </div>
+      )}
       <motion.h2
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -1202,10 +1461,12 @@ const DayProgrammeSection = ({
   mode,
   data,
   onUpdate,
+  sectionVisibility,
 }: {
   mode: TemplateProps["mode"];
   data: TemplateProps["data"];
   onUpdate: TemplateProps["onUpdate"];
+  sectionVisibility: SectionVisibility;
 }) => (
   <section
     className="py-20 md:py-28 relative overflow-hidden"
@@ -1221,6 +1482,18 @@ const DayProgrammeSection = ({
     />
 
     <div className="max-w-3xl mx-auto px-6 relative z-10">
+      {mode === "edit" && (
+        <div className="mb-6 flex justify-center">
+          <SectionActionButton
+            label="Remove Section"
+            onClick={() =>
+              onUpdate({
+                sectionVisibility: { ...sectionVisibility, events: false },
+              })
+            }
+          />
+        </div>
+      )}
       <div className="text-center mb-16">
         <SectionFlourish invert />
         <motion.h2
@@ -1318,7 +1591,7 @@ const AlternatingTimeline = ({
             />
           ) : (
             <p
-              className="font-bold text-base md:text-lg tracking-[0.15em]"
+              className="font-bold text-sm sm:text-base md:text-lg tracking-[0.1em] sm:tracking-[0.15em]"
               style={{ color: C.text, fontFamily: FONTS.body }}
             >
               {formatTime(event.eventTime)}
@@ -1331,12 +1604,12 @@ const AlternatingTimeline = ({
               onSave={(val) => updateEvent(i, { eventName: val })}
               mode={mode}
               placeholder="Event Name"
-              className="text-sm md:text-base tracking-[0.12em] uppercase mt-1"
+              className="text-xs sm:text-sm md:text-base tracking-[0.08em] sm:tracking-[0.12em] uppercase mt-1"
               as="p"
             />
           ) : (
             <p
-              className="text-sm md:text-base tracking-[0.12em] uppercase mt-1"
+              className="text-xs sm:text-sm md:text-base tracking-[0.08em] sm:tracking-[0.12em] uppercase mt-1"
               style={{ color: C.textMuted, fontFamily: FONTS.body }}
             >
               {event.eventName}
@@ -1344,23 +1617,73 @@ const AlternatingTimeline = ({
           );
 
           const venueContent = isEdit ? (
-            <EditableText
-              value={event.venueName}
-              onSave={(val) => updateEvent(i, { venueName: val })}
-              mode={mode}
-              placeholder="Venue Name"
-              className="text-xs md:text-sm italic mt-1"
-              as="p"
-            />
-          ) : (
-            event.venueName && (
-              <p
+            <>
+              <EditableText
+                value={event.venueName}
+                onSave={(val) => updateEvent(i, { venueName: val })}
+                mode={mode}
+                placeholder="Venue Name"
                 className="text-xs md:text-sm italic mt-1"
-                style={{ color: C.textLight, fontFamily: FONTS.serif }}
-              >
-                {event.venueName}
-              </p>
-            )
+                as="p"
+              />
+              <EditableText
+                value={event.venueAddress}
+                onSave={(val) => updateEvent(i, { venueAddress: val })}
+                mode={mode}
+                placeholder="Venue Address"
+                className="text-[11px] md:text-xs italic mt-0.5"
+                as="p"
+              />
+              <div className="mt-1">
+                <input
+                  type="url"
+                  value={event.mapsUrl || ""}
+                  onChange={(e) =>
+                    updateEvent(i, { mapsUrl: e.target.value || null })
+                  }
+                  placeholder="Google Maps URL"
+                  className="w-full bg-white/60 border rounded-lg px-3 py-1.5 text-xs"
+                  style={{
+                    borderColor: C.goldLight,
+                    color: C.text,
+                    fontFamily: FONTS.body,
+                  }}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              {event.venueName && (
+                <p
+                  className="text-xs md:text-sm italic mt-1"
+                  style={{ color: C.textLight, fontFamily: FONTS.serif }}
+                >
+                  {event.venueName}
+                </p>
+              )}
+              {event.venueAddress && (
+                event.mapsUrl ? (
+                  <a
+                    href={event.mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-[11px] md:text-xs italic mt-0.5 hover:opacity-80 transition-opacity break-words"
+                    style={{ color: C.gold, fontFamily: FONTS.serif }}
+                  >
+                    <MapPin size={11} className="inline-block align-middle mr-0.5 shrink-0" />
+                    <span className="align-middle">{event.venueAddress}</span>
+                  </a>
+                ) : (
+                  <p
+                    className="block text-[11px] md:text-xs italic mt-0.5 break-words"
+                    style={{ color: C.textLight, fontFamily: FONTS.serif }}
+                  >
+                    <MapPin size={11} className="inline-block align-middle mr-0.5 shrink-0" />
+                    <span className="align-middle">{event.venueAddress}</span>
+                  </p>
+                )
+              )}
+            </>
           );
 
           const dateContent = isEdit ? (
@@ -1395,7 +1718,7 @@ const AlternatingTimeline = ({
 
               {isLeft ? (
                 <>
-                  <div className="text-right pr-10">
+                  <div className="text-right pr-4 sm:pr-10 overflow-hidden break-words">
                     {timeContent}
                     {nameContent}
                     {venueContent}
@@ -1404,12 +1727,12 @@ const AlternatingTimeline = ({
                       <div className="flex justify-end">{deleteBtn}</div>
                     )}
                   </div>
-                  <div className="pl-10" />
+                  <div className="pl-4 sm:pl-10" />
                 </>
               ) : (
                 <>
-                  <div className="pr-10" />
-                  <div className="text-left pl-10">
+                  <div className="pr-4 sm:pr-10" />
+                  <div className="text-left pl-4 sm:pl-10 overflow-hidden break-words">
                     {timeContent}
                     {nameContent}
                     {venueContent}
@@ -2125,6 +2448,242 @@ function getEmbedMapUrl(mapsUrl: string): string {
 }
 
 /* ══════════════════════════════════════════════════════════
+   GIFTS & BLESSINGS — Tap-to-reveal payment details
+   ══════════════════════════════════════════════════════════ */
+const GiftsBlessingsSection = ({
+  mode,
+  data,
+  onUpdate,
+  sectionVisibility,
+}: {
+  mode: TemplateProps["mode"];
+  data: TemplateProps["data"];
+  onUpdate: TemplateProps["onUpdate"];
+  sectionVisibility: SectionVisibility;
+}) => {
+  const [revealed, setRevealed] = useState(false);
+
+  const updateCustomText = (key: string, value: string) =>
+    onUpdate({ customTexts: { ...data.customTexts, [key]: value } });
+
+  return (
+    <section className="px-4 pb-20" style={{ backgroundColor: C.bg }}>
+      <div className="mx-auto max-w-3xl">
+        {mode === "edit" && (
+          <div className="mb-6 flex justify-center">
+            <SectionActionButton
+              label="Remove Section"
+              onClick={() =>
+                onUpdate({
+                  sectionVisibility: { ...sectionVisibility, gifts: false },
+                })
+              }
+            />
+          </div>
+        )}
+        <motion.div
+          {...SECTION_REVEAL}
+          className="overflow-hidden rounded-[2rem] border px-6 py-12 text-center sm:px-10"
+          style={{
+            borderColor: `${C.gold}25`,
+            background:
+              "linear-gradient(180deg, rgba(255,253,249,0.96), rgba(249,241,230,0.86))",
+            boxShadow: "0 24px 60px rgba(92,74,50,0.08)",
+          }}
+        >
+          <div
+            className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full"
+            style={{ backgroundColor: `${C.gold}1F` }}
+          >
+            <Gift size={28} style={{ color: C.gold }} />
+          </div>
+          <p
+            className="text-[11px] uppercase tracking-[0.45em]"
+            style={{ color: C.gold, fontFamily: FONTS.body }}
+          >
+            Gifts &amp; Blessings
+          </p>
+          <h2
+            className="mt-4 font-script text-4xl md:text-6xl"
+            style={{ color: C.text }}
+          >
+            <EditableText
+              value={
+                data.customTexts?.giftsHeading ||
+                "Your Presence Is The Real Gift"
+              }
+              onSave={(val) => updateCustomText("giftsHeading", val)}
+              mode={mode}
+              placeholder="Your Presence Is The Real Gift"
+              as="span"
+            />
+          </h2>
+          <p
+            className="mx-auto mt-5 max-w-2xl text-lg leading-8 italic"
+            style={{ color: C.textMuted, fontFamily: FONTS.serif }}
+          >
+            <EditableText
+              value={
+                data.customTexts?.giftsBody ||
+                "If you wish to bless the couple as they start their new journey together, you can use the details below."
+              }
+              onSave={(val) => updateCustomText("giftsBody", val)}
+              mode={mode}
+              placeholder="Add a message about gifts"
+              as="span"
+              multiline
+            />
+          </p>
+
+          <div className="mt-10 flex justify-center">
+            {mode === "edit" ? (
+              <div
+                className="w-full max-w-sm rounded-[28px] border px-6 py-10"
+                style={{
+                  borderColor: `${C.gold}66`,
+                  backgroundColor: `${C.gold}14`,
+                }}
+              >
+                <p
+                  className="mb-4 text-[11px] uppercase tracking-[0.34em]"
+                  style={{ color: C.gold, fontFamily: FONTS.body }}
+                >
+                  Payment Details (editable)
+                </p>
+                <div
+                  className="space-y-1 text-base"
+                  style={{ color: C.textMuted, fontFamily: FONTS.body }}
+                >
+                  <p>
+                    <EditableText
+                      value={
+                        data.customTexts?.giftsUpi || "UPI ID: yourname@upi"
+                      }
+                      onSave={(val) => updateCustomText("giftsUpi", val)}
+                      mode={mode}
+                      placeholder="UPI ID: yourname@upi"
+                      as="span"
+                    />
+                  </p>
+                  <p>
+                    <EditableText
+                      value={
+                        data.customTexts?.giftsAccountName ||
+                        "A/C Name: Account Holder Name"
+                      }
+                      onSave={(val) =>
+                        updateCustomText("giftsAccountName", val)
+                      }
+                      mode={mode}
+                      placeholder="A/C Name: Account Holder Name"
+                      as="span"
+                    />
+                  </p>
+                  <p>
+                    <EditableText
+                      value={
+                        data.customTexts?.giftsAccountNo ||
+                        "A/C No: XXXX XXXX XXXX"
+                      }
+                      onSave={(val) => updateCustomText("giftsAccountNo", val)}
+                      mode={mode}
+                      placeholder="A/C No: XXXX XXXX XXXX"
+                      as="span"
+                    />
+                  </p>
+                  <p>
+                    <EditableText
+                      value={data.customTexts?.giftsIfsc || "IFSC: XXXX0001234"}
+                      onSave={(val) => updateCustomText("giftsIfsc", val)}
+                      mode={mode}
+                      placeholder="IFSC: XXXX0001234"
+                      as="span"
+                    />
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setRevealed((prev) => !prev)}
+                className="w-full max-w-sm rounded-[28px] border px-6 py-10"
+                style={{
+                  borderColor: revealed ? `${C.gold}66` : `${C.gold}25`,
+                  backgroundColor: revealed
+                    ? `${C.gold}14`
+                    : "rgba(255,255,255,0.7)",
+                }}
+              >
+                {!revealed ? (
+                  <div className="space-y-4">
+                    <Gift
+                      className="mx-auto"
+                      size={28}
+                      style={{ color: C.gold }}
+                    />
+                    <p
+                      className="text-[11px] uppercase tracking-[0.34em]"
+                      style={{ color: C.textMuted, fontFamily: FONTS.body }}
+                    >
+                      Bank Details
+                    </p>
+                    <p
+                      className="font-script text-2xl"
+                      style={{ color: C.text }}
+                    >
+                      Tap to reveal
+                    </p>
+                  </div>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-3"
+                  >
+                    <p
+                      className="text-[11px] uppercase tracking-[0.34em]"
+                      style={{ color: C.gold, fontFamily: FONTS.body }}
+                    >
+                      Payment Option
+                    </p>
+                    <p
+                      className="font-script text-2xl"
+                      style={{ color: C.text }}
+                    >
+                      UPI / Bank Transfer
+                    </p>
+                    <div
+                      className="space-y-1 text-base"
+                      style={{ color: C.textMuted, fontFamily: FONTS.body }}
+                    >
+                      <p>
+                        {data.customTexts?.giftsUpi || "UPI ID: yourname@upi"}
+                      </p>
+                      <p>
+                        {data.customTexts?.giftsAccountName ||
+                          "A/C Name: Account Holder Name"}
+                      </p>
+                      <p>
+                        {data.customTexts?.giftsAccountNo ||
+                          "A/C No: XXXX XXXX XXXX"}
+                      </p>
+                      <p>
+                        {data.customTexts?.giftsIfsc || "IFSC: XXXX0001234"}
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+              </motion.button>
+            )}
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+/* ══════════════════════════════════════════════════════════
    RSVP SECTION — Premium Elegante styled RSVP form
    ══════════════════════════════════════════════════════════ */
 const RsvpSection = ({
@@ -2148,7 +2707,7 @@ const RsvpSection = ({
       toast.error("Please enter your name");
       return;
     }
-    if (!phone.trim() || phone.length < 10) {
+    if (phone.trim() && phone.length < 10) {
       toast.error("Please enter a valid 10-digit phone number");
       return;
     }
@@ -2169,7 +2728,7 @@ const RsvpSection = ({
       };
       await submitRsvp(String(invitationId || ""), {
         guestName: name,
-        guestPhone: phone,
+        guestPhone: phone || undefined,
         attending: attendingMap[attending] || "YES",
         guestCount,
         message: message || undefined,
@@ -2339,7 +2898,7 @@ const RsvpSection = ({
               className="text-xs tracking-[0.15em] uppercase block mb-2"
               style={{ fontFamily: FONTS.body, color: C.textMuted }}
             >
-              Phone Number *
+              Phone Number
             </label>
             <input
               type="tel"
@@ -2347,7 +2906,6 @@ const RsvpSection = ({
               onChange={(e) =>
                 setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
               }
-              required
               className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all"
               style={{
                 fontFamily: FONTS.body,

@@ -3,12 +3,11 @@ import { DemoDataOverrides } from '../demoData';
 const R2_BASE = 'https://pub-ae188d768af94d25a7750692051dfeea.r2.dev';
 
 const galleryPhotos = [
-  `${R2_BASE}/templates/7/photos/Dance.png`,
-  `${R2_BASE}/templates/7/photos/Phere.png`,
-  `${R2_BASE}/templates/7/photos/Pose.png`,
-  `${R2_BASE}/templates/7/photos/haldi.png`,
-  `${R2_BASE}/templates/7/photos/marriage.png`,
-  `${R2_BASE}/templates/7/photos/mehandi.png`,
+  `${R2_BASE}/templates/7/photos/couple1.jpg`,
+  `${R2_BASE}/templates/7/photos/couple2.jpg`,
+  `${R2_BASE}/templates/7/photos/couple3.jpg`,
+  `${R2_BASE}/templates/7/photos/couple4.jpg`,
+  `${R2_BASE}/templates/7/photos/couple5.jpg`,
 ];
 
 const demoData: DemoDataOverrides = {

@@ -55,6 +55,8 @@ export interface SectionVisibility {
   faq?: boolean;
   gifts?: boolean;
   rsvp?: boolean;
+  countdown?: boolean;
+  welcome?: boolean;
 }
 
 // Main invitation data structure

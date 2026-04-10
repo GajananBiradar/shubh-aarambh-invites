@@ -52,6 +52,9 @@ export interface SectionVisibility {
   dressCode?: boolean;
   details?: boolean;
   timeline?: boolean;
+  faq?: boolean;
+  gifts?: boolean;
+  rsvp?: boolean;
 }
 
 // Main invitation data structure

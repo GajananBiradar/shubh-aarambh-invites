@@ -16,9 +16,11 @@ import {
   Gift,
   Heart,
   MapPin,
+  Plus,
   Sparkle,
   Send,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 import { submitRsvp } from "@/api/rsvp";
 import {
@@ -37,7 +39,7 @@ import {
   formatTime,
   formatWeddingDate,
 } from "@/utils/formatDate";
-import { createEmptyEvent, EventData, TemplateProps } from "@/templates/types";
+import { createEmptyEvent, EventData, SectionVisibility, TemplateProps } from "@/templates/types";
 import toast from "react-hot-toast";
 
 const R2_BASE = "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev";
@@ -76,19 +78,19 @@ const sectionReveal = {
 const faqItems = [
   {
     q: "What should I wear?",
-    a: "Think regal, festive, and camera-ready. Jewel tones, embroidered looks, and soft glam fit the mood beautifully.",
+    a: "We'd love to see you in festive traditional attire. Think elegant sarees, lehengas, sherwanis or suits in rich jewel tones that match the celebratory spirit.",
   },
   {
     q: "Can I bring family?",
-    a: "Yes, if your invitation mentions guest count. We want every seat, meal, and welcome prepared with care.",
+    a: "Absolutely! Please RSVP with the total number of guests attending so we can ensure everyone is comfortably accommodated.",
   },
   {
     q: "Will accommodation details be shared?",
-    a: "Yes. Nearby stay suggestions and travel pointers can be added here for guests coming from outside the city.",
+    a: "Yes, hotel recommendations and travel directions for outstation guests will be shared closer to the date. Feel free to reach out if you need any help.",
   },
   {
     q: "Is there a gift option?",
-    a: "Your blessings matter most, but a payment or bank transfer option is included below if you want to contribute with love.",
+    a: "Your presence truly is the best gift. However, if you wish to bless us, a small section with payment details is included below.",
   },
 ];
 
@@ -170,6 +172,88 @@ const SectionIntro = ({
       </p>
     )}
   </motion.div>
+);
+
+/* ── Section visibility ─────────────────────────────────── */
+const DEFAULT_SECTION_VISIBILITY: SectionVisibility = {
+  story: true,
+  events: true,
+  gallery: true,
+  families: true,
+  footer: true,
+  music: true,
+  venue: true,
+  faq: true,
+  gifts: true,
+  rsvp: true,
+};
+
+const getSectionVisibility = (data: TemplateProps["data"]) => ({
+  ...DEFAULT_SECTION_VISIBILITY,
+  ...(data.sectionVisibility || {}),
+});
+
+const SectionActionButton = ({
+  label,
+  onClick,
+  variant = "remove",
+}: {
+  label: string;
+  onClick: () => void;
+  variant?: "remove" | "add";
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] uppercase tracking-[0.22em] transition-all"
+    style={{
+      borderColor:
+        variant === "add" ? `${C.gold}88` : "rgba(182,129,63,0.22)",
+      background:
+        variant === "add"
+          ? "linear-gradient(135deg, rgba(182,129,63,0.16), rgba(182,129,63,0.06))"
+          : "rgba(56,26,29,0.38)",
+      color: variant === "add" ? C.gold : C.inkMuted,
+    }}
+  >
+    {variant === "add" ? <Plus size={14} /> : <Trash2 size={14} />}
+    {label}
+  </button>
+);
+
+const HiddenSectionPlaceholder = ({
+  title,
+  onAdd,
+}: {
+  title: string;
+  onAdd: () => void;
+}) => (
+  <section className="py-10 sm:py-12">
+    <div className="mx-auto max-w-5xl px-6">
+      <div
+        className="rounded-[1.5rem] border px-6 py-8 text-center"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(255,253,249,0.6), rgba(247,238,224,0.8))",
+          borderColor: C.border,
+        }}
+      >
+        <p
+          className="text-xs uppercase tracking-[0.32em]"
+          style={{ color: C.inkMuted }}
+        >
+          {title} hidden
+        </p>
+        <div className="mt-4 flex justify-center">
+          <SectionActionButton
+            label={`Add ${title}`}
+            onClick={onAdd}
+            variant="add"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
 );
 
 /* ── 3D Curved-shelf card ───────────────────────────────── */
@@ -377,6 +461,7 @@ const GoldenMemoTemplate = ({
     data.effectiveMusicName ||
     data.templateDefaults.defaultMusicName;
   const displayPhotos = useMemo(() => getDisplayPhotos(data), [data]);
+  const sectionVisibility = getSectionVisibility(data);
 
   return (
     <div
@@ -407,24 +492,92 @@ const GoldenMemoTemplate = ({
         sessionUUID={sessionUUID}
         uploadStage={uploadStage}
       />
-      <StoryMemorySection
-        mode={mode}
-        data={data}
-        onUpdate={onUpdate}
-        photos={displayPhotos}
-        templateId={templateId}
-        sessionUUID={sessionUUID}
-        uploadStage={uploadStage}
-      />
-      <EventsSection mode={mode} data={data} onUpdate={onUpdate} />
-      <VenueSection event={data.events[0] ?? null} />
-      <FaqSection />
-      <GiftsSection />
+      {sectionVisibility.story && (
+        <StoryMemorySection
+          mode={mode}
+          data={data}
+          onUpdate={onUpdate}
+          photos={displayPhotos}
+          templateId={templateId}
+          sessionUUID={sessionUUID}
+          uploadStage={uploadStage}
+        />
+      )}
+      {mode === "edit" && !sectionVisibility.story && (
+        <HiddenSectionPlaceholder
+          title="Our Story"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, story: true },
+            })
+          }
+        />
+      )}
+      {sectionVisibility.events && (
+        <EventsSection mode={mode} data={data} onUpdate={onUpdate} />
+      )}
+      {mode === "edit" && !sectionVisibility.events && (
+        <HiddenSectionPlaceholder
+          title="Events"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, events: true },
+            })
+          }
+        />
+      )}
+
+      {sectionVisibility.venue !== false && (
+        <VenueSection
+          event={data.events[0] ?? null}
+          mode={mode}
+          data={data}
+          onUpdate={onUpdate}
+        />
+      )}
+      {mode === "edit" && sectionVisibility.venue === false && (
+        <HiddenSectionPlaceholder
+          title="Venue"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, venue: true },
+            })
+          }
+        />
+      )}
+
+      {sectionVisibility.faq !== false && (
+        <FaqSection mode={mode} data={data} onUpdate={onUpdate} />
+      )}
+      {mode === "edit" && sectionVisibility.faq === false && (
+        <HiddenSectionPlaceholder
+          title="FAQ"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, faq: true },
+            })
+          }
+        />
+      )}
+
+      {sectionVisibility.gifts !== false && (
+        <GiftsSection mode={mode} data={data} onUpdate={onUpdate} />
+      )}
+      {mode === "edit" && sectionVisibility.gifts === false && (
+        <HiddenSectionPlaceholder
+          title="Gifts"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, gifts: true },
+            })
+          }
+        />
+      )}
 
       {mode === "edit" && (
         <section className="px-4 pb-12">
           <div
-            className="mx-auto max-w-3xl rounded-[32px] border px-5 py-8 sm:px-8"
+            className="mx-auto max-w-3xl rounded-[32px] border px-5 py-8 sm:px-8 [&_.btn-outline-accent]:border [&_.btn-outline-accent]:border-[rgba(182,129,63,0.3)] [&_.btn-outline-accent]:text-[#6c584d] [&_button]:text-[#6c584d]"
             style={{
               backgroundColor: "rgba(255,253,249,0.86)",
               borderColor: C.border,
@@ -461,48 +614,97 @@ const GoldenMemoTemplate = ({
         />
       )}
 
-      <footer
-        className={cn("px-4 pb-20 pt-16", mode === "edit" && "pb-36")}
-        style={{
-          background: `linear-gradient(180deg, rgba(247,238,224,1), rgba(237,224,206,1))`,
-        }}
-      >
-        <motion.div
-          {...sectionReveal}
-          className="mx-auto max-w-5xl rounded-[36px] border px-6 py-12 text-center sm:px-10"
+      {sectionVisibility.footer && (
+        <footer
+          className={cn("px-4 pb-20 pt-16", mode === "edit" && "pb-36")}
           style={{
-            borderColor: C.border,
-            background:
-              "linear-gradient(180deg, rgba(255,253,249,0.96), rgba(249,241,230,0.88))",
-            boxShadow: C.shadow,
+            background: `linear-gradient(180deg, rgba(247,238,224,1), rgba(237,224,206,1))`,
           }}
         >
-          <p
-            className="mb-3 text-[11px] uppercase tracking-[0.45em]"
-            style={{ color: C.gold, fontFamily: FONTS.sans }}
+          <motion.div
+            {...sectionReveal}
+            className="mx-auto max-w-5xl rounded-[36px] border px-6 py-12 text-center sm:px-10"
+            style={{
+              borderColor: C.border,
+              background:
+                "linear-gradient(180deg, rgba(255,253,249,0.96), rgba(249,241,230,0.88))",
+              boxShadow: C.shadow,
+            }}
           >
-            Made for Celebration
-          </p>
-          <h2
-            className="text-4xl sm:text-5xl"
-            style={{ color: C.ink, fontFamily: FONTS.display }}
-          >
-            {data.brideName || "Bride"} &amp; {data.groomName || "Groom"}
-          </h2>
-          <p
-            className="mt-4 text-lg"
-            style={{ color: C.inkMuted, fontFamily: FONTS.serif }}
-          >
-            {formatWeddingDate(data.weddingDate)}
-          </p>
-          <p
-            className="mt-5 text-sm uppercase tracking-[0.25em]"
-            style={{ color: "rgba(108,88,77,0.5)", fontFamily: FONTS.sans }}
-          >
-            Shubh Aarambh Invitation
-          </p>
-        </motion.div>
-      </footer>
+            <div style={{ color: C.gold, fontFamily: FONTS.sans }}>
+              <EditableText
+                value={
+                  data.customTexts?.footerKicker || "Made for Celebration"
+                }
+                onSave={(val) =>
+                  onUpdate({
+                    customTexts: {
+                      ...data.customTexts,
+                      footerKicker: val,
+                    },
+                  })
+                }
+                mode={mode}
+                className="mb-3 text-[11px] uppercase tracking-[0.45em]"
+                as="p"
+                placeholder="Made for Celebration"
+              />
+            </div>
+            <h2
+              className="text-4xl sm:text-5xl"
+              style={{ color: C.ink, fontFamily: FONTS.display }}
+            >
+              {data.brideName || "Bride"} &amp; {data.groomName || "Groom"}
+            </h2>
+            {mode === "edit" ? (
+              <input
+                type="date"
+                value={data.weddingDate || ""}
+                onChange={(e) => onUpdate({ weddingDate: e.target.value })}
+                className="mx-auto mt-4 block cursor-pointer rounded-full border px-5 py-2 text-center text-lg"
+                style={{
+                  borderColor: "rgba(182,129,63,0.3)",
+                  backgroundColor: "rgba(255,253,249,0.72)",
+                  color: C.inkMuted,
+                  fontFamily: FONTS.serif,
+                }}
+              />
+            ) : (
+              <p
+                className="mt-4 text-lg"
+                style={{ color: C.inkMuted, fontFamily: FONTS.serif }}
+              >
+                {formatWeddingDate(data.weddingDate)}
+              </p>
+            )}
+            {mode === "edit" && (
+              <div className="mt-6 flex justify-center">
+                <SectionActionButton
+                  label="Remove Section"
+                  onClick={() =>
+                    onUpdate({
+                      sectionVisibility: {
+                        ...sectionVisibility,
+                        footer: false,
+                      },
+                    })
+                  }
+                />
+              </div>
+            )}
+          </motion.div>
+        </footer>
+      )}
+      {mode === "edit" && !sectionVisibility.footer && (
+        <HiddenSectionPlaceholder
+          title="Footer"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, footer: true },
+            })
+          }
+        />
+      )}
 
       {mode === "edit" && (
         <EditModeToolbar
@@ -534,13 +736,13 @@ const HeroSection = ({
   sessionUUID?: string;
   uploadStage: "temp" | "draft" | "published";
 }) => {
-  const floatingPhotos = [
-    data.couplePhotoUrl || photos[0]?.photoUrl || DEFAULT_COUPLE_PHOTO,
-    photos[1]?.photoUrl,
-    photos[2]?.photoUrl,
-    photos[3]?.photoUrl,
-    photos[4]?.photoUrl,
-  ];
+  const heroPhotos = Array.from({ length: 6 }, (_, i) =>
+    data.customTexts?.[`heroPhoto${i}`] || data.couplePhotoUrl || photos[0]?.photoUrl || DEFAULT_COUPLE_PHOTO,
+  );
+  const floatingPhotos = heroPhotos;
+
+  const updateCustomText = (key: string, value: string) =>
+    onUpdate({ customTexts: { ...data.customTexts, [key]: value } });
 
   return (
     <section className="relative overflow-hidden px-4 pb-8 pt-6 sm:pb-10 sm:pt-8">
@@ -554,6 +756,34 @@ const HeroSection = ({
         className="relative mx-auto max-w-[1450px]"
       >
         <HeroCurvedCarousel photos={floatingPhotos} />
+
+        {mode === "edit" && (
+          <div className="mx-auto mt-6 max-w-4xl">
+            <p
+              className="mb-3 text-center text-[11px] uppercase tracking-[0.3em]"
+              style={{ color: C.gold, fontFamily: FONTS.sans }}
+            >
+              Edit Carousel Photos (up to 6)
+            </p>
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+              {heroPhotos.map((photoUrl, i) => (
+                <EditablePhoto
+                  key={`hero-edit-${i}`}
+                  photoUrl={photoUrl}
+                  onSave={(url) => updateCustomText(`heroPhoto${i}`, url)}
+                  mode={mode}
+                  className="aspect-[3/4] w-full rounded-xl"
+                  alt={`Hero photo ${i + 1}`}
+                  templateId={templateId}
+                  sessionUUID={sessionUUID}
+                  uploadStage={uploadStage}
+                  invitationId={data.invitationId ?? undefined}
+                  oldPublicUrl={data.customTexts?.[`heroPhoto${i}`] || undefined}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="pt-6 text-center sm:pt-8">
           <div
@@ -599,12 +829,27 @@ const HeroSection = ({
               placeholder="Groom Name"
             />
           </div>
-          <p
-            className="mt-4 text-sm uppercase tracking-[0.36em]"
-            style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
-          >
-            {formatWeddingDate(data.weddingDate)}
-          </p>
+          {mode === "edit" ? (
+            <input
+              type="date"
+              value={data.weddingDate || ""}
+              onChange={(e) => onUpdate({ weddingDate: e.target.value })}
+              className="mx-auto mt-4 block cursor-pointer rounded-full border px-5 py-2 text-center text-sm uppercase tracking-[0.36em]"
+              style={{
+                borderColor: "rgba(182,129,63,0.3)",
+                backgroundColor: "rgba(255,253,249,0.72)",
+                color: C.inkMuted,
+                fontFamily: FONTS.sans,
+              }}
+            />
+          ) : (
+            <p
+              className="mt-4 text-sm uppercase tracking-[0.36em]"
+              style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+            >
+              {formatWeddingDate(data.weddingDate)}
+            </p>
+          )}
         </div>
       </motion.div>
     </section>
@@ -628,18 +873,25 @@ const StoryMemorySection = ({
   sessionUUID?: string;
   uploadStage: "temp" | "draft" | "published";
 }) => {
-  const cards = [
-    photos[1]?.photoUrl || photos[0]?.photoUrl || DEFAULT_COUPLE_PHOTO,
-    photos[2]?.photoUrl || photos[1]?.photoUrl || DEFAULT_COUPLE_PHOTO,
-    photos[3]?.photoUrl || photos[2]?.photoUrl || DEFAULT_COUPLE_PHOTO,
+  const defaultPhoto = photos[0]?.photoUrl || data.couplePhotoUrl || DEFAULT_COUPLE_PHOTO;
+  const memoryPhotos = [
+    data.customTexts?.memoryPhoto0 || photos[1]?.photoUrl || defaultPhoto,
+    data.customTexts?.memoryPhoto1 || photos[2]?.photoUrl || defaultPhoto,
+    data.customTexts?.memoryPhoto2 || photos[3]?.photoUrl || defaultPhoto,
   ];
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const storyTexts = [
+  const defaultStoryTexts = [
     "The first time we met, there was an unspoken warmth — like finding a melody you never knew you were humming.",
     "Through late-night conversations and shared silences, we discovered that love isn't just found — it grows, gently and deeply.",
     "And now, here we are — two stories becoming one, ready to write every chapter of forever together.",
   ];
+  const storyTexts = defaultStoryTexts.map(
+    (fallback, i) => data.customTexts?.[`storyText${i}`] || fallback,
+  );
+
+  const updateCustomText = (key: string, value: string) =>
+    onUpdate({ customTexts: { ...data.customTexts, [key]: value } });
 
   return (
     <section className="relative px-4 py-20 sm:py-24">
@@ -674,10 +926,8 @@ const StoryMemorySection = ({
               {storyTexts.map((story, index) => {
                 const isActive = index === activeIndex;
                 return (
-                  <button
+                  <div
                     key={`story-tab-${index}`}
-                    type="button"
-                    onClick={() => setActiveIndex(index)}
                     className="block w-full rounded-[28px] border px-6 py-5 text-left transition-all duration-300"
                     style={{
                       borderColor: isActive
@@ -692,7 +942,8 @@ const StoryMemorySection = ({
                     }}
                   >
                     <div
-                      className="mb-3 inline-flex rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.3em]"
+                      className="mb-3 inline-flex cursor-pointer rounded-full px-4 py-1.5 text-[10px] uppercase tracking-[0.3em]"
+                      onClick={() => setActiveIndex(index)}
                       style={{
                         backgroundColor: "rgba(182,129,63,0.1)",
                         color: C.gold,
@@ -702,34 +953,78 @@ const StoryMemorySection = ({
                     >
                       Memory {String(index + 1).padStart(2, "0")}
                     </div>
-                    <p
-                      className="text-xl leading-9 sm:text-2xl"
-                      style={{ color: C.ink, fontFamily: FONTS.serif }}
-                    >
-                      {story}
-                    </p>
-                  </button>
+                    {mode === "edit" ? (
+                      <div style={{ color: C.ink, fontFamily: FONTS.serif }}>
+                        <EditableText
+                          value={story}
+                          onSave={(val) =>
+                            updateCustomText(`storyText${index}`, val)
+                          }
+                          mode={mode}
+                          multiline
+                          className="text-xl leading-9 sm:text-2xl"
+                          as="p"
+                          placeholder="Tell your love story"
+                        />
+                      </div>
+                    ) : (
+                      <p
+                        className="cursor-pointer text-xl leading-9 sm:text-2xl"
+                        onClick={() => setActiveIndex(index)}
+                        style={{ color: C.ink, fontFamily: FONTS.serif }}
+                      >
+                        {story}
+                      </p>
+                    )}
+                  </div>
                 );
               })}
-
-              {mode === "edit" && activeIndex === 0 && (
-                <EditableText
-                  value={data.groomBio || ""}
-                  onSave={(value) => onUpdate({ groomBio: value })}
-                  mode={mode}
-                  multiline
-                  className="block rounded-[24px] border px-6 py-5 text-base leading-7"
-                  inputClassName="text-base"
-                  as="p"
-                  placeholder="Add more to your story"
-                  style={{
-                    borderColor: C.border,
-                    backgroundColor: "rgba(255,253,249,0.72)",
-                  }}
-                />
-              )}
             </div>
 
+            {mode === "edit" ? (
+              <div className="space-y-4">
+                {memoryPhotos.map((photoUrl, i) => (
+                  <div
+                    key={`memory-photo-edit-${i}`}
+                    className="relative rounded-[30px] border bg-[#fffefb] p-3 sm:p-4"
+                    style={{
+                      borderColor: C.border,
+                      boxShadow: "0 32px 80px rgba(43,23,24,0.12)",
+                    }}
+                  >
+                    <EditablePhoto
+                      photoUrl={photoUrl || null}
+                      onSave={(url) =>
+                        updateCustomText(`memoryPhoto${i}`, url)
+                      }
+                      mode={mode}
+                      className="aspect-[4/5] w-full rounded-[22px]"
+                      alt={`Story frame ${i + 1}`}
+                      templateId={templateId}
+                      sessionUUID={sessionUUID}
+                      uploadStage={uploadStage}
+                      invitationId={data.invitationId ?? undefined}
+                      oldPublicUrl={data.customTexts?.[`memoryPhoto${i}`] || undefined}
+                    />
+                    <div
+                      className="absolute bottom-7 left-7 right-7 flex items-center justify-between rounded-full px-4 py-2"
+                      style={{
+                        backgroundColor: "rgba(255,254,251,0.9)",
+                        backdropFilter: "blur(10px)",
+                      }}
+                    >
+                      <p
+                        className="text-xs uppercase tracking-[0.28em]"
+                        style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+                      >
+                        Memory {String(i + 1).padStart(2, "0")} Photo
+                      </p>
+                      <Sparkle size={14} style={{ color: C.gold }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
             <motion.div
               key={`featured-memory-${activeIndex}`}
               initial={{ opacity: 0, y: 20, scale: 0.985 }}
@@ -746,15 +1041,9 @@ const StoryMemorySection = ({
                 }}
               >
                 <EditablePhoto
-                  photoUrl={cards[activeIndex] || null}
+                  photoUrl={memoryPhotos[activeIndex] || null}
                   onSave={(url) =>
-                    onUpdate({
-                      galleryPhotos: updateGalleryPhotoAtIndex(
-                        photos,
-                        activeIndex + 1,
-                        url,
-                      ),
-                    })
+                    updateCustomText(`memoryPhoto${activeIndex}`, url)
                   }
                   mode={mode}
                   className="aspect-[4/5] w-full rounded-[22px]"
@@ -763,7 +1052,7 @@ const StoryMemorySection = ({
                   sessionUUID={sessionUUID}
                   uploadStage={uploadStage}
                   invitationId={data.invitationId ?? undefined}
-                  oldPublicUrl={cards[activeIndex] || undefined}
+                  oldPublicUrl={data.customTexts?.[`memoryPhoto${activeIndex}`] || undefined}
                 />
                 <div
                   className="absolute bottom-7 left-7 right-7 flex items-center justify-between rounded-full px-4 py-2"
@@ -782,8 +1071,25 @@ const StoryMemorySection = ({
                 </div>
               </div>
             </motion.div>
+            )}
           </div>
         </div>
+
+        {mode === "edit" && (
+          <div className="mt-8 flex justify-center">
+            <SectionActionButton
+              label="Remove Section"
+              onClick={() =>
+                onUpdate({
+                  sectionVisibility: {
+                    ...getSectionVisibility(data),
+                    story: false,
+                  },
+                })
+              }
+            />
+          </div>
+        )}
       </div>
     </section>
   );
@@ -1155,8 +1461,8 @@ const EventsSection = ({
       <div className="mx-auto max-w-6xl">
         <SectionIntro
           kicker="Wedding Weekend"
-          title="Every Function, Beautifully Framed"
-          body="Refined event cards with real-looking copy, richer hierarchy, and softer motion so the section feels premium instead of generic."
+          title="Celebrate With Us"
+          body="Each ceremony has been planned with love. Here's everything you need to know about the celebrations."
         />
 
         <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-4">
@@ -1308,7 +1614,7 @@ const EventsSection = ({
           ))}
         </div>
 
-        <motion.div {...sectionReveal} className="mt-6">
+        <div className="mt-6">
           <AddEventButton
             mode={mode}
             onAdd={() =>
@@ -1316,16 +1622,82 @@ const EventsSection = ({
             }
             currentCount={data.events.length}
             maxEvents={8}
-            className="rounded-[24px] bg-[rgba(255,253,249,0.56)]"
+            className="rounded-[24px] !border-[rgba(182,129,63,0.35)] !text-[#6c584d] bg-[rgba(255,253,249,0.72)] hover:!bg-[rgba(182,129,63,0.1)]"
           />
-        </motion.div>
+        </div>
+
+        {mode === "edit" && (
+          <div className="mt-6 flex justify-center">
+            <SectionActionButton
+              label="Remove Section"
+              onClick={() =>
+                onUpdate({
+                  sectionVisibility: {
+                    ...getSectionVisibility(data),
+                    events: false,
+                  },
+                })
+              }
+            />
+          </div>
+        )}
       </div>
     </section>
   );
 };
 
-const VenueSection = ({ event }: { event: EventData | null }) => {
+const DEFAULT_VENUE_CARDS = [
+  {
+    key: "venueCard1Title",
+    defaultTitle: "Arrival",
+    bodyKey: "venueCard1Body",
+    defaultBody:
+      "Please arrive by the time mentioned so seating and welcome drinks can be arranged smoothly before the ceremony begins.",
+  },
+  {
+    key: "venueCard2Title",
+    defaultTitle: "Photography",
+    bodyKey: "venueCard2Body",
+    defaultBody:
+      "Family portraits will be taken right after the ceremony, followed by candid coverage through the evening.",
+  },
+  {
+    key: "venueCard3Title",
+    defaultTitle: "Parking",
+    bodyKey: "venueCard3Body",
+    defaultBody:
+      "Valet parking will be available at the main gate. Overflow parking will be directed by the hospitality desk.",
+  },
+  {
+    key: "venueCard4Title",
+    defaultTitle: "Hospitality",
+    bodyKey: "venueCard4Body",
+    defaultBody:
+      "For stay support, transport help, or room assistance, our guest relations team will be available throughout the event.",
+  },
+];
+
+const VenueSection = ({
+  event,
+  mode,
+  data,
+  onUpdate,
+}: {
+  event: EventData | null;
+  mode: TemplateProps["mode"];
+  data: TemplateProps["data"];
+  onUpdate: TemplateProps["onUpdate"];
+}) => {
   if (!event) return null;
+
+  const updateCustomText = (key: string, value: string) =>
+    onUpdate({ customTexts: { ...data.customTexts, [key]: value } });
+
+  const updateFirstEvent = (updates: Partial<EventData>) => {
+    const next = [...data.events];
+    next[0] = { ...next[0], ...updates };
+    onUpdate({ events: next });
+  };
 
   return (
     <section className="px-4 pb-24">
@@ -1346,55 +1718,102 @@ const VenueSection = ({ event }: { event: EventData | null }) => {
             >
               Venue Highlight
             </p>
-            <h2
-              className="text-5xl leading-[0.98] sm:text-6xl"
-              style={{ color: C.ink, fontFamily: FONTS.display }}
-            >
-              {event.venueName}
-            </h2>
-            <p
-              className="mt-5 max-w-xl text-lg leading-8"
+            <div style={{ color: C.ink, fontFamily: FONTS.display }}>
+              <EditableText
+                value={event.venueName}
+                onSave={(val) => updateFirstEvent({ venueName: val })}
+                mode={mode}
+                className="text-5xl leading-[0.98] sm:text-6xl"
+                as="h2"
+                placeholder="Venue Name"
+              />
+            </div>
+            <div
               style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+              className="mt-5 max-w-xl"
             >
-              {event.venueAddress}
-            </p>
+              <EditableText
+                value={event.venueAddress}
+                onSave={(val) => updateFirstEvent({ venueAddress: val })}
+                mode={mode}
+                className="text-lg leading-8"
+                as="p"
+                multiline
+                placeholder="Venue address"
+              />
+            </div>
             <div className="mt-8 flex flex-wrap gap-4">
-              <div
-                className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm"
-                style={{
-                  borderColor: C.border,
-                  backgroundColor: "rgba(182,129,63,0.08)",
-                  color: C.ink,
-                  fontFamily: FONTS.sans,
-                }}
-              >
-                <CalendarDays size={16} style={{ color: C.gold }} />
-                <span>{formatEventDate(event.eventDate)}</span>
-              </div>
-              <div
-                className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm"
-                style={{
-                  borderColor: C.border,
-                  backgroundColor: "rgba(182,129,63,0.08)",
-                  color: C.ink,
-                  fontFamily: FONTS.sans,
-                }}
-              >
-                <Clock3 size={16} style={{ color: C.gold }} />
-                <span>{formatTime(event.eventTime)}</span>
-              </div>
-              <div
-                className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm"
-                style={{
-                  borderColor: C.border,
-                  backgroundColor: "rgba(182,129,63,0.08)",
-                  color: C.ink,
-                  fontFamily: FONTS.sans,
-                }}
-              >
-                <MapPin size={16} style={{ color: C.gold }} />
-                <span>Location Ready</span>
-              </div>
+              {mode === "edit" ? (
+                <>
+                  <div
+                    className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm"
+                    style={{
+                      borderColor: C.border,
+                      backgroundColor: "rgba(182,129,63,0.08)",
+                      color: C.ink,
+                      fontFamily: FONTS.sans,
+                    }}
+                  >
+                    <CalendarDays size={16} style={{ color: C.gold }} />
+                    <input
+                      type="date"
+                      value={event.eventDate || ""}
+                      onChange={(e) =>
+                        updateFirstEvent({ eventDate: e.target.value })
+                      }
+                      className="cursor-pointer border-none bg-transparent outline-none"
+                      style={{ color: C.ink, fontFamily: FONTS.sans }}
+                    />
+                  </div>
+                  <div
+                    className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm"
+                    style={{
+                      borderColor: C.border,
+                      backgroundColor: "rgba(182,129,63,0.08)",
+                      color: C.ink,
+                      fontFamily: FONTS.sans,
+                    }}
+                  >
+                    <Clock3 size={16} style={{ color: C.gold }} />
+                    <input
+                      type="time"
+                      value={event.eventTime || ""}
+                      onChange={(e) =>
+                        updateFirstEvent({ eventTime: e.target.value })
+                      }
+                      className="cursor-pointer border-none bg-transparent outline-none"
+                      style={{ color: C.ink, fontFamily: FONTS.sans }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div
+                    className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm"
+                    style={{
+                      borderColor: C.border,
+                      backgroundColor: "rgba(182,129,63,0.08)",
+                      color: C.ink,
+                      fontFamily: FONTS.sans,
+                    }}
+                  >
+                    <CalendarDays size={16} style={{ color: C.gold }} />
+                    <span>{formatEventDate(event.eventDate)}</span>
+                  </div>
+                  <div
+                    className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm"
+                    style={{
+                      borderColor: C.border,
+                      backgroundColor: "rgba(182,129,63,0.08)",
+                      color: C.ink,
+                      fontFamily: FONTS.sans,
+                    }}
+                  >
+                    <Clock3 size={16} style={{ color: C.gold }} />
+                    <span>{formatTime(event.eventTime)}</span>
+                  </div>
+                </>
+              )}
             </div>
             {event.mapsUrl && (
               <a
@@ -1415,26 +1834,9 @@ const VenueSection = ({ event }: { event: EventData | null }) => {
           </motion.div>
 
           <motion.div {...sectionReveal} className="grid gap-4 sm:grid-cols-2">
-            {[
-              {
-                title: "Arrival",
-                text: "Guests are requested by 4:45 PM so welcome drinks and seating can begin smoothly before the main ceremony.",
-              },
-              {
-                title: "Photography",
-                text: "Family portraits will be guided right after the varmala, followed by open candid coverage through the evening.",
-              },
-              {
-                title: "Parking",
-                text: "Valet will be available at the main gate, with overflow parking directed by the hospitality desk.",
-              },
-              {
-                title: "Hospitality",
-                text: "For stay support, transport help, or room assistance, our guest relations team will be available throughout the event.",
-              },
-            ].map((item) => (
+            {DEFAULT_VENUE_CARDS.map((card) => (
               <motion.div
-                key={item.title}
+                key={card.key}
                 whileHover={{ y: -6 }}
                 className="rounded-[28px] border p-6"
                 style={{
@@ -1443,23 +1845,52 @@ const VenueSection = ({ event }: { event: EventData | null }) => {
                   boxShadow: "0 12px 40px rgba(43,23,24,0.06)",
                 }}
               >
-                <p
-                  className="text-[11px] uppercase tracking-[0.34em]"
+                <div
                   style={{ color: C.gold, fontFamily: FONTS.sans }}
                 >
-                  {item.title}
-                </p>
-                <p
-                  className="mt-3 text-lg leading-7"
-                  style={{ color: C.inkMuted }}
-                >
-                  {item.text}
-                </p>
+                  <EditableText
+                    value={data.customTexts?.[card.key] || card.defaultTitle}
+                    onSave={(val) => updateCustomText(card.key, val)}
+                    mode={mode}
+                    placeholder={card.defaultTitle}
+                    className="text-[11px] uppercase tracking-[0.34em]"
+                    as="p"
+                  />
+                </div>
+                <div style={{ color: C.inkMuted }}>
+                  <EditableText
+                    value={
+                      data.customTexts?.[card.bodyKey] || card.defaultBody
+                    }
+                    onSave={(val) => updateCustomText(card.bodyKey, val)}
+                    mode={mode}
+                    placeholder="Add details here"
+                    className="mt-3 text-lg leading-7"
+                    as="p"
+                    multiline
+                  />
+                </div>
               </motion.div>
             ))}
           </motion.div>
         </div>
       </div>
+
+      {mode === "edit" && (
+        <div className="mt-6 flex justify-center">
+          <SectionActionButton
+            label="Remove Section"
+            onClick={() =>
+              onUpdate({
+                sectionVisibility: {
+                  ...getSectionVisibility(data),
+                  venue: false,
+                },
+              })
+            }
+          />
+        </div>
+      )}
     </section>
   );
 };
@@ -1484,8 +1915,19 @@ const InfoPill = ({
   </div>
 );
 
-const FaqSection = () => {
+const FaqSection = ({
+  mode,
+  data,
+  onUpdate,
+}: {
+  mode: TemplateProps["mode"];
+  data: TemplateProps["data"];
+  onUpdate: TemplateProps["onUpdate"];
+}) => {
   const [openIndex, setOpenIndex] = useState(0);
+
+  const updateCustomText = (key: string, value: string) =>
+    onUpdate({ customTexts: { ...data.customTexts, [key]: value } });
 
   return (
     <section className="px-4 py-24 sm:py-28">
@@ -1494,13 +1936,15 @@ const FaqSection = () => {
           <SectionIntro
             kicker="Questions"
             title="Questions and Answers"
-            body="A section like the one in your screenshot, designed to stay airy and premium instead of looking cramped."
+            body="Everything you might want to know before the big day — all in one place."
             align="left"
           />
 
           <motion.div {...sectionReveal} className="space-y-4">
             {faqItems.map((item, index) => {
               const isOpen = index === openIndex;
+              const qKey = `faqQ${index}`;
+              const aKey = `faqA${index}`;
               return (
                 <div
                   key={item.q}
@@ -1520,16 +1964,29 @@ const FaqSection = () => {
                     onClick={() => setOpenIndex(isOpen ? -1 : index)}
                     className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
                   >
-                    <span
-                      className="text-2xl sm:text-3xl"
-                      style={{ fontFamily: FONTS.display }}
-                    >
-                      {item.q}
-                    </span>
+                    {mode === "edit" ? (
+                      <span style={{ fontFamily: FONTS.display }}>
+                        <EditableText
+                          value={data.customTexts?.[qKey] || item.q}
+                          onSave={(val) => updateCustomText(qKey, val)}
+                          mode={mode}
+                          placeholder="Question"
+                          className="text-2xl sm:text-3xl"
+                          as="span"
+                        />
+                      </span>
+                    ) : (
+                      <span
+                        className="text-2xl sm:text-3xl"
+                        style={{ fontFamily: FONTS.display }}
+                      >
+                        {data.customTexts?.[qKey] || item.q}
+                      </span>
+                    )}
                     <ChevronDown
                       size={22}
                       className={cn(
-                        "transition-transform",
+                        "shrink-0 transition-transform",
                         isOpen && "rotate-180",
                       )}
                     />
@@ -1543,24 +2000,75 @@ const FaqSection = () => {
                     transition={{ duration: 0.35 }}
                     className="overflow-hidden"
                   >
-                    <p
-                      className="px-6 pb-6 text-base leading-8"
-                      style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
-                    >
-                      {item.a}
-                    </p>
+                    <div className="px-6 pb-6">
+                      {mode === "edit" ? (
+                        <div
+                          style={{
+                            color: C.inkMuted,
+                            fontFamily: FONTS.sans,
+                          }}
+                        >
+                          <EditableText
+                            value={data.customTexts?.[aKey] || item.a}
+                            onSave={(val) => updateCustomText(aKey, val)}
+                            mode={mode}
+                            placeholder="Answer"
+                            className="text-base leading-8"
+                            as="p"
+                            multiline
+                          />
+                        </div>
+                      ) : (
+                        <p
+                          className="text-base leading-8"
+                          style={{
+                            color: C.inkMuted,
+                            fontFamily: FONTS.sans,
+                          }}
+                        >
+                          {data.customTexts?.[aKey] || item.a}
+                        </p>
+                      )}
+                    </div>
                   </motion.div>
                 </div>
               );
             })}
           </motion.div>
         </div>
+
+        {mode === "edit" && (
+          <div className="mt-8 flex justify-center">
+            <SectionActionButton
+              label="Remove Section"
+              onClick={() =>
+                onUpdate({
+                  sectionVisibility: {
+                    ...getSectionVisibility(data),
+                    faq: false,
+                  },
+                })
+              }
+            />
+          </div>
+        )}
       </div>
     </section>
   );
 };
-const GiftsSection = () => {
+const GiftsSection = ({
+  mode,
+  data,
+  onUpdate,
+}: {
+  mode: TemplateProps["mode"];
+  data: TemplateProps["data"];
+  onUpdate: TemplateProps["onUpdate"];
+}) => {
   const [revealed, setRevealed] = useState(false);
+
+  const updateCustomText = (key: string, value: string) =>
+    onUpdate({ customTexts: { ...data.customTexts, [key]: value } });
 
   return (
     <section className="px-4 pb-24">
@@ -1591,18 +2099,107 @@ const GiftsSection = () => {
             className="mt-4 text-5xl sm:text-6xl"
             style={{ fontFamily: FONTS.display }}
           >
-            Your Presence Is The Real Gift
+            <EditableText
+              value={
+                data.customTexts?.giftsHeading ||
+                "Your Presence Is The Real Gift"
+              }
+              onSave={(val) => updateCustomText("giftsHeading", val)}
+              mode={mode}
+              placeholder="Your Presence Is The Real Gift"
+              as="span"
+            />
           </h2>
           <p
             className="mx-auto mt-5 max-w-3xl text-lg leading-8"
             style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
           >
-            If you still wish to contribute to the couple's new beginning, this
-            section gives you the same kind of payment reveal interaction you
-            shared.
+            <EditableText
+              value={
+                data.customTexts?.giftsBody ||
+                "If you wish to bless the couple as they start their new journey together, you can use the details below."
+              }
+              onSave={(val) => updateCustomText("giftsBody", val)}
+              mode={mode}
+              placeholder="Add a message about gifts"
+              as="span"
+              multiline
+            />
           </p>
 
           <div className="mt-10 flex justify-center">
+            {mode === "edit" ? (
+              <div
+                className="w-full max-w-sm rounded-[28px] border px-6 py-10"
+                style={{
+                  borderColor: "rgba(184,138,65,0.4)",
+                  backgroundColor: "rgba(184,138,65,0.08)",
+                }}
+              >
+                <p
+                  className="mb-4 text-[11px] uppercase tracking-[0.34em]"
+                  style={{ color: C.gold, fontFamily: FONTS.sans }}
+                >
+                  Payment Details (editable)
+                </p>
+                <div
+                  className="space-y-1 text-base"
+                  style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
+                >
+                  <p>
+                    <EditableText
+                      value={
+                        data.customTexts?.giftsUpi ||
+                        "UPI ID: yourname@upi"
+                      }
+                      onSave={(val) => updateCustomText("giftsUpi", val)}
+                      mode={mode}
+                      placeholder="UPI ID: yourname@upi"
+                      as="span"
+                    />
+                  </p>
+                  <p>
+                    <EditableText
+                      value={
+                        data.customTexts?.giftsAccountName ||
+                        "A/C Name: Account Holder Name"
+                      }
+                      onSave={(val) =>
+                        updateCustomText("giftsAccountName", val)
+                      }
+                      mode={mode}
+                      placeholder="A/C Name: Account Holder Name"
+                      as="span"
+                    />
+                  </p>
+                  <p>
+                    <EditableText
+                      value={
+                        data.customTexts?.giftsAccountNo ||
+                        "A/C No: XXXX XXXX XXXX"
+                      }
+                      onSave={(val) =>
+                        updateCustomText("giftsAccountNo", val)
+                      }
+                      mode={mode}
+                      placeholder="A/C No: XXXX XXXX XXXX"
+                      as="span"
+                    />
+                  </p>
+                  <p>
+                    <EditableText
+                      value={
+                        data.customTexts?.giftsIfsc || "IFSC: XXXX0001234"
+                      }
+                      onSave={(val) => updateCustomText("giftsIfsc", val)}
+                      mode={mode}
+                      placeholder="IFSC: XXXX0001234"
+                      as="span"
+                    />
+                  </p>
+                </div>
+              </div>
+            ) : (
             <motion.button
               type="button"
               whileTap={{ scale: 0.98 }}
@@ -1651,16 +2248,80 @@ const GiftsSection = () => {
                     className="space-y-1 text-base"
                     style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
                   >
-                    <p>UPI ID: weddingfamily@okaxis</p>
-                    <p>A/C Name: Shubh Aarambh Couple Fund</p>
-                    <p>A/C No: 1234 5678 9012</p>
-                    <p>IFSC: SBIN0001234</p>
+                    <p>
+                      <EditableText
+                        value={
+                          data.customTexts?.giftsUpi ||
+                          "UPI ID: yourname@upi"
+                        }
+                        onSave={(val) => updateCustomText("giftsUpi", val)}
+                        mode={mode}
+                        placeholder="UPI ID: yourname@upi"
+                        as="span"
+                      />
+                    </p>
+                    <p>
+                      <EditableText
+                        value={
+                          data.customTexts?.giftsAccountName ||
+                          "A/C Name: Account Holder Name"
+                        }
+                        onSave={(val) =>
+                          updateCustomText("giftsAccountName", val)
+                        }
+                        mode={mode}
+                        placeholder="A/C Name: Account Holder Name"
+                        as="span"
+                      />
+                    </p>
+                    <p>
+                      <EditableText
+                        value={
+                          data.customTexts?.giftsAccountNo ||
+                          "A/C No: XXXX XXXX XXXX"
+                        }
+                        onSave={(val) =>
+                          updateCustomText("giftsAccountNo", val)
+                        }
+                        mode={mode}
+                        placeholder="A/C No: XXXX XXXX XXXX"
+                        as="span"
+                      />
+                    </p>
+                    <p>
+                      <EditableText
+                        value={
+                          data.customTexts?.giftsIfsc || "IFSC: XXXX0001234"
+                        }
+                        onSave={(val) => updateCustomText("giftsIfsc", val)}
+                        mode={mode}
+                        placeholder="IFSC: XXXX0001234"
+                        as="span"
+                      />
+                    </p>
                   </div>
                 </motion.div>
               )}
             </motion.button>
+            )}
           </div>
         </motion.div>
+
+        {mode === "edit" && (
+          <div className="mt-6 flex justify-center">
+            <SectionActionButton
+              label="Remove Section"
+              onClick={() =>
+                onUpdate({
+                  sectionVisibility: {
+                    ...getSectionVisibility(data),
+                    gifts: false,
+                  },
+                })
+              }
+            />
+          </div>
+        )}
       </div>
     </section>
   );
@@ -1705,7 +2366,7 @@ const RsvpSection = ({
         guestPhone: phone,
         attending:
           attending === "yes" ? "YES" : attending === "maybe" ? "MAYBE" : "NO",
-        guestCount,
+        guestCount: attending === "no" ? 0 : guestCount,
         message: message || undefined,
       });
       setSubmitted(true);
@@ -1781,15 +2442,15 @@ const RsvpSection = ({
               className="mt-5 max-w-md text-lg leading-8"
               style={{ color: C.inkMuted, fontFamily: FONTS.sans }}
             >
-              This keeps the existing RSVP flow but dresses it in the same
-              editorial style as the rest of the invite.
+              We'd love to know if you can make it. Please fill in your
+              details so we can prepare everything just right for you.
             </p>
             <div className="mt-8 space-y-4">
               {[
-                "Quick reply form",
-                "Phone-based guest tracking",
-                "Guest count and note support",
-                "Works in demo and live mode",
+                "Confirm your attendance",
+                "Let us know your guest count",
+                "Share any dietary or travel needs",
+                "Leave a personal note for the couple",
               ].map((line) => (
                 <div key={line} className="flex items-center gap-3">
                   <Heart size={16} style={{ color: C.gold }} />
@@ -1878,6 +2539,7 @@ const RsvpSection = ({
                 ))}
               </div>
             </div>
+            {attending !== "no" && (
             <label className="grid gap-2">
               <span
                 className="text-[11px] uppercase tracking-[0.3em]"
@@ -1899,6 +2561,7 @@ const RsvpSection = ({
                 }}
               />
             </label>
+            )}
             <label className="grid gap-2">
               <span
                 className="text-[11px] uppercase tracking-[0.3em]"

@@ -18,6 +18,7 @@ import {
   Heart,
   Calendar,
   Clock,
+  Gift,
   Trash2,
   Check,
   Minus,
@@ -27,7 +28,7 @@ import {
   VolumeX,
   ChevronDown,
 } from "lucide-react";
-import { TemplateProps, EventData } from "@/templates/types";
+import { TemplateProps, EventData, SectionVisibility } from "@/templates/types";
 import {
   EditableText,
   EditablePhoto,
@@ -214,6 +215,96 @@ const HeartPin = ({ className = "" }: { className?: string }) => (
   </div>
 );
 
+const getCustomText = (
+  data: TemplateProps["data"],
+  key: string,
+  fallback: string,
+) => data.customTexts?.[key] || fallback;
+
+/* ════════════════════════════════════════════
+   SECTION VISIBILITY — Blossom defaults
+   ════════════════════════════════════════════ */
+const DEFAULT_SECTION_VISIBILITY: SectionVisibility = {
+  story: true,
+  events: true,
+  gallery: true,
+  families: true,
+  footer: true,
+  music: true,
+  venue: true,
+  dressCode: true,
+  details: true,
+  timeline: true,
+};
+
+const getSectionVisibility = (data: TemplateProps["data"]) => ({
+  ...DEFAULT_SECTION_VISIBILITY,
+  ...(data.sectionVisibility || {}),
+});
+
+/* ────── Section action / placeholder (Blossom style) ────── */
+const BlossomSectionAction = ({
+  label,
+  onClick,
+  variant = "remove",
+}: {
+  label: string;
+  onClick: () => void;
+  variant?: "remove" | "add";
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] uppercase tracking-[0.22em] transition-all"
+    style={{
+      borderColor:
+        variant === "add" ? `${C.sage}88` : `${C.textLight}44`,
+      background:
+        variant === "add"
+          ? `linear-gradient(135deg, ${C.sage}28, ${C.sage}10)`
+          : "rgba(58,54,50,0.12)",
+      color: variant === "add" ? C.sage : C.textMuted,
+    }}
+  >
+    {variant === "add" ? <Plus size={14} /> : <Trash2 size={14} />}
+    {label}
+  </button>
+);
+
+const BlossomHiddenPlaceholder = ({
+  title,
+  onAdd,
+}: {
+  title: string;
+  onAdd: () => void;
+}) => (
+  <section className="py-10 sm:py-12" style={{ backgroundColor: C.cream }}>
+    <div className="mx-auto max-w-5xl px-6">
+      <div
+        className="rounded-[1.5rem] border px-6 py-8 text-center"
+        style={{
+          background: `linear-gradient(180deg, ${C.cream}, ${C.creamDark})`,
+          borderColor: `${C.textLight}30`,
+        }}
+      >
+        <p
+          className="text-xs uppercase tracking-[0.32em]"
+          style={{ color: C.textMuted }}
+        >
+          {title} hidden
+        </p>
+        <div className="mt-4 flex justify-center">
+          <BlossomSectionAction
+            label={`Add ${title}`}
+            onClick={onAdd}
+            variant="add"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
 /* ════════════════════════════════════════════
    INLINE MUSIC TOGGLE — circular button with rotating text
    ════════════════════════════════════════════ */
@@ -346,9 +437,6 @@ const BlossomDateTemplate = ({
   sessionUUID,
   uploadStage = "temp",
 }: TemplateProps) => {
-  const [envelopeOpen, setEnvelopeOpen] = useState(mode === "edit");
-  const inviteRef = useRef<HTMLDivElement>(null);
-
   const effectiveMusicUrl =
     data.musicUrl ||
     data.effectiveMusicUrl ||
@@ -357,13 +445,15 @@ const BlossomDateTemplate = ({
     data.musicName ||
     data.effectiveMusicName ||
     data.templateDefaults.defaultMusicName;
+  const updateCustomText = (key: string, value: string) =>
+    onUpdate({
+      customTexts: {
+        ...data.customTexts,
+        [key]: value,
+      },
+    });
 
-  const handleOpenEnvelope = () => {
-    setEnvelopeOpen(true);
-    setTimeout(() => {
-      inviteRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 800);
-  };
+  const sectionVisibility = getSectionVisibility(data);
 
   return (
     <div
@@ -374,23 +464,14 @@ const BlossomDateTemplate = ({
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Great+Vibes&display=swap');`}</style>
 
       {/* ═══════════ ENVELOPE SCREEN ═══════════ */}
-      {!envelopeOpen && mode !== "edit" && (
-        <EnvelopeScreen
-          brideName={data.brideName}
-          groomName={data.groomName}
-          onOpen={handleOpenEnvelope}
-        />
-      )}
 
       {/* ═══════════ MAIN INVITE CONTENT ═══════════ */}
       <AnimatePresence>
-        {(envelopeOpen || mode === "edit") && (
-          <motion.div
-            ref={inviteRef}
-            initial={mode === "edit" ? false : { opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-          >
+        <motion.div
+          initial={mode === "edit" ? false : { opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.65, delay: 0.08 }}
+        >
             {/* Hero: Couple Photo */}
             <HeroSection
               mode={mode}
@@ -417,37 +498,184 @@ const BlossomDateTemplate = ({
             />
 
             {/* Animated S-Curve Timeline */}
-            <EditorialTimelineSection
-              mode={mode}
-              data={data}
-              onUpdate={onUpdate}
-            />
+            {sectionVisibility.timeline !== false && (
+              <EditorialTimelineSection
+                mode={mode}
+                data={data}
+                onUpdate={onUpdate}
+                sectionVisibility={sectionVisibility}
+              />
+            )}
+            {mode === "edit" && sectionVisibility.timeline === false && (
+              <BlossomHiddenPlaceholder
+                title="Timeline"
+                onAdd={() =>
+                  onUpdate({
+                    sectionVisibility: { ...sectionVisibility, timeline: true },
+                  })
+                }
+              />
+            )}
 
             {/* Venue */}
-            {data.events[0] && (
-              <EditorialVenueSection mode={mode} event={data.events[0]} />
+            {sectionVisibility.venue !== false && data.events[0] && (
+              <EditorialVenueSection
+                mode={mode}
+                event={data.events[0]}
+                venueTitle={getCustomText(data, "venueTitle", "Venue")}
+                routeLabel={getCustomText(data, "venueRouteLabel", "Plan Route")}
+                onUpdateCustomText={updateCustomText}
+                onUpdate={onUpdate}
+                sectionVisibility={sectionVisibility}
+              />
+            )}
+            {mode === "edit" && sectionVisibility.venue === false && (
+              <BlossomHiddenPlaceholder
+                title="Venue"
+                onAdd={() =>
+                  onUpdate({
+                    sectionVisibility: { ...sectionVisibility, venue: true },
+                  })
+                }
+              />
             )}
 
             {/* Dress Code */}
-            <EditorialDressCodeSection />
+            {sectionVisibility.dressCode !== false && (
+              <EditorialDressCodeSection
+                mode={mode}
+                title={getCustomText(data, "dressCodeTitle", "Dress Code")}
+                body={getCustomText(
+                  data,
+                  "dressCodeBody",
+                  "We would be grateful if you could follow the colour palette of our wedding.",
+                )}
+                onUpdateCustomText={updateCustomText}
+                data={data}
+                onUpdate={onUpdate}
+                sectionVisibility={sectionVisibility}
+              />
+            )}
+            {mode === "edit" && sectionVisibility.dressCode === false && (
+              <BlossomHiddenPlaceholder
+                title="Dress Code"
+                onAdd={() =>
+                  onUpdate({
+                    sectionVisibility: { ...sectionVisibility, dressCode: true },
+                  })
+                }
+              />
+            )}
 
             {/* Gallery */}
-            <GallerySection
-              mode={mode}
-              data={data}
-              onUpdate={onUpdate}
-              templateId={templateId}
-              sessionUUID={sessionUUID}
-              uploadStage={uploadStage}
-            />
+            {sectionVisibility.gallery && (
+              <GallerySection
+                mode={mode}
+                data={data}
+                onUpdate={onUpdate}
+                templateId={templateId}
+                sessionUUID={sessionUUID}
+                uploadStage={uploadStage}
+                sectionVisibility={sectionVisibility}
+              />
+            )}
+            {mode === "edit" && !sectionVisibility.gallery && (
+              <BlossomHiddenPlaceholder
+                title="Gallery"
+                onAdd={() =>
+                  onUpdate({
+                    sectionVisibility: { ...sectionVisibility, gallery: true },
+                  })
+                }
+              />
+            )}
 
             {/* Details */}
-            <EditorialDetailsSection />
+            {sectionVisibility.details !== false && (
+              <EditorialDetailsSection
+                mode={mode}
+                title={getCustomText(data, "giftSectionLabel", "Gifts & Blessings")}
+                heading={getCustomText(
+                  data,
+                  "giftSectionHeading",
+                  "Your Presence Is The Real Gift",
+                )}
+                body={getCustomText(
+                  data,
+                  "giftSectionBody",
+                  "If you still wish to contribute to the couple's new beginning, you can use the bank details below.",
+                )}
+                revealLabel={getCustomText(
+                  data,
+                  "giftRevealLabel",
+                  "Bank Details",
+                )}
+                revealPrompt={getCustomText(
+                  data,
+                  "giftRevealPrompt",
+                  "Tap to reveal",
+                )}
+                paymentLabel={getCustomText(
+                  data,
+                  "giftPaymentLabel",
+                  "Payment Option",
+                )}
+                paymentTitle={getCustomText(
+                  data,
+                  "giftPaymentTitle",
+                  "UPI / Bank Transfer",
+                )}
+                upiLine={getCustomText(
+                  data,
+                  "giftUpiLine",
+                  "UPI ID: weddingfamily@okaxis",
+                )}
+                accountNameLine={getCustomText(
+                  data,
+                  "giftAccountNameLine",
+                  "A/C Name: Shubh Aarambh Couple Fund",
+                )}
+                accountNumberLine={getCustomText(
+                  data,
+                  "giftAccountNumberLine",
+                  "A/C No: 1234 5678 9012",
+                )}
+                ifscLine={getCustomText(data, "giftIfscLine", "IFSC: SBIN0001234")}
+                note={getCustomText(
+                  data,
+                  "giftSectionNote",
+                  "Your presence will mean the most",
+                )}
+                onUpdateCustomText={updateCustomText}
+                sectionVisibility={sectionVisibility}
+                onUpdate={onUpdate}
+              />
+            )}
+            {mode === "edit" && sectionVisibility.details === false && (
+              <BlossomHiddenPlaceholder
+                title="Gifts & Details"
+                onAdd={() =>
+                  onUpdate({
+                    sectionVisibility: { ...sectionVisibility, details: true },
+                  })
+                }
+              />
+            )}
 
             {/* Music Editor (edit only) */}
-            {mode === "edit" && (
+            {mode === "edit" && sectionVisibility.music && (
               <section className="py-16" style={{ backgroundColor: C.cream }}>
                 <div className="max-w-xl mx-auto px-6">
+                  <div className="mb-4 flex justify-end">
+                    <BlossomSectionAction
+                      label="Remove Music"
+                      onClick={() =>
+                        onUpdate({
+                          sectionVisibility: { ...sectionVisibility, music: false },
+                        })
+                      }
+                    />
+                  </div>
                   <EditableMusicPlayer
                     musicUrl={data.musicUrl}
                     musicName={data.musicName}
@@ -465,6 +693,16 @@ const BlossomDateTemplate = ({
                 </div>
               </section>
             )}
+            {mode === "edit" && !sectionVisibility.music && (
+              <BlossomHiddenPlaceholder
+                title="Music"
+                onAdd={() =>
+                  onUpdate({
+                    sectionVisibility: { ...sectionVisibility, music: true },
+                  })
+                }
+              />
+            )}
 
             {/* RSVP */}
             {mode !== "edit" && data.rsvpEnabled !== false && (
@@ -475,6 +713,7 @@ const BlossomDateTemplate = ({
             )}
 
             {/* Footer */}
+            {sectionVisibility.footer && (
             <footer
               className={cn(
                 "relative py-16 text-center overflow-hidden",
@@ -483,6 +722,18 @@ const BlossomDateTemplate = ({
               style={{ backgroundColor: C.sage }}
             >
               <div className="max-w-md mx-auto px-6 relative z-10">
+                {mode === "edit" && (
+                  <div className="mb-6 flex justify-center">
+                    <BlossomSectionAction
+                      label="Remove Section"
+                      onClick={() =>
+                        onUpdate({
+                          sectionVisibility: { ...sectionVisibility, footer: false },
+                        })
+                      }
+                    />
+                  </div>
+                )}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -539,6 +790,17 @@ const BlossomDateTemplate = ({
                 </motion.div>
               </div>
             </footer>
+            )}
+            {mode === "edit" && !sectionVisibility.footer && (
+              <BlossomHiddenPlaceholder
+                title="Footer"
+                onAdd={() =>
+                  onUpdate({
+                    sectionVisibility: { ...sectionVisibility, footer: true },
+                  })
+                }
+              />
+            )}
 
             {mode === "edit" && (
               <EditModeToolbar
@@ -550,8 +812,7 @@ const BlossomDateTemplate = ({
                 hasUnsavedChanges={true}
               />
             )}
-          </motion.div>
-        )}
+        </motion.div>
       </AnimatePresence>
     </div>
   );
@@ -1443,6 +1704,7 @@ const GallerySection = ({
   templateId,
   sessionUUID,
   uploadStage,
+  sectionVisibility,
 }: {
   mode: TemplateProps["mode"];
   data: TemplateProps["data"];
@@ -1450,6 +1712,7 @@ const GallerySection = ({
   templateId?: number;
   sessionUUID?: string;
   uploadStage?: "temp" | "draft" | "published";
+  sectionVisibility?: SectionVisibility;
 }) => {
   const displayPhotos =
     data.galleryPhotos.length > 0
@@ -1465,6 +1728,18 @@ const GallerySection = ({
   return (
     <section style={{ backgroundColor: C.cream }}>
       <div className="py-12 px-6 max-w-5xl mx-auto">
+        {mode === "edit" && sectionVisibility && (
+          <div className="mb-6 flex justify-center">
+            <BlossomSectionAction
+              label="Remove Section"
+              onClick={() =>
+                onUpdate({
+                  sectionVisibility: { ...sectionVisibility, gallery: false },
+                })
+              }
+            />
+          </div>
+        )}
         <h2
           className="text-center text-3xl mb-8"
           style={{ fontFamily: FONTS.script, color: C.text }}
@@ -1565,7 +1840,7 @@ const RsvpSection = ({
       toast.error("Please enter your name");
       return;
     }
-    if (!phone.trim() || phone.length < 10) {
+    if (phone.trim() && phone.trim().length < 10) {
       toast.error("Please enter a valid 10-digit phone number");
       return;
     }
@@ -1580,7 +1855,7 @@ const RsvpSection = ({
     try {
       await submitRsvp(String(invitationId || ""), {
         guestName: name,
-        guestPhone: phone,
+        guestPhone: phone.trim(),
         attending:
           attending === "yes" ? "YES" : attending === "maybe" ? "MAYBE" : "NO",
         guestCount,
@@ -1712,20 +1987,19 @@ const RsvpSection = ({
               className="text-xs tracking-[0.15em] uppercase block mb-2"
               style={{ color: C.textMuted }}
             >
-              Phone Number *
+              Phone Number
             </label>
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              required
               className="w-full rounded-xl px-4 py-3 text-sm outline-none"
               style={{
                 color: C.text,
                 backgroundColor: C.white,
                 border: `1px solid ${C.sage}30`,
               }}
-              placeholder="10-digit phone number"
+              placeholder="10-digit phone number (optional)"
               maxLength={10}
             />
           </div>
@@ -1856,7 +2130,7 @@ const EditorialWelcomeSection = ({
   effectiveMusicUrl: string | null;
 }) => (
   <section
-    className="relative z-20 -mt-10 overflow-hidden px-0 pt-28 pb-16 md:-mt-12 md:pt-32 md:pb-24"
+    className="relative z-20 -mt-4 overflow-hidden px-0 pt-16 pb-14 md:-mt-6 md:pt-20 md:pb-20"
     style={{ backgroundColor: C.cream }}
   >
     <div className="absolute left-1/2 top-0 h-44 w-44 -translate-x-1/2 rounded-full bg-[#e8dfcb]/70 blur-3xl" />
@@ -2041,10 +2315,12 @@ const EditorialTimelineSection = ({
   mode,
   data,
   onUpdate,
+  sectionVisibility,
 }: {
   mode: TemplateProps["mode"];
   data: TemplateProps["data"];
   onUpdate: TemplateProps["onUpdate"];
+  sectionVisibility: SectionVisibility;
 }) => {
   const isEdit = mode === "edit";
   const updateEvent = (index: number, updates: Partial<EventData>) => {
@@ -2059,6 +2335,18 @@ const EditorialTimelineSection = ({
       style={{ backgroundColor: C.cream }}
     >
       <div className="mx-auto max-w-4xl px-6">
+        {isEdit && (
+          <div className="mb-6 flex justify-center">
+            <BlossomSectionAction
+              label="Remove Section"
+              onClick={() =>
+                onUpdate({
+                  sectionVisibility: { ...sectionVisibility, timeline: false },
+                })
+              }
+            />
+          </div>
+        )}
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -2218,19 +2506,34 @@ const EditorialSCurveTimeline = ({ events }: { events: EventData[] }) => {
             </p>
             {event.eventTime && (
               <p
-                className="mt-3 text-[1.9rem] leading-none md:text-[2.6rem]"
+                className="mt-2 text-[1.35rem] leading-none md:text-[1.8rem]"
                 style={{ color: C.text, fontFamily: FONTS.heading }}
               >
                 {formatTime(event.eventTime)}
               </p>
             )}
             {event.venueName && (
-              <p
-                className="mt-3 text-[11px] uppercase tracking-[0.22em]"
+              <div
+                className={cn(
+                  "mt-3 flex items-center gap-2 text-[10px] uppercase tracking-[0.22em]",
+                  isLeft ? "justify-end" : "justify-start",
+                )}
                 style={{ color: C.textMuted }}
               >
-                {event.venueName}
-              </p>
+                <span>{event.venueName}</span>
+                {event.mapsUrl && (
+                  <a
+                    href={event.mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Open map for ${event.eventName}`}
+                    className="inline-flex h-6 w-6 items-center justify-center rounded-full border transition-colors hover:bg-[#7a8c6e] hover:text-white"
+                    style={{ borderColor: `${C.sage}50` }}
+                  >
+                    <MapPin size={12} />
+                  </a>
+                )}
+              </div>
             )}
           </motion.div>
         );
@@ -2240,13 +2543,37 @@ const EditorialSCurveTimeline = ({ events }: { events: EventData[] }) => {
 };
 
 const EditorialVenueSection = ({
+  mode,
   event,
+  venueTitle,
+  routeLabel,
+  onUpdateCustomText,
+  onUpdate,
+  sectionVisibility,
 }: {
   mode: TemplateProps["mode"];
   event: EventData;
-}) => (
+  venueTitle: string;
+  routeLabel: string;
+  onUpdateCustomText: (key: string, value: string) => void;
+  onUpdate: TemplateProps["onUpdate"];
+  sectionVisibility: SectionVisibility;
+}) => {
+  return (
   <section style={{ backgroundColor: C.cream }}>
     <div className="mx-auto max-w-xl px-6 py-14 text-center md:py-16">
+      {mode === "edit" && (
+        <div className="mb-6 flex justify-center">
+          <BlossomSectionAction
+            label="Remove Section"
+            onClick={() =>
+              onUpdate({
+                sectionVisibility: { ...sectionVisibility, venue: false },
+              })
+            }
+          />
+        </div>
+      )}
       <HeartPin className="mx-auto mb-5" />
       <motion.h2
         initial={{ opacity: 0, y: 20 }}
@@ -2255,7 +2582,14 @@ const EditorialVenueSection = ({
         className="mb-4 text-5xl md:text-6xl"
         style={{ fontFamily: FONTS.script, color: C.text }}
       >
-        Venue
+        <EditableText
+          value={venueTitle}
+          onSave={(val) => onUpdateCustomText("venueTitle", val)}
+          mode={mode}
+          placeholder="Venue"
+          className="block"
+          as="span"
+        />
       </motion.h2>
       <motion.div
         initial={{ opacity: 0 }}
@@ -2267,13 +2601,27 @@ const EditorialVenueSection = ({
           className="text-2xl md:text-[2rem]"
           style={{ color: C.text, fontFamily: FONTS.heading }}
         >
-          {event.venueName || "Venue Name"}
+          <EditableText
+            value={event.venueName || ""}
+            onSave={(val) => onUpdateCustomText("venueNameOverride", val)}
+            mode={mode}
+            placeholder="Venue Name"
+            className="block"
+            as="span"
+          />
         </p>
         <p
           className="mx-auto mt-3 max-w-md text-base leading-relaxed"
           style={{ color: C.textMuted }}
         >
-          {event.venueAddress || "Venue Address"}
+          <EditableText
+            value={event.venueAddress || ""}
+            onSave={(val) => onUpdateCustomText("venueAddressOverride", val)}
+            mode={mode}
+            placeholder="Venue Address"
+            className="block"
+            as="span"
+          />
         </p>
       </motion.div>
       <motion.div
@@ -2283,7 +2631,7 @@ const EditorialVenueSection = ({
         transition={{ delay: 0.25 }}
         className="mt-8"
       >
-        {event.mapsUrl ? (
+        {event.mapsUrl && mode !== "edit" ? (
           <a
             href={event.mapsUrl}
             target="_blank"
@@ -2297,9 +2645,14 @@ const EditorialVenueSection = ({
           >
             <div>
               <MapPin size={18} className="mx-auto mb-2" />
-              <span className="text-[11px] uppercase tracking-[0.16em]">
-                Plan Route
-              </span>
+              <EditableText
+                value={routeLabel}
+                onSave={(val) => onUpdateCustomText("venueRouteLabel", val)}
+                mode={mode}
+                placeholder="Plan Route"
+                className="text-[11px] uppercase tracking-[0.16em]"
+                as="span"
+              />
             </div>
           </a>
         ) : (
@@ -2313,9 +2666,14 @@ const EditorialVenueSection = ({
           >
             <div>
               <MapPin size={18} className="mx-auto mb-2" />
-              <span className="text-[11px] uppercase tracking-[0.16em]">
-                Plan Route
-              </span>
+              <EditableText
+                value={routeLabel}
+                onSave={(val) => onUpdateCustomText("venueRouteLabel", val)}
+                mode={mode}
+                placeholder="Plan Route"
+                className="text-[11px] uppercase tracking-[0.16em]"
+                as="span"
+              />
             </div>
           </div>
         )}
@@ -2337,98 +2695,389 @@ const EditorialVenueSection = ({
       <PaperDivider className="absolute inset-x-0 -bottom-8 z-20" />
     </motion.div>
   </section>
-);
+  );
+};
 
-const EditorialDressCodeSection = () => (
-  <section
-    className="relative z-20 -mt-10 overflow-hidden px-0 pt-28 pb-16 md:-mt-12 md:pt-32 md:pb-20"
-    style={{ backgroundColor: C.cream }}
-  >
-    <div className="mx-auto max-w-md px-6 text-center">
-      <motion.h2
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="mb-4 text-5xl md:text-6xl"
-        style={{ fontFamily: FONTS.script, color: C.text }}
-      >
-        Dress Code
-      </motion.h2>
-      <motion.p
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.15 }}
-        className="mb-8 text-lg leading-relaxed"
-        style={{ color: C.textMuted }}
-      >
-        We would be grateful if you could follow the colour palette of our
-        wedding.
-      </motion.p>
-      <div className="flex justify-center gap-2 md:gap-3">
-        {DRESS_COLORS.map((c, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 18, rotate: -3 }}
-            whileInView={{ opacity: 1, y: 0, rotate: 0 }}
-            whileHover={{ y: -6, scale: 1.04 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.22 + i * 0.08, duration: 0.45 }}
-            className="h-14 w-11 rounded-sm shadow-[0_10px_20px_rgba(64,68,49,0.12)] md:h-[76px] md:w-14"
-            style={{
-              backgroundColor: c.hex,
-              border:
-                c.hex === "#f0ebe2" ? `1px solid ${C.textLight}40` : "none",
-            }}
-            title={c.name}
-          />
-        ))}
-      </div>
-    </div>
-  </section>
-);
+const EditorialDressCodeSection = ({
+  mode,
+  title,
+  body,
+  onUpdateCustomText,
+  data,
+  onUpdate,
+  sectionVisibility,
+}: {
+  mode: TemplateProps["mode"];
+  title: string;
+  body: string;
+  onUpdateCustomText: (key: string, value: string) => void;
+  data: TemplateProps["data"];
+  onUpdate: TemplateProps["onUpdate"];
+  sectionVisibility: SectionVisibility;
+}) => {
+  const getColors = (): { hex: string; name: string }[] => {
+    const saved = data.customTexts?.dressCodeColors;
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch { /* fall through */ }
+    }
+    return DRESS_COLORS;
+  };
+  const colors = getColors();
 
-const EditorialDetailsSection = () => (
-  <section style={{ backgroundColor: C.cream }}>
-    <PaperDivider flip />
-    <motion.div
-      initial={{ opacity: 0, scale: 1.03 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.8 }}
-      className="relative overflow-hidden"
+  const updateColor = (index: number, hex: string) => {
+    const updated = [...colors];
+    updated[index] = { ...updated[index], hex };
+    onUpdateCustomText("dressCodeColors", JSON.stringify(updated));
+  };
+
+  const addColor = () => {
+    const updated = [...colors, { hex: "#cccccc", name: `Color ${colors.length + 1}` }];
+    onUpdateCustomText("dressCodeColors", JSON.stringify(updated));
+  };
+
+  const removeColor = (index: number) => {
+    const updated = colors.filter((_, i) => i !== index);
+    onUpdateCustomText("dressCodeColors", JSON.stringify(updated));
+  };
+
+  return (
+    <section
+      className="relative z-20 -mt-10 overflow-hidden px-0 pt-28 pb-16 md:-mt-12 md:pt-32 md:pb-20"
+      style={{ backgroundColor: C.cream }}
     >
-      <img
-        src={DEFAULT_DETAIL_PHOTO}
-        alt="Wedding Details"
-        className="h-[420px] w-full object-cover md:h-[520px]"
-      />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(31,31,24,0.08),rgba(31,31,24,0.48))]" />
-      <div className="absolute inset-0 flex items-center justify-center px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
+      <div className="mx-auto max-w-md px-6 text-center">
+        {mode === "edit" && (
+          <div className="mb-6 flex justify-center">
+            <BlossomSectionAction
+              label="Remove Section"
+              onClick={() =>
+                onUpdate({
+                  sectionVisibility: { ...sectionVisibility, dressCode: false },
+                })
+              }
+            />
+          </div>
+        )}
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.15 }}
-          className="max-w-md rounded-[2rem] border border-white/20 bg-black/20 px-8 py-10 text-center backdrop-blur-sm"
+          className="mb-4 text-5xl md:text-6xl"
+          style={{ fontFamily: FONTS.script, color: C.text }}
         >
-          <h2
-            className="mb-4 text-5xl text-white md:text-6xl"
-            style={{ fontFamily: FONTS.script }}
-          >
-            Details
-          </h2>
-          <p className="text-lg leading-relaxed text-white/90">
-            Please bring your warm wishes and love in your hearts. If you wish
-            to bless us with a gift, we would be grateful for an envelope.
-          </p>
-          <p className="mt-5 text-sm uppercase tracking-[0.24em] text-white/75">
-            Your presence will mean the most
-          </p>
+          <EditableText
+            value={title}
+            onSave={(val) => onUpdateCustomText("dressCodeTitle", val)}
+            mode={mode}
+            placeholder="Dress Code"
+            className="block"
+            as="span"
+          />
+        </motion.h2>
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.15 }}
+          className="mb-8 text-lg leading-relaxed"
+          style={{ color: C.textMuted }}
+        >
+          <EditableText
+            value={body}
+            onSave={(val) => onUpdateCustomText("dressCodeBody", val)}
+            mode={mode}
+            placeholder="Describe the colour palette or attire guidance."
+            className="block"
+            multiline
+            as="p"
+          />
         </motion.div>
+        <div className="flex flex-wrap justify-center gap-2 md:gap-3">
+          {colors.map((c, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 18, rotate: -3 }}
+              whileInView={{ opacity: 1, y: 0, rotate: 0 }}
+              whileHover={{ y: -6, scale: 1.04 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.22 + i * 0.08, duration: 0.45 }}
+              className="relative h-14 w-11 rounded-sm shadow-[0_10px_20px_rgba(64,68,49,0.12)] md:h-[76px] md:w-14"
+              style={{
+                backgroundColor: c.hex,
+                border:
+                  c.hex === "#f0ebe2" ? `1px solid ${C.textLight}40` : "none",
+              }}
+              title={c.name}
+            >
+              {mode === "edit" && (
+                <>
+                  <label className="absolute inset-0 cursor-pointer">
+                    <input
+                      type="color"
+                      value={c.hex}
+                      onChange={(e) => updateColor(i, e.target.value)}
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    />
+                  </label>
+                  {colors.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeColor(i);
+                      }}
+                      className="absolute -top-2 -right-2 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-[10px] shadow-md hover:bg-red-600"
+                      title="Remove color"
+                    >
+                      <Minus size={10} />
+                    </button>
+                  )}
+                </>
+              )}
+            </motion.div>
+          ))}
+          {mode === "edit" && (
+            <motion.button
+              type="button"
+              onClick={addColor}
+              className="flex h-14 w-11 items-center justify-center rounded-sm border-2 border-dashed md:h-[76px] md:w-14"
+              style={{ borderColor: C.textLight, color: C.textMuted }}
+              title="Add color"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Plus size={16} />
+            </motion.button>
+          )}
+        </div>
       </div>
-    </motion.div>
-  </section>
-);
+    </section>
+  );
+};
+
+const EditorialDetailsSection = ({
+  mode,
+  title,
+  heading,
+  body,
+  revealLabel,
+  revealPrompt,
+  paymentLabel,
+  paymentTitle,
+  upiLine,
+  accountNameLine,
+  accountNumberLine,
+  ifscLine,
+  note,
+  onUpdateCustomText,
+  sectionVisibility,
+  onUpdate,
+}: {
+  mode: TemplateProps["mode"];
+  title: string;
+  heading: string;
+  body: string;
+  revealLabel: string;
+  revealPrompt: string;
+  paymentLabel: string;
+  paymentTitle: string;
+  upiLine: string;
+  accountNameLine: string;
+  accountNumberLine: string;
+  ifscLine: string;
+  note: string;
+  onUpdateCustomText: (key: string, value: string) => void;
+  sectionVisibility: SectionVisibility;
+  onUpdate: TemplateProps["onUpdate"];
+}) => {
+  const [revealed, setRevealed] = useState(mode === "edit");
+
+  return (
+    <section style={{ backgroundColor: C.cream }}>
+      <PaperDivider flip />
+      <div className="px-4 py-16 md:py-20">
+        {mode === "edit" && (
+          <div className="mb-6 flex justify-center">
+            <BlossomSectionAction
+              label="Remove Section"
+              onClick={() =>
+                onUpdate({
+                  sectionVisibility: { ...sectionVisibility, details: false },
+                })
+              }
+            />
+          </div>
+        )}
+        <div className="mx-auto max-w-4xl">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+            className="overflow-hidden rounded-[2.25rem] border border-[#d9d0bf] bg-[linear-gradient(180deg,rgba(255,252,247,0.96),rgba(246,238,228,0.94))] px-6 py-12 text-center shadow-[0_24px_50px_rgba(122,140,110,0.12)] sm:px-10"
+          >
+            <div
+              className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full"
+              style={{ backgroundColor: "rgba(197,164,109,0.12)" }}
+            >
+              <Gift size={28} style={{ color: C.gold }} />
+            </div>
+            <EditableText
+              value={title}
+              onSave={(val) => onUpdateCustomText("giftSectionLabel", val)}
+              mode={mode}
+              placeholder="Gifts & Blessings"
+              className="text-[11px] uppercase tracking-[0.45em]"
+              inputClassName="text-center"
+              as="p"
+            />
+            <EditableText
+              value={heading}
+              onSave={(val) => onUpdateCustomText("giftSectionHeading", val)}
+              mode={mode}
+              placeholder="Your Presence Is The Real Gift"
+              className="mt-4 text-4xl leading-tight md:text-6xl"
+              inputClassName="text-center"
+              multiline
+              as="h2"
+            />
+            <EditableText
+              value={body}
+              onSave={(val) => onUpdateCustomText("giftSectionBody", val)}
+              mode={mode}
+              placeholder="Add your gifts or blessings note."
+              className="mx-auto mt-5 block max-w-2xl text-lg leading-8"
+              inputClassName="text-center"
+              multiline
+              as="p"
+            />
+
+            <div className="mt-10 flex justify-center">
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setRevealed((prev) => !prev)}
+                className="w-full max-w-sm rounded-[28px] border px-6 py-10 text-center"
+                style={{
+                  borderColor: revealed ? `${C.gold}66` : `${C.sage}2c`,
+                  backgroundColor: revealed
+                    ? "rgba(197,164,109,0.08)"
+                    : "rgba(255,255,255,0.72)",
+                }}
+              >
+                {!revealed ? (
+                  <div className="space-y-4">
+                    <Gift
+                      className="mx-auto"
+                      size={28}
+                      style={{ color: C.gold }}
+                    />
+                    <EditableText
+                      value={revealLabel}
+                      onSave={(val) => onUpdateCustomText("giftRevealLabel", val)}
+                      mode={mode}
+                      placeholder="Bank Details"
+                      className="text-[11px] uppercase tracking-[0.34em]"
+                      inputClassName="text-center"
+                      as="p"
+                    />
+                    <EditableText
+                      value={revealPrompt}
+                      onSave={(val) =>
+                        onUpdateCustomText("giftRevealPrompt", val)
+                      }
+                      mode={mode}
+                      placeholder="Tap to reveal"
+                      className="text-2xl"
+                      inputClassName="text-center"
+                      as="p"
+                    />
+                  </div>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-3"
+                  >
+                    <EditableText
+                      value={paymentLabel}
+                      onSave={(val) => onUpdateCustomText("giftPaymentLabel", val)}
+                      mode={mode}
+                      placeholder="Payment Option"
+                      className="text-[11px] uppercase tracking-[0.34em]"
+                      inputClassName="text-center"
+                      as="p"
+                    />
+                    <EditableText
+                      value={paymentTitle}
+                      onSave={(val) => onUpdateCustomText("giftPaymentTitle", val)}
+                      mode={mode}
+                      placeholder="UPI / Bank Transfer"
+                      className="text-2xl"
+                      inputClassName="text-center"
+                      as="p"
+                    />
+                    <div
+                      className="space-y-1 text-base"
+                      style={{ color: C.textMuted, fontFamily: FONTS.body }}
+                    >
+                      <EditableText
+                        value={upiLine}
+                        onSave={(val) => onUpdateCustomText("giftUpiLine", val)}
+                        mode={mode}
+                        placeholder="UPI ID: weddingfamily@okaxis"
+                        inputClassName="text-center"
+                        as="p"
+                      />
+                      <EditableText
+                        value={accountNameLine}
+                        onSave={(val) =>
+                          onUpdateCustomText("giftAccountNameLine", val)
+                        }
+                        mode={mode}
+                        placeholder="A/C Name: Shubh Aarambh Couple Fund"
+                        inputClassName="text-center"
+                        as="p"
+                      />
+                      <EditableText
+                        value={accountNumberLine}
+                        onSave={(val) =>
+                          onUpdateCustomText("giftAccountNumberLine", val)
+                        }
+                        mode={mode}
+                        placeholder="A/C No: 1234 5678 9012"
+                        inputClassName="text-center"
+                        as="p"
+                      />
+                      <EditableText
+                        value={ifscLine}
+                        onSave={(val) => onUpdateCustomText("giftIfscLine", val)}
+                        mode={mode}
+                        placeholder="IFSC: SBIN0001234"
+                        inputClassName="text-center"
+                        as="p"
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </motion.button>
+            </div>
+
+            <EditableText
+              value={note}
+              onSave={(val) => onUpdateCustomText("giftSectionNote", val)}
+              mode={mode}
+              placeholder="Your presence will mean the most"
+              className="mt-6 block text-sm uppercase tracking-[0.24em]"
+              inputClassName="text-center"
+              as="p"
+            />
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+};
 
 export default BlossomDateTemplate;

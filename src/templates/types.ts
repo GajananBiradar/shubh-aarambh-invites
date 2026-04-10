@@ -48,6 +48,10 @@ export interface SectionVisibility {
   families: boolean;
   footer: boolean;
   music: boolean;
+  venue?: boolean;
+  dressCode?: boolean;
+  details?: boolean;
+  timeline?: boolean;
 }
 
 // Main invitation data structure

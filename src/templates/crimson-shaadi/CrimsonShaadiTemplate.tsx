@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronDown, Heart, MapPin, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Gift, Heart, MapPin, Minus, Plus, Trash2 } from "lucide-react";
 import {
   TemplateProps,
   EventData,
@@ -146,7 +146,24 @@ const DEFAULT_SECTION_VISIBILITY: SectionVisibility = {
   families: true,
   footer: true,
   music: true,
+  dressCode: true,
+  details: true,
 };
+
+const getCustomText = (
+  data: TemplateProps["data"],
+  key: string,
+  fallback: string,
+) => data.customTexts?.[key] || fallback;
+
+const DRESS_COLORS = [
+  { hex: "#4a1818", name: "Maroon" },
+  { hex: "#d4af37", name: "Gold" },
+  { hex: "#8b2020", name: "Crimson" },
+  { hex: "#2a0c0c", name: "Dark Wine" },
+  { hex: "#f5e6d0", name: "Cream" },
+  { hex: "#b8962e", name: "Antique Gold" },
+];
 
 const getSectionVisibility = (data: TemplateProps["data"]) => ({
   ...DEFAULT_SECTION_VISIBILITY,
@@ -411,6 +428,13 @@ const CrimsonShaadiTemplate = ({
     data.effectiveMusicName ||
     data.templateDefaults.defaultMusicName;
   const sectionVisibility = getSectionVisibility(data);
+  const updateCustomText = (key: string, value: string) =>
+    onUpdate({
+      customTexts: {
+        ...data.customTexts,
+        [key]: value,
+      },
+    });
 
   return (
     <div
@@ -496,6 +520,93 @@ const CrimsonShaadiTemplate = ({
           onAdd={() =>
             onUpdate({
               sectionVisibility: { ...sectionVisibility, families: true },
+            })
+          }
+        />
+      )}
+
+      {/* Dress Code */}
+      {sectionVisibility.dressCode !== false && (
+        <CrimsonDressCodeSection
+          mode={mode}
+          title={getCustomText(data, "dressCodeTitle", "Dress Code")}
+          body={getCustomText(
+            data,
+            "dressCodeBody",
+            "We would be grateful if you could follow the colour palette of our wedding.",
+          )}
+          onUpdateCustomText={updateCustomText}
+          data={data}
+          onUpdate={onUpdate}
+          sectionVisibility={sectionVisibility}
+        />
+      )}
+      {mode === "edit" && sectionVisibility.dressCode === false && (
+        <HiddenSectionPlaceholder
+          title="Dress Code"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, dressCode: true },
+            })
+          }
+        />
+      )}
+
+      {/* Gifts & Blessings (payment) */}
+      {sectionVisibility.details !== false && (
+        <CrimsonDetailsSection
+          mode={mode}
+          title={getCustomText(data, "giftSectionLabel", "Gifts & Blessings")}
+          heading={getCustomText(
+            data,
+            "giftSectionHeading",
+            "Your Presence Is The Real Gift",
+          )}
+          body={getCustomText(
+            data,
+            "giftSectionBody",
+            "If you still wish to contribute to the couple's new beginning, you can use the bank details below.",
+          )}
+          revealLabel={getCustomText(data, "giftRevealLabel", "Bank Details")}
+          revealPrompt={getCustomText(data, "giftRevealPrompt", "Tap to reveal")}
+          paymentLabel={getCustomText(data, "giftPaymentLabel", "Payment Option")}
+          paymentTitle={getCustomText(
+            data,
+            "giftPaymentTitle",
+            "UPI / Bank Transfer",
+          )}
+          upiLine={getCustomText(
+            data,
+            "giftUpiLine",
+            "UPI ID: weddingfamily@okaxis",
+          )}
+          accountNameLine={getCustomText(
+            data,
+            "giftAccountNameLine",
+            "A/C Name: Shubh Aarambh Couple Fund",
+          )}
+          accountNumberLine={getCustomText(
+            data,
+            "giftAccountNumberLine",
+            "A/C No: 1234 5678 9012",
+          )}
+          ifscLine={getCustomText(data, "giftIfscLine", "IFSC: SBIN0001234")}
+          note={getCustomText(
+            data,
+            "giftSectionNote",
+            "Your presence will mean the most",
+          )}
+          onUpdateCustomText={updateCustomText}
+          sectionVisibility={sectionVisibility}
+          onUpdate={onUpdate}
+        />
+      )}
+      {mode === "edit" && sectionVisibility.details === false && (
+        <HiddenSectionPlaceholder
+          title="Gifts & Details"
+          onAdd={() =>
+            onUpdate({
+              sectionVisibility: { ...sectionVisibility, details: true },
             })
           }
         />
@@ -2273,6 +2384,408 @@ const RsvpSection = ({
             {isSubmitting ? "Submitting..." : "Confirm RSVP"}
           </motion.button>
         </motion.form>
+      </div>
+    </section>
+  );
+};
+
+/* ====== DRESS CODE ====== */
+const CrimsonDressCodeSection = ({
+  mode,
+  title,
+  body,
+  onUpdateCustomText,
+  data,
+  onUpdate,
+  sectionVisibility,
+}: {
+  mode: TemplateProps["mode"];
+  title: string;
+  body: string;
+  onUpdateCustomText: (key: string, value: string) => void;
+  data: TemplateProps["data"];
+  onUpdate: TemplateProps["onUpdate"];
+  sectionVisibility: SectionVisibility;
+}) => {
+  const getColors = (): { hex: string; name: string }[] => {
+    const saved = data.customTexts?.dressCodeColors;
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch { /* fall through */ }
+    }
+    return DRESS_COLORS;
+  };
+  const colors = getColors();
+
+  const updateColor = (index: number, hex: string) => {
+    const updated = [...colors];
+    updated[index] = { ...updated[index], hex };
+    onUpdateCustomText("dressCodeColors", JSON.stringify(updated));
+  };
+
+  const addColor = () => {
+    const updated = [...colors, { hex: "#cccccc", name: `Color ${colors.length + 1}` }];
+    onUpdateCustomText("dressCodeColors", JSON.stringify(updated));
+  };
+
+  const removeColor = (index: number) => {
+    const updated = colors.filter((_, i) => i !== index);
+    onUpdateCustomText("dressCodeColors", JSON.stringify(updated));
+  };
+
+  return (
+    <section
+      className="relative overflow-hidden py-24 sm:py-28"
+      style={{
+        background: `
+          radial-gradient(circle at 50% 0%, rgba(255,198,120,0.08), transparent 24%),
+          linear-gradient(180deg, rgba(58,16,16,0.84) 0%, rgba(72,22,20,0.9) 35%, rgba(40,10,10,0.98) 100%)
+        `,
+      }}
+    >
+      <BokehOverlay count={12} />
+      <div className="relative z-10 mx-auto max-w-md px-6 text-center">
+        {mode === "edit" && (
+          <div className="mb-6 flex justify-center">
+            <SectionActionButton
+              label="Remove Section"
+              onClick={() =>
+                onUpdate({
+                  sectionVisibility: { ...sectionVisibility, dressCode: false },
+                })
+              }
+            />
+          </div>
+        )}
+        <SectionTitle title="Dress Code" />
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-4 mt-6 text-4xl sm:text-5xl"
+          style={{ fontFamily: FONTS.script, ...goldGradient }}
+        >
+          <EditableText
+            value={title}
+            onSave={(val) => onUpdateCustomText("dressCodeTitle", val)}
+            mode={mode}
+            placeholder="Dress Code"
+            className="block"
+            as="span"
+          />
+        </motion.h2>
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.15 }}
+          className="mb-8 text-lg leading-relaxed"
+          style={{ color: C.textMuted, fontFamily: FONTS.body }}
+        >
+          <EditableText
+            value={body}
+            onSave={(val) => onUpdateCustomText("dressCodeBody", val)}
+            mode={mode}
+            placeholder="Describe the colour palette or attire guidance."
+            className="block"
+            multiline
+            as="p"
+          />
+        </motion.div>
+        <div className="flex flex-wrap justify-center gap-2 md:gap-3">
+          {colors.map((c, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 18, rotate: -3 }}
+              whileInView={{ opacity: 1, y: 0, rotate: 0 }}
+              whileHover={{ y: -6, scale: 1.04 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.22 + i * 0.08, duration: 0.45 }}
+              className="relative h-14 w-11 rounded-sm shadow-[0_10px_20px_rgba(0,0,0,0.25)] md:h-[76px] md:w-14"
+              style={{
+                backgroundColor: c.hex,
+                border:
+                  c.hex === "#f5e6d0" ? `1px solid ${C.textMuted}40` : `1px solid ${C.gold}30`,
+              }}
+              title={c.name}
+            >
+              {mode === "edit" && (
+                <>
+                  <label className="absolute inset-0 cursor-pointer">
+                    <input
+                      type="color"
+                      value={c.hex}
+                      onChange={(e) => updateColor(i, e.target.value)}
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    />
+                  </label>
+                  {colors.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeColor(i);
+                      }}
+                      className="absolute -top-2 -right-2 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-[10px] shadow-md hover:bg-red-600"
+                      title="Remove color"
+                    >
+                      <Minus size={10} />
+                    </button>
+                  )}
+                </>
+              )}
+            </motion.div>
+          ))}
+          {mode === "edit" && (
+            <motion.button
+              type="button"
+              onClick={addColor}
+              className="flex h-14 w-11 items-center justify-center rounded-sm border-2 border-dashed md:h-[76px] md:w-14"
+              style={{ borderColor: `${C.gold}66`, color: C.textMuted }}
+              title="Add color"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Plus size={16} />
+            </motion.button>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+/* ====== GIFTS & BLESSINGS (Payment) ====== */
+const CrimsonDetailsSection = ({
+  mode,
+  title,
+  heading,
+  body,
+  revealLabel,
+  revealPrompt,
+  paymentLabel,
+  paymentTitle,
+  upiLine,
+  accountNameLine,
+  accountNumberLine,
+  ifscLine,
+  note,
+  onUpdateCustomText,
+  sectionVisibility,
+  onUpdate,
+}: {
+  mode: TemplateProps["mode"];
+  title: string;
+  heading: string;
+  body: string;
+  revealLabel: string;
+  revealPrompt: string;
+  paymentLabel: string;
+  paymentTitle: string;
+  upiLine: string;
+  accountNameLine: string;
+  accountNumberLine: string;
+  ifscLine: string;
+  note: string;
+  onUpdateCustomText: (key: string, value: string) => void;
+  sectionVisibility: SectionVisibility;
+  onUpdate: TemplateProps["onUpdate"];
+}) => {
+  const [revealed, setRevealed] = useState(mode === "edit");
+
+  return (
+    <section
+      className="relative overflow-hidden py-24 sm:py-28"
+      style={{
+        background: `
+          radial-gradient(circle at 50% 0%, rgba(255,205,130,0.06), transparent 20%),
+          linear-gradient(180deg, rgba(64,18,18,0.96) 0%, rgba(78,24,22,0.98) 38%, rgba(30,8,8,1) 100%)
+        `,
+      }}
+    >
+      <BokehOverlay count={10} />
+      <div className="relative z-10 mx-auto max-w-4xl px-4">
+        {mode === "edit" && (
+          <div className="mb-6 flex justify-center">
+            <SectionActionButton
+              label="Remove Section"
+              onClick={() =>
+                onUpdate({
+                  sectionVisibility: { ...sectionVisibility, details: false },
+                })
+              }
+            />
+          </div>
+        )}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.7 }}
+          className="overflow-hidden rounded-[2rem] border px-6 py-12 text-center shadow-[0_24px_50px_rgba(0,0,0,0.3)] sm:px-10"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 18%, rgba(255,223,157,0.08), transparent 28%), linear-gradient(160deg, rgba(74,24,20,0.88), rgba(46,12,12,0.92))",
+            borderColor: `${C.gold}35`,
+          }}
+        >
+          <div
+            className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full"
+            style={{ backgroundColor: `${C.gold}20` }}
+          >
+            <Gift size={28} style={{ color: C.gold }} />
+          </div>
+          <EditableText
+            value={title}
+            onSave={(val) => onUpdateCustomText("giftSectionLabel", val)}
+            mode={mode}
+            placeholder="Gifts & Blessings"
+            className="text-[11px] uppercase tracking-[0.45em]"
+            inputClassName="text-center"
+            as="p"
+          />
+          <EditableText
+            value={heading}
+            onSave={(val) => onUpdateCustomText("giftSectionHeading", val)}
+            mode={mode}
+            placeholder="Your Presence Is The Real Gift"
+            className="mt-4 text-4xl leading-tight md:text-5xl"
+            inputClassName="text-center"
+            multiline
+            as="h2"
+          />
+          <EditableText
+            value={body}
+            onSave={(val) => onUpdateCustomText("giftSectionBody", val)}
+            mode={mode}
+            placeholder="Add your gifts or blessings note."
+            className="mx-auto mt-5 block max-w-2xl text-lg leading-8"
+            inputClassName="text-center"
+            multiline
+            as="p"
+          />
+
+          <div className="mt-10 flex justify-center">
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setRevealed((prev) => !prev)}
+              className="w-full max-w-sm rounded-[28px] border px-6 py-10 text-center"
+              style={{
+                borderColor: revealed ? `${C.gold}66` : `${C.gold}2c`,
+                backgroundColor: revealed
+                  ? `${C.gold}14`
+                  : "rgba(58,20,20,0.72)",
+              }}
+            >
+              {!revealed ? (
+                <div className="space-y-4">
+                  <Gift
+                    className="mx-auto"
+                    size={28}
+                    style={{ color: C.gold }}
+                  />
+                  <EditableText
+                    value={revealLabel}
+                    onSave={(val) => onUpdateCustomText("giftRevealLabel", val)}
+                    mode={mode}
+                    placeholder="Bank Details"
+                    className="text-[11px] uppercase tracking-[0.34em]"
+                    inputClassName="text-center"
+                    as="p"
+                  />
+                  <EditableText
+                    value={revealPrompt}
+                    onSave={(val) =>
+                      onUpdateCustomText("giftRevealPrompt", val)
+                    }
+                    mode={mode}
+                    placeholder="Tap to reveal"
+                    className="text-2xl"
+                    inputClassName="text-center"
+                    as="p"
+                  />
+                </div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-3"
+                >
+                  <EditableText
+                    value={paymentLabel}
+                    onSave={(val) => onUpdateCustomText("giftPaymentLabel", val)}
+                    mode={mode}
+                    placeholder="Payment Option"
+                    className="text-[11px] uppercase tracking-[0.34em]"
+                    inputClassName="text-center"
+                    as="p"
+                  />
+                  <EditableText
+                    value={paymentTitle}
+                    onSave={(val) => onUpdateCustomText("giftPaymentTitle", val)}
+                    mode={mode}
+                    placeholder="UPI / Bank Transfer"
+                    className="text-2xl"
+                    inputClassName="text-center"
+                    as="p"
+                  />
+                  <div
+                    className="space-y-1 text-base"
+                    style={{ color: C.textMuted, fontFamily: FONTS.body }}
+                  >
+                    <EditableText
+                      value={upiLine}
+                      onSave={(val) => onUpdateCustomText("giftUpiLine", val)}
+                      mode={mode}
+                      placeholder="UPI ID: weddingfamily@okaxis"
+                      inputClassName="text-center"
+                      as="p"
+                    />
+                    <EditableText
+                      value={accountNameLine}
+                      onSave={(val) =>
+                        onUpdateCustomText("giftAccountNameLine", val)
+                      }
+                      mode={mode}
+                      placeholder="A/C Name: Shubh Aarambh Couple Fund"
+                      inputClassName="text-center"
+                      as="p"
+                    />
+                    <EditableText
+                      value={accountNumberLine}
+                      onSave={(val) =>
+                        onUpdateCustomText("giftAccountNumberLine", val)
+                      }
+                      mode={mode}
+                      placeholder="A/C No: 1234 5678 9012"
+                      inputClassName="text-center"
+                      as="p"
+                    />
+                    <EditableText
+                      value={ifscLine}
+                      onSave={(val) => onUpdateCustomText("giftIfscLine", val)}
+                      mode={mode}
+                      placeholder="IFSC: SBIN0001234"
+                      inputClassName="text-center"
+                      as="p"
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </motion.button>
+          </div>
+
+          <EditableText
+            value={note}
+            onSave={(val) => onUpdateCustomText("giftSectionNote", val)}
+            mode={mode}
+            placeholder="Your presence will mean the most"
+            className="mt-6 block text-sm uppercase tracking-[0.24em]"
+            inputClassName="text-center"
+            as="p"
+          />
+        </motion.div>
       </div>
     </section>
   );

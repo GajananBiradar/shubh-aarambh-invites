@@ -12,7 +12,7 @@ import {
 import FloatingMusicPlayer from "@/components/invitation/FloatingMusicPlayer";
 import { submitRsvp } from "@/api/rsvp";
 import { cn } from "@/lib/utils";
-import { createEmptyEvent, EventData, TemplateProps } from "@/templates/types";
+import { createEmptyEvent, EventData, SectionVisibility, TemplateProps } from "@/templates/types";
 import { formatEventDate, formatTime } from "@/utils/formatDate";
 import {
   CalendarDays,
@@ -20,6 +20,8 @@ import {
   Clock3,
   Heart,
   MapPin,
+  Minus,
+  Plus,
   Sparkles,
   Stars,
 } from "lucide-react";
@@ -50,6 +52,15 @@ const reveal = {
   transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] },
 } as const;
 
+const VELVET_DRESS_COLORS = [
+  { hex: "#1a2e28", name: "Deep Forest" },
+  { hex: "#d8b178", name: "Gold" },
+  { hex: "#8ea68f", name: "Sage" },
+  { hex: "#2c3b34", name: "Dark Emerald" },
+  { hex: "#f5ecdf", name: "Ivory" },
+  { hex: "#6b7f5e", name: "Olive" },
+];
+
 /* Bokeh-style warm golden particles */
 const generateBokeh = (count: number) =>
   Array.from({ length: count }, (_, i) => ({
@@ -77,6 +88,14 @@ const generateFlowers = (count: number) =>
 
 const BOKEH = generateBokeh(30);
 const FLOWERS = generateFlowers(10);
+const HEARTS = Array.from({ length: 6 }, (_, i) => ({
+  id: i,
+  left: `${10 + Math.random() * 80}%`,
+  size: 10 + Math.random() * 10,
+  duration: 4 + Math.random() * 6,
+  delay: Math.random() * 8,
+  drift: -20 + Math.random() * 40,
+}));
 
 /* Decorative gold ornament SVG */
 const GoldOrnament = ({ className = "" }: { className?: string }) => (
@@ -1259,6 +1278,21 @@ const VelvetPromiseEngagementTemplate = ({
 
       <GoldOrnament className="my-4" />
 
+      {/* Dress Code Color Palette */}
+      <VelvetDressCodeSection
+        mode={mode}
+        title={customText("dressCodeTitle", "Dress Code")}
+        body={customText(
+          "dressCodeBody",
+          "If possible, we would love for you to dress in these tones.",
+        )}
+        onUpdateCustomText={updateCustomText}
+        data={data}
+        onUpdate={onUpdate}
+      />
+
+      <GoldOrnament className="my-4" />
+
       {(data.showCountdown || mode === "edit") && (
         <section className="px-4 py-12 sm:py-16">
           <div
@@ -1468,6 +1502,150 @@ const VelvetPromiseEngagementTemplate = ({
         />
       )}
     </div>
+  );
+};
+
+/* ====== DRESS CODE COLOR PALETTE ====== */
+const VelvetDressCodeSection = ({
+  mode,
+  title,
+  body,
+  onUpdateCustomText,
+  data,
+  onUpdate,
+}: {
+  mode: TemplateProps["mode"];
+  title: string;
+  body: string;
+  onUpdateCustomText: (key: string, value: string) => void;
+  data: TemplateProps["data"];
+  onUpdate: TemplateProps["onUpdate"];
+}) => {
+  const getColors = (): { hex: string; name: string }[] => {
+    const saved = data.customTexts?.dressCodeColors;
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch { /* fall through */ }
+    }
+    return VELVET_DRESS_COLORS;
+  };
+  const colors = getColors();
+
+  const updateColor = (index: number, hex: string) => {
+    const updated = [...colors];
+    updated[index] = { ...updated[index], hex };
+    onUpdateCustomText("dressCodeColors", JSON.stringify(updated));
+  };
+
+  const addColor = () => {
+    const updated = [...colors, { hex: "#cccccc", name: `Color ${colors.length + 1}` }];
+    onUpdateCustomText("dressCodeColors", JSON.stringify(updated));
+  };
+
+  const removeColor = (index: number) => {
+    const updated = colors.filter((_, i) => i !== index);
+    onUpdateCustomText("dressCodeColors", JSON.stringify(updated));
+  };
+
+  return (
+    <section className="px-4 py-12 sm:py-16">
+      <div
+        className="mx-auto max-w-5xl rounded-[32px] border p-6 text-center sm:p-8"
+        style={{ borderColor: C.border, background: C.surface }}
+      >
+        <motion.p
+          {...reveal}
+          className="text-[11px] uppercase tracking-[0.38em]"
+          style={{ color: C.gold, fontFamily: F.sans }}
+        >
+          <EditableText
+            value={title}
+            onSave={(val) => onUpdateCustomText("dressCodeTitle", val)}
+            mode={mode}
+            placeholder="Dress Code"
+            className="block"
+            as="span"
+          />
+        </motion.p>
+        <motion.div
+          {...reveal}
+          transition={{ ...reveal.transition, delay: 0.1 }}
+          className="mx-auto mt-4 max-w-md text-sm leading-7 sm:text-base"
+          style={{ color: C.muted, fontFamily: F.serif }}
+        >
+          <EditableText
+            value={body}
+            onSave={(val) => onUpdateCustomText("dressCodeBody", val)}
+            mode={mode}
+            placeholder="Describe the colour palette or attire guidance."
+            className="block"
+            multiline
+            as="p"
+          />
+        </motion.div>
+        <div className="mt-8 flex flex-wrap justify-center gap-3 md:gap-4">
+          {colors.map((c, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 18, rotate: -3 }}
+              whileInView={{ opacity: 1, y: 0, rotate: 0 }}
+              whileHover={{ y: -6, scale: 1.04 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 + i * 0.08, duration: 0.45 }}
+              className="relative h-14 w-11 rounded-lg md:h-[76px] md:w-14"
+              style={{
+                backgroundColor: c.hex,
+                border:
+                  c.hex === "#f5ecdf"
+                    ? `1px solid rgba(231, 219, 200, 0.4)`
+                    : `1px solid ${C.border}`,
+                boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
+              }}
+              title={c.name}
+            >
+              {mode === "edit" && (
+                <>
+                  <label className="absolute inset-0 cursor-pointer">
+                    <input
+                      type="color"
+                      value={c.hex}
+                      onChange={(e) => updateColor(i, e.target.value)}
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    />
+                  </label>
+                  {colors.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeColor(i);
+                      }}
+                      className="absolute -top-2 -right-2 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-[10px] shadow-md hover:bg-red-600"
+                      title="Remove color"
+                    >
+                      <Minus size={10} />
+                    </button>
+                  )}
+                </>
+              )}
+            </motion.div>
+          ))}
+          {mode === "edit" && (
+            <motion.button
+              type="button"
+              onClick={addColor}
+              className="flex h-14 w-11 items-center justify-center rounded-lg border-2 border-dashed md:h-[76px] md:w-14"
+              style={{ borderColor: C.border, color: C.muted }}
+              title="Add color"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Plus size={16} />
+            </motion.button>
+          )}
+        </div>
+      </div>
+    </section>
   );
 };
 

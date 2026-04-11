@@ -42,14 +42,160 @@
 }
 
 /* ═══════════════════════════════════════
-   CUSTOM SCROLLBAR (matches dark gold theme)
+   CUSTOM SCROLLBAR — per-theme
    ═══════════════════════════════════════ */
 
-/* Webkit (Chrome, Safari, Edge) */
+/* Base scrollbar size (all themes) */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
+
+/* ── Crimson Shaadi: dark maroon track + gold thumb ── */
+[data-theme="crimson"],
+[data-theme="crimson"] * {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(38 65% 50% / 0.4) #1a0808;
+}
+[data-theme="crimson"] ::-webkit-scrollbar-track {
+  background: #1a0808;
+  border-radius: 3px;
+}
+[data-theme="crimson"] ::-webkit-scrollbar-thumb {
+  background: hsl(38 65% 50% / 0.4);
+  border-radius: 3px;
+}
+[data-theme="crimson"] ::-webkit-scrollbar-thumb:hover {
+  background: hsl(38 65% 50% / 0.6);
+}
+
+/* ── Blossom Date: cream track + sage thumb ── */
+[data-theme="blossom"],
+[data-theme="blossom"] * {
+  scrollbar-width: thin;
+  scrollbar-color: #7a8c6e #faf6f0;
+}
+[data-theme="blossom"] ::-webkit-scrollbar-track {
+  background: #faf6f0;
+  border-radius: 3px;
+}
+[data-theme="blossom"] ::-webkit-scrollbar-thumb {
+  background: rgba(122, 140, 110, 0.5);
+  border-radius: 3px;
+}
+[data-theme="blossom"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(122, 140, 110, 0.7);
+}
+
+/* ── Velvet Promise: dark forest track + gold thumb ── */
+[data-theme="velvet"],
+[data-theme="velvet"] * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(216, 177, 120, 0.4) #0c110f;
+}
+[data-theme="velvet"] ::-webkit-scrollbar-track {
+  background: #0c110f;
+  border-radius: 3px;
+}
+[data-theme="velvet"] ::-webkit-scrollbar-thumb {
+  background: rgba(216, 177, 120, 0.4);
+  border-radius: 3px;
+}
+[data-theme="velvet"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(216, 177, 120, 0.6);
+}
+
+/* ── Midnight Moonlit: deep navy track + gold thumb ── */
+[data-theme="midnight"],
+[data-theme="midnight"] * {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(45 100% 50% / 0.35) hsl(225 50% 10%);
+}
+[data-theme="midnight"] ::-webkit-scrollbar-track {
+  background: hsl(225 50% 10%);
+  border-radius: 3px;
+}
+[data-theme="midnight"] ::-webkit-scrollbar-thumb {
+  background: hsl(45 100% 50% / 0.35);
+  border-radius: 3px;
+}
+[data-theme="midnight"] ::-webkit-scrollbar-thumb:hover {
+  background: hsl(45 100% 50% / 0.55);
+}
+
+/* ── Golden Memo: dark warm track + gold/plum thumb ── */
+[data-theme="golden"],
+[data-theme="golden"] * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(182, 129, 63, 0.45) #241b17;
+}
+[data-theme="golden"] ::-webkit-scrollbar-track {
+  background: #241b17;
+  border-radius: 3px;
+}
+[data-theme="golden"] ::-webkit-scrollbar-thumb {
+  background: rgba(182, 129, 63, 0.45);
+  border-radius: 3px;
+}
+[data-theme="golden"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(182, 129, 63, 0.65);
+}
+
+/* ── Blush Affair: warm blush track + sage thumb ── */
+[data-theme="blush"],
+[data-theme="blush"] * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(145, 163, 152, 0.5) #f6e7e3;
+}
+[data-theme="blush"] ::-webkit-scrollbar-track {
+  background: #f6e7e3;
+  border-radius: 3px;
+}
+[data-theme="blush"] ::-webkit-scrollbar-thumb {
+  background: rgba(145, 163, 152, 0.5);
+  border-radius: 3px;
+}
+[data-theme="blush"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(145, 163, 152, 0.7);
+}
+
+/* ── Finca Olive: paper track + olive thumb ── */
+[data-theme="finca"],
+[data-theme="finca"] * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(113, 112, 91, 0.4) #f6efe7;
+}
+[data-theme="finca"] ::-webkit-scrollbar-track {
+  background: #f6efe7;
+  border-radius: 3px;
+}
+[data-theme="finca"] ::-webkit-scrollbar-thumb {
+  background: rgba(113, 112, 91, 0.4);
+  border-radius: 3px;
+}
+[data-theme="finca"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(113, 112, 91, 0.6);
+}
+
+/* ── Premium Elegante: ivory track + gold thumb ── */
+[data-theme="premium"],
+[data-theme="premium"] * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(197, 164, 109, 0.4) #f3ede3;
+}
+[data-theme="premium"] ::-webkit-scrollbar-track {
+  background: #f3ede3;
+  border-radius: 3px;
+}
+[data-theme="premium"] ::-webkit-scrollbar-thumb {
+  background: rgba(197, 164, 109, 0.4);
+  border-radius: 3px;
+}
+[data-theme="premium"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(197, 164, 109, 0.6);
+}
+
+/* ── Fallback (non-themed pages): dark gold ── */
 ::-webkit-scrollbar-track {
   background: hsl(30 15% 10%);
   border-radius: 3px;
@@ -61,13 +207,10 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(38 65% 50% / 0.6);
 }
-
-/* Firefox */
 * {
   scrollbar-width: thin;
   scrollbar-color: hsl(38 65% 50% / 0.4) hsl(30 15% 10%);
 }
-
 select {
   scrollbar-width: thin;
   scrollbar-color: hsl(38 65% 50% / 0.4) hsl(30 15% 10%);

@@ -12,7 +12,12 @@ import {
 import FloatingMusicPlayer from "@/components/invitation/FloatingMusicPlayer";
 import { submitRsvp } from "@/api/rsvp";
 import { cn } from "@/lib/utils";
-import { createEmptyEvent, EventData, SectionVisibility, TemplateProps } from "@/templates/types";
+import {
+  createEmptyEvent,
+  EventData,
+  SectionVisibility,
+  TemplateProps,
+} from "@/templates/types";
 import { formatEventDate, formatTime } from "@/utils/formatDate";
 import {
   CalendarDays,
@@ -130,8 +135,16 @@ const BokehOverlay = () => (
           background: `radial-gradient(circle, ${C.gold}88, ${C.gold}22)`,
           filter: `blur(${p.blur}px)`,
         }}
-        animate={{ opacity: [p.opacity * 0.3, p.opacity, p.opacity * 0.3], scale: [0.8, 1.2, 0.8] }}
-        transition={{ duration: p.duration, delay: p.delay, repeat: Infinity, ease: "easeInOut" }}
+        animate={{
+          opacity: [p.opacity * 0.3, p.opacity, p.opacity * 0.3],
+          scale: [0.8, 1.2, 0.8],
+        }}
+        transition={{
+          duration: p.duration,
+          delay: p.delay,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
       />
     ))}
   </div>
@@ -143,9 +156,20 @@ const FloatingHearts = () => (
       <motion.div
         key={h.id}
         className="absolute"
-        style={{ left: h.left, bottom: -20, fontSize: h.size, color: C.gold, opacity: 0.25 }}
+        style={{
+          left: h.left,
+          bottom: -20,
+          fontSize: h.size,
+          color: C.gold,
+          opacity: 0.25,
+        }}
         animate={{ y: [0, -600], x: [0, h.drift], opacity: [0, 0.3, 0] }}
-        transition={{ duration: h.duration, delay: h.delay, repeat: Infinity, ease: "easeOut" }}
+        transition={{
+          duration: h.duration,
+          delay: h.delay,
+          repeat: Infinity,
+          ease: "easeOut",
+        }}
       >
         ♥
       </motion.div>
@@ -179,7 +203,14 @@ const FloatingFlowers = () => (
           viewBox="0 0 64 64"
           fill="none"
         >
-          <ellipse cx="32" cy="14" rx="9" ry="14" fill={C.gold} fillOpacity="0.36" />
+          <ellipse
+            cx="32"
+            cy="14"
+            rx="9"
+            ry="14"
+            fill={C.gold}
+            fillOpacity="0.36"
+          />
           <ellipse
             cx="50"
             cy="32"
@@ -189,7 +220,14 @@ const FloatingFlowers = () => (
             fillOpacity="0.28"
             transform="rotate(90 50 32)"
           />
-          <ellipse cx="32" cy="50" rx="9" ry="14" fill={C.gold} fillOpacity="0.24" />
+          <ellipse
+            cx="32"
+            cy="50"
+            rx="9"
+            ry="14"
+            fill={C.gold}
+            fillOpacity="0.24"
+          />
           <ellipse
             cx="14"
             cy="32"
@@ -232,11 +270,8 @@ const getEventTimeLabel = (event?: EventData | null) => {
   return formatTime(event.eventTime);
 };
 
-const getText = (
-  data: TemplateProps["data"],
-  key: string,
-  fallback: string,
-) => data.customTexts?.[key] || fallback;
+const getText = (data: TemplateProps["data"], key: string, fallback: string) =>
+  data.customTexts?.[key] || fallback;
 
 const SectionHeading = ({
   kicker,
@@ -635,7 +670,8 @@ const VelvetPromiseEngagementTemplate = ({
   const bridePhoto = data.bridePhotoUrl || photos[1]?.photoUrl || heroPhoto;
   const groomPhoto = data.groomPhotoUrl || photos[2]?.photoUrl || heroPhoto;
   const firstEvent = data.events[0];
-  const customText = (key: string, fallback: string) => getText(data, key, fallback);
+  const customText = (key: string, fallback: string) =>
+    getText(data, key, fallback);
   const updateCustomText = (key: string, value: string) =>
     onUpdate({
       customTexts: {
@@ -774,96 +810,125 @@ const VelvetPromiseEngagementTemplate = ({
                     : "Date to be announced",
                   href: undefined as string | undefined,
                   note: customText("heroDateNote", "Celebrate with us"),
-                  edit: mode === "edit" ? (
-                    <div className="relative mt-3">
-                      <button
-                        type="button"
-                        onClick={() => setShowHeroDatePicker((current) => !current)}
-                        className="rounded-full border px-3 py-2 text-xs"
-                        style={{ borderColor: C.border, color: C.gold, fontFamily: F.sans }}
-                      >
-                        Change date
-                      </button>
-                      {showHeroDatePicker && (
-                        <div
-                          className="absolute left-0 top-full z-20 mt-2 rounded-xl border p-3"
-                          style={{ borderColor: C.border, background: C.surface }}
+                  edit:
+                    mode === "edit" ? (
+                      <div className="relative mt-3">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowHeroDatePicker((current) => !current)
+                          }
+                          className="rounded-full border px-3 py-2 text-xs"
+                          style={{
+                            borderColor: C.border,
+                            color: C.gold,
+                            fontFamily: F.sans,
+                          }}
                         >
-                          <input
-                            type="date"
-                            value={firstEvent?.eventDate || ""}
-                            onChange={(event) => {
-                              updateEventAt(0, { eventDate: event.target.value });
-                              setShowHeroDatePicker(false);
+                          Change date
+                        </button>
+                        {showHeroDatePicker && (
+                          <div
+                            className="absolute left-0 top-full z-20 mt-2 rounded-xl border p-3"
+                            style={{
+                              borderColor: C.border,
+                              background: C.surface,
                             }}
-                            className="bg-transparent text-sm outline-none"
-                            style={{ color: C.text, fontFamily: F.sans }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ) : null,
+                          >
+                            <input
+                              type="date"
+                              value={firstEvent?.eventDate || ""}
+                              onChange={(event) => {
+                                updateEventAt(0, {
+                                  eventDate: event.target.value,
+                                });
+                                setShowHeroDatePicker(false);
+                              }}
+                              className="bg-transparent text-sm outline-none"
+                              style={{ color: C.text, fontFamily: F.sans }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ) : null,
                 },
                 {
                   label: "Venue",
                   value: firstEvent?.venueName || "Venue Name",
                   href: firstEvent?.mapsUrl || undefined,
                   note: firstEvent?.venueAddress || "City, State",
-                  edit: mode === "edit" ? (
-                    <div className="mt-3 space-y-2">
-                      <EditableText
-                        value={firstEvent?.venueName || ""}
-                        onSave={(value) => updateEventAt(0, { venueName: value })}
-                        mode={mode}
-                        as="p"
-                        className="text-sm"
-                        placeholder="Venue name"
-                      />
-                      <EditableText
-                        value={firstEvent?.venueAddress || ""}
-                        onSave={(value) => updateEventAt(0, { venueAddress: value })}
-                        mode={mode}
-                        as="p"
-                        className="text-xs"
-                        placeholder="Venue address"
-                      />
-                    </div>
-                  ) : null,
+                  edit:
+                    mode === "edit" ? (
+                      <div className="mt-3 space-y-2">
+                        <EditableText
+                          value={firstEvent?.venueName || ""}
+                          onSave={(value) =>
+                            updateEventAt(0, { venueName: value })
+                          }
+                          mode={mode}
+                          as="p"
+                          className="text-sm"
+                          placeholder="Venue name"
+                        />
+                        <EditableText
+                          value={firstEvent?.venueAddress || ""}
+                          onSave={(value) =>
+                            updateEventAt(0, { venueAddress: value })
+                          }
+                          mode={mode}
+                          as="p"
+                          className="text-xs"
+                          placeholder="Venue address"
+                        />
+                      </div>
+                    ) : null,
                 },
                 {
                   label: "Engagement Time",
                   value: getEventTimeLabel(firstEvent),
                   href: undefined as string | undefined,
                   note: firstEvent?.eventName || "Ring ceremony",
-                  edit: mode === "edit" ? (
-                    <div className="relative mt-3">
-                      <button
-                        type="button"
-                        onClick={() => setShowHeroTimePicker((current) => !current)}
-                        className="rounded-full border px-3 py-2 text-xs"
-                        style={{ borderColor: C.border, color: C.gold, fontFamily: F.sans }}
-                      >
-                        Change time
-                      </button>
-                      {showHeroTimePicker && (
-                        <div
-                          className="absolute left-0 top-full z-20 mt-2 rounded-xl border p-3"
-                          style={{ borderColor: C.border, background: C.surface }}
+                  edit:
+                    mode === "edit" ? (
+                      <div className="relative mt-3">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowHeroTimePicker((current) => !current)
+                          }
+                          className="rounded-full border px-3 py-2 text-xs"
+                          style={{
+                            borderColor: C.border,
+                            color: C.gold,
+                            fontFamily: F.sans,
+                          }}
                         >
-                          <input
-                            type="time"
-                            value={firstEvent?.eventTime?.slice(0, 5) || ""}
-                            onChange={(event) => {
-                              updateEventAt(0, { eventTime: `${event.target.value}:00` });
-                              setShowHeroTimePicker(false);
+                          Change time
+                        </button>
+                        {showHeroTimePicker && (
+                          <div
+                            className="absolute left-0 top-full z-20 mt-2 rounded-xl border p-3"
+                            style={{
+                              borderColor: C.border,
+                              background: C.surface,
                             }}
-                            className="bg-transparent text-sm outline-none"
-                            style={{ color: C.text, fontFamily: F.sans }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ) : null,
+                          >
+                            <input
+                              type="time"
+                              value={firstEvent?.eventTime?.slice(0, 5) || ""}
+                              onChange={(event) => {
+                                updateEventAt(0, {
+                                  eventTime: `${event.target.value}:00`,
+                                });
+                                setShowHeroTimePicker(false);
+                              }}
+                              className="bg-transparent text-sm outline-none"
+                              style={{ color: C.text, fontFamily: F.sans }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ) : null,
                 },
               ].map((item, idx) => {
                 const inner = (
@@ -876,7 +941,10 @@ const VelvetPromiseEngagementTemplate = ({
                     </div>
                     <p
                       className="mt-3 flex items-center gap-1.5 text-[11px] uppercase tracking-[0.32em]"
-                      style={{ color: item.href ? C.gold : C.muted, fontFamily: F.sans }}
+                      style={{
+                        color: item.href ? C.gold : C.muted,
+                        fontFamily: F.sans,
+                      }}
                     >
                       {item.href && <MapPin size={12} />}
                       {item.label}
@@ -904,7 +972,10 @@ const VelvetPromiseEngagementTemplate = ({
                     transition={{ duration: 0.5, delay: idx * 0.1 }}
                     whileHover={{ y: -4 }}
                     className="block rounded-[24px] border p-4 transition-colors"
-                    style={{ borderColor: C.border, background: C.surfaceStrong }}
+                    style={{
+                      borderColor: C.border,
+                      background: C.surfaceStrong,
+                    }}
                   >
                     {inner}
                   </motion.a>
@@ -917,7 +988,10 @@ const VelvetPromiseEngagementTemplate = ({
                     transition={{ duration: 0.5, delay: idx * 0.1 }}
                     whileHover={{ y: -4 }}
                     className="rounded-[24px] border p-4"
-                    style={{ borderColor: C.border, background: C.surfaceStrong }}
+                    style={{
+                      borderColor: C.border,
+                      background: C.surfaceStrong,
+                    }}
                   >
                     {inner}
                   </motion.div>
@@ -930,7 +1004,11 @@ const VelvetPromiseEngagementTemplate = ({
             <motion.div
               whileHover={{ scale: 1.01 }}
               className="overflow-hidden rounded-[34px] border shadow-lg"
-              style={{ borderColor: C.border, background: C.surfaceStrong, boxShadow: `0 0 40px ${C.goldSoft}` }}
+              style={{
+                borderColor: C.border,
+                background: C.surfaceStrong,
+                boxShadow: `0 0 40px ${C.goldSoft}`,
+              }}
             >
               {mode === "edit" ? (
                 <EditablePhoto
@@ -1056,7 +1134,9 @@ const VelvetPromiseEngagementTemplate = ({
                     onUpdate={(updates) => updateEventAt(index, updates)}
                     onDelete={() =>
                       onUpdate({
-                        events: data.events.filter((_, eventIndex) => eventIndex !== index),
+                        events: data.events.filter(
+                          (_, eventIndex) => eventIndex !== index,
+                        ),
                       })
                     }
                     mode={mode}
@@ -1086,7 +1166,10 @@ const VelvetPromiseEngagementTemplate = ({
                     viewport={{ once: true }}
                     transition={{ duration: 0.55, delay: index * 0.08 }}
                     className="rounded-[28px] border p-5 sm:p-6"
-                    style={{ borderColor: C.border, background: C.surfaceStrong }}
+                    style={{
+                      borderColor: C.border,
+                      background: C.surfaceStrong,
+                    }}
                   >
                     <p
                       className="text-[11px] uppercase tracking-[0.34em]"
@@ -1121,7 +1204,11 @@ const VelvetPromiseEngagementTemplate = ({
                         target="_blank"
                         rel="noreferrer"
                         className="mt-5 inline-flex items-center gap-2 rounded-full border px-4 py-3 text-sm"
-                        style={{ borderColor: C.border, color: C.text, fontFamily: F.sans }}
+                        style={{
+                          borderColor: C.border,
+                          color: C.text,
+                          fontFamily: F.sans,
+                        }}
                       >
                         <MapPin size={16} color={C.gold} />
                         Open map
@@ -1244,7 +1331,11 @@ const VelvetPromiseEngagementTemplate = ({
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: idx * 0.12, ease: [0.22, 1, 0.36, 1] }}
+                transition={{
+                  duration: 0.6,
+                  delay: idx * 0.12,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
                 whileHover={{ y: -6, scale: 1.02 }}
                 className="rounded-[28px] border p-5"
                 style={{ borderColor: C.border, background: C.surfaceStrong }}
@@ -1255,7 +1346,9 @@ const VelvetPromiseEngagementTemplate = ({
                 >
                   <EditableText
                     value={item.title}
-                    onSave={(value) => updateCustomText(`${item.key}Title`, value)}
+                    onSave={(value) =>
+                      updateCustomText(`${item.key}Title`, value)
+                    }
                     mode={mode}
                     as="span"
                     placeholder="Card title"
@@ -1327,7 +1420,10 @@ const VelvetPromiseEngagementTemplate = ({
             )}
             {data.showCountdown && (
               <>
-                <motion.div {...reveal} className="mx-auto max-w-3xl text-center">
+                <motion.div
+                  {...reveal}
+                  className="mx-auto max-w-3xl text-center"
+                >
                   <p
                     className="text-[11px] uppercase tracking-[0.38em]"
                     style={{ color: C.gold, fontFamily: F.sans }}
@@ -1339,7 +1435,9 @@ const VelvetPromiseEngagementTemplate = ({
                       "countdownTitle",
                       "The engagement evening is getting closer.",
                     )}
-                    onSave={(value) => updateCustomText("countdownTitle", value)}
+                    onSave={(value) =>
+                      updateCustomText("countdownTitle", value)
+                    }
                     mode={mode}
                     multiline
                     as="h2"
@@ -1361,7 +1459,9 @@ const VelvetPromiseEngagementTemplate = ({
                   />
                 </motion.div>
                 <div className="mt-8">
-                  <CountDownStrip weddingDate={firstEvent?.eventDate || data.weddingDate} />
+                  <CountDownStrip
+                    weddingDate={firstEvent?.eventDate || data.weddingDate}
+                  />
                 </div>
               </>
             )}
@@ -1399,7 +1499,11 @@ const VelvetPromiseEngagementTemplate = ({
                     initial={{ opacity: 0, y: 30, scale: 0.96 }}
                     whileInView={{ opacity: 1, y: 0, scale: 1 }}
                     viewport={{ once: true, margin: "-5% 0px" }}
-                    transition={{ duration: 0.7, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                    transition={{
+                      duration: 0.7,
+                      delay: index * 0.08,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
                     whileHover={{ y: -8, scale: 1.02 }}
                     className={cn(
                       "group overflow-hidden rounded-[28px] border",
@@ -1526,7 +1630,9 @@ const VelvetDressCodeSection = ({
     if (saved) {
       try {
         return JSON.parse(saved);
-      } catch { /* fall through */ }
+      } catch {
+        /* fall through */
+      }
     }
     return VELVET_DRESS_COLORS;
   };
@@ -1539,7 +1645,10 @@ const VelvetDressCodeSection = ({
   };
 
   const addColor = () => {
-    const updated = [...colors, { hex: "#cccccc", name: `Color ${colors.length + 1}` }];
+    const updated = [
+      ...colors,
+      { hex: "#cccccc", name: `Color ${colors.length + 1}` },
+    ];
     onUpdateCustomText("dressCodeColors", JSON.stringify(updated));
   };
 

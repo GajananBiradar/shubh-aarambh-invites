@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronDown, Gift, Heart, MapPin, Minus, Plus, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  Gift,
+  Heart,
+  MapPin,
+  Minus,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import {
   TemplateProps,
   EventData,
@@ -568,8 +576,16 @@ const CrimsonShaadiTemplate = ({
             "If you still wish to contribute to the couple's new beginning, you can use the bank details below.",
           )}
           revealLabel={getCustomText(data, "giftRevealLabel", "Bank Details")}
-          revealPrompt={getCustomText(data, "giftRevealPrompt", "Tap to reveal")}
-          paymentLabel={getCustomText(data, "giftPaymentLabel", "Payment Option")}
+          revealPrompt={getCustomText(
+            data,
+            "giftRevealPrompt",
+            "Tap to reveal",
+          )}
+          paymentLabel={getCustomText(
+            data,
+            "giftPaymentLabel",
+            "Payment Option",
+          )}
           paymentTitle={getCustomText(
             data,
             "giftPaymentTitle",
@@ -2412,7 +2428,9 @@ const CrimsonDressCodeSection = ({
     if (saved) {
       try {
         return JSON.parse(saved);
-      } catch { /* fall through */ }
+      } catch {
+        /* fall through */
+      }
     }
     return DRESS_COLORS;
   };
@@ -2425,7 +2443,10 @@ const CrimsonDressCodeSection = ({
   };
 
   const addColor = () => {
-    const updated = [...colors, { hex: "#cccccc", name: `Color ${colors.length + 1}` }];
+    const updated = [
+      ...colors,
+      { hex: "#cccccc", name: `Color ${colors.length + 1}` },
+    ];
     onUpdateCustomText("dressCodeColors", JSON.stringify(updated));
   };
 
@@ -2506,7 +2527,9 @@ const CrimsonDressCodeSection = ({
               style={{
                 backgroundColor: c.hex,
                 border:
-                  c.hex === "#f5e6d0" ? `1px solid ${C.textMuted}40` : `1px solid ${C.gold}30`,
+                  c.hex === "#f5e6d0"
+                    ? `1px solid ${C.textMuted}40`
+                    : `1px solid ${C.gold}30`,
               }}
               title={c.name}
             >
@@ -2714,7 +2737,9 @@ const CrimsonDetailsSection = ({
                 >
                   <EditableText
                     value={paymentLabel}
-                    onSave={(val) => onUpdateCustomText("giftPaymentLabel", val)}
+                    onSave={(val) =>
+                      onUpdateCustomText("giftPaymentLabel", val)
+                    }
                     mode={mode}
                     placeholder="Payment Option"
                     className="text-[11px] uppercase tracking-[0.34em]"
@@ -2723,7 +2748,9 @@ const CrimsonDetailsSection = ({
                   />
                   <EditableText
                     value={paymentTitle}
-                    onSave={(val) => onUpdateCustomText("giftPaymentTitle", val)}
+                    onSave={(val) =>
+                      onUpdateCustomText("giftPaymentTitle", val)
+                    }
                     mode={mode}
                     placeholder="UPI / Bank Transfer"
                     className="text-2xl"

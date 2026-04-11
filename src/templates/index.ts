@@ -29,14 +29,14 @@ const templateRegistry: Record<string, TemplateRegistryEntry & { loader: () => P
   'ivory': {
     loader: IvoryGardenTemplate,
     component: null as unknown as TemplateComponent,
-    name: 'Velvet Promise',
+    name: 'Ivory Garden',
     theme: 'ivory',
     category: 'Engagement',
   },
   'ivory-garden': {
     loader: IvoryGardenTemplate,
     component: null as unknown as TemplateComponent,
-    name: 'Velvet Promise',
+    name: 'Ivory Garden',
     theme: 'ivory',
     category: 'Engagement',
   },
@@ -57,14 +57,14 @@ const templateRegistry: Record<string, TemplateRegistryEntry & { loader: () => P
   'midnight': {
     loader: MidnightNawabTemplate,
     component: null as unknown as TemplateComponent,
-    name: 'Sage Letter',
+    name: 'Midnight Nawab',
     theme: 'midnight',
     category: 'Engagement',
   },
   'midnight-nawab': {
     loader: MidnightNawabTemplate,
     component: null as unknown as TemplateComponent,
-    name: 'Sage Letter',
+    name: 'Midnight Nawab',
     theme: 'midnight',
     category: 'Engagement',
   },

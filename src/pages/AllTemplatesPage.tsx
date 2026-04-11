@@ -145,7 +145,7 @@ const TemplateCard = ({
       onClick={() => window.open(`/templates/${template.id}/demo`, "_blank")}
     >
       {/* iPhone Frame */}
-      <div className="relative rounded-[2rem] border-[3px] border-neutral-800 bg-neutral-900 p-[3px] shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30 transition-shadow duration-300">
+      <div className="relative rounded-[2rem] border-[3px] border-neutral-800 bg-neutral-900 p-[3px] shadow-xl shadow-black/20 group-hover:shadow-2xl group-hover:shadow-gold/10 group-hover:border-neutral-700 transition-all duration-500 group-hover:scale-[1.02]">
         {/* Notch / Dynamic Island */}
         <div className="absolute top-[6px] left-1/2 -translate-x-1/2 z-20 w-[60px] h-[14px] bg-neutral-900 rounded-full" />
 
@@ -226,14 +226,16 @@ const TemplateCard = ({
         </div>
       </div>
 
-      {/* Template name & description below frame */}
+      {/* Template name & category below frame */}
       <div className="mt-3 text-center px-1">
         <h3 className="font-display text-sm font-semibold leading-tight">
           {template.name}
         </h3>
-        <p className="font-body text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
-          {template.description}
-        </p>
+        {template.category && (
+          <span className="inline-block mt-1.5 font-body text-[10px] tracking-wide uppercase text-muted-foreground/70 border border-border/50 rounded-full px-2.5 py-0.5">
+            {template.category.replace(/_/g, ' ')}
+          </span>
+        )}
       </div>
 
       {/* Delete confirmation dialog */}
@@ -398,15 +400,15 @@ const AllTemplatesPage = () => {
         {!isLoading && !isError && (
           <>
             {/* Filter pills */}
-            <div className="flex flex-wrap gap-2 justify-center mb-12 sticky top-16 z-30 bg-background/80 backdrop-blur-xl py-4 -mx-4 px-4">
+            <div className="flex flex-wrap gap-2 justify-center mb-12 sticky top-16 z-30 bg-background/80 backdrop-blur-xl py-4 -mx-4 px-4 border-b border-border/30">
               {allTags.map((tag) => (
                 <button
                   key={tag}
                   onClick={() => setActiveFilter(tag)}
-                  className={`font-body text-xs px-4 py-2 rounded-full border transition-all ${
+                  className={`font-body text-xs px-5 py-2 rounded-full border transition-all duration-300 ${
                     activeFilter === tag
-                      ? "bg-gold text-background border-gold"
-                      : "bg-card text-muted-foreground border-border hover:border-gold/50"
+                      ? "bg-gold text-background border-gold shadow-md shadow-gold/20 scale-105"
+                      : "bg-card text-muted-foreground border-border hover:border-gold/50 hover:text-foreground"
                   }`}
                 >
                   {tag}
@@ -415,7 +417,7 @@ const AllTemplatesPage = () => {
             </div>
 
             {filtered.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-6xl mx-auto justify-items-center">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-6xl mx-auto justify-items-center">
                 {filtered.map((t) => (
                   <TemplateCard
                     key={t.id}

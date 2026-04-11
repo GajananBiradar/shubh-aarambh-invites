@@ -105,7 +105,7 @@ const TemplateCard = ({ template }: { template: Template }) => {
       onClick={() => window.open(`/templates/${template.id}/demo`, "_blank")}
     >
       {/* iPhone Frame */}
-      <div className="relative rounded-[2rem] border-[3px] border-neutral-800 bg-neutral-900 p-[3px] shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30 transition-shadow duration-300">
+      <div className="relative rounded-[2rem] border-[3px] border-neutral-800 bg-neutral-900 p-[3px] shadow-xl shadow-black/20 group-hover:shadow-2xl group-hover:shadow-gold/10 group-hover:border-neutral-700 transition-all duration-500 group-hover:scale-[1.02]">
         {/* Notch / Dynamic Island */}
         <div className="absolute top-[6px] left-1/2 -translate-x-1/2 z-20 w-[60px] h-[14px] bg-neutral-900 rounded-full" />
 
@@ -153,14 +153,16 @@ const TemplateCard = ({ template }: { template: Template }) => {
         </div>
       </div>
 
-      {/* Template name & description below frame */}
+      {/* Template name & category below frame */}
       <div className="mt-3 text-center px-1">
         <h3 className="font-display text-sm font-semibold leading-tight">
           {template.name}
         </h3>
-        <p className="font-body text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
-          {template.description}
-        </p>
+        {template.category && (
+          <span className="inline-block mt-1.5 font-body text-[10px] tracking-wide uppercase text-muted-foreground/70 border border-border/50 rounded-full px-2.5 py-0.5">
+            {template.category.replace(/_/g, ' ')}
+          </span>
+        )}
       </div>
     </motion.div>
   );

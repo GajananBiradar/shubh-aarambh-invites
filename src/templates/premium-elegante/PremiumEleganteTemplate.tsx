@@ -288,15 +288,16 @@ const PremiumEleganteTemplate = ({
       />
 
       {/* ═══════════ COUNTDOWN ═══════════ */}
-      {sectionVisibility.countdown && (data.showCountdown || mode === "edit") && (
-        <CountdownSection
-          mode={mode}
-          weddingDate={data.weddingDate}
-          showCountdown={data.showCountdown}
-          onUpdate={onUpdate}
-          sectionVisibility={sectionVisibility}
-        />
-      )}
+      {sectionVisibility.countdown &&
+        (data.showCountdown || mode === "edit") && (
+          <CountdownSection
+            mode={mode}
+            weddingDate={data.weddingDate}
+            showCountdown={data.showCountdown}
+            onUpdate={onUpdate}
+            sectionVisibility={sectionVisibility}
+          />
+        )}
       {mode === "edit" && !sectionVisibility.countdown && (
         <HiddenSectionPlaceholder
           title="Countdown"
@@ -356,7 +357,13 @@ const PremiumEleganteTemplate = ({
 
       {/* ═══════════ THE VENUE ═══════════ */}
       {sectionVisibility.venue && data.events[0] && (
-        <VenueSection event={data.events[0]} weddingDate={data.weddingDate} mode={mode} sectionVisibility={sectionVisibility} onUpdate={onUpdate} />
+        <VenueSection
+          event={data.events[0]}
+          weddingDate={data.weddingDate}
+          mode={mode}
+          sectionVisibility={sectionVisibility}
+          onUpdate={onUpdate}
+        />
       )}
       {mode === "edit" && !sectionVisibility.venue && (
         <HiddenSectionPlaceholder
@@ -371,7 +378,12 @@ const PremiumEleganteTemplate = ({
 
       {/* ═══════════ DAY PROGRAMME ═══════════ */}
       {sectionVisibility.events && (
-        <DayProgrammeSection mode={mode} data={data} onUpdate={onUpdate} sectionVisibility={sectionVisibility} />
+        <DayProgrammeSection
+          mode={mode}
+          data={data}
+          onUpdate={onUpdate}
+          sectionVisibility={sectionVisibility}
+        />
       )}
       {mode === "edit" && !sectionVisibility.events && (
         <HiddenSectionPlaceholder
@@ -431,7 +443,12 @@ const PremiumEleganteTemplate = ({
 
       {/* ═══════════ GIFTS & BLESSINGS ═══════════ */}
       {sectionVisibility.gifts && (
-        <GiftsBlessingsSection mode={mode} data={data} onUpdate={onUpdate} sectionVisibility={sectionVisibility} />
+        <GiftsBlessingsSection
+          mode={mode}
+          data={data}
+          onUpdate={onUpdate}
+          sectionVisibility={sectionVisibility}
+        />
       )}
       {mode === "edit" && !sectionVisibility.gifts && (
         <HiddenSectionPlaceholder
@@ -445,193 +462,210 @@ const PremiumEleganteTemplate = ({
       )}
 
       {/* ═══════════ RSVP ═══════════ */}
-      {sectionVisibility.rsvp !== false && mode !== "edit" && data.rsvpEnabled !== false && (
-        <RsvpSection
-          invitationId={data.invitationId}
-          isDemo={mode === "demo"}
-        />
-      )}
+      {sectionVisibility.rsvp !== false &&
+        mode !== "edit" &&
+        data.rsvpEnabled !== false && (
+          <RsvpSection
+            invitationId={data.invitationId}
+            isDemo={mode === "demo"}
+          />
+        )}
 
       {/* ═══════════ FOOTER ═══════════ */}
       {sectionVisibility.footer && (
-      <footer
-        className={cn(
-          "relative py-20 text-center overflow-hidden",
-          mode === "edit" && "pb-32",
-        )}
-        style={{ backgroundColor: C.bg }}
-      >
-        {/* Decorative floral top border */}
-        <div className="absolute top-0 left-0 right-0 flex justify-center">
-          <svg
-            width="400"
-            height="80"
-            viewBox="0 0 400 80"
-            fill="none"
-            style={{ color: C.gold, opacity: 0.4 }}
-          >
-            <path
-              d="M0 80 Q50 30 100 50 Q150 70 200 40 Q250 10 300 50 Q350 70 400 30"
-              stroke="currentColor"
-              strokeWidth="1"
-              fill="none"
-            />
-            <path
-              d="M0 80 Q50 50 100 65 Q150 80 200 55 Q250 30 300 65 Q350 80 400 50"
-              stroke="currentColor"
-              strokeWidth="0.5"
-              fill="none"
-            />
-          </svg>
-        </div>
-
-        <div className="max-w-md mx-auto px-6 relative z-10">
-          {mode === "edit" && (
-            <div className="mb-6 flex justify-center">
-              <SectionActionButton
-                label="Remove Section"
-                onClick={() =>
-                  onUpdate({
-                    sectionVisibility: { ...sectionVisibility, footer: false },
-                  })
-                }
-              />
-            </div>
+        <footer
+          className={cn(
+            "relative py-20 text-center overflow-hidden",
+            mode === "edit" && "pb-32",
           )}
-          {/* Ending flowers illustration */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="flex justify-center mb-6"
-          >
+          style={{ backgroundColor: C.bg }}
+        >
+          {/* Decorative floral top border */}
+          <div className="absolute top-0 left-0 right-0 flex justify-center">
             <svg
-              width="180"
-              height="120"
-              viewBox="0 0 180 120"
+              width="400"
+              height="80"
+              viewBox="0 0 400 80"
               fill="none"
-              style={{ color: C.ornament }}
-            >
-              <g stroke="currentColor" strokeWidth="0.8" fill="none">
-                {/* Left branch with flowers */}
-                <path d="M90 100 Q60 80 30 90 Q20 70 35 55 Q25 40 40 30" />
-                <circle cx="35" cy="55" r="8" strokeWidth="0.6" />
-                <circle cx="35" cy="55" r="4" strokeWidth="0.4" />
-                <circle cx="40" cy="30" r="6" strokeWidth="0.6" />
-                <circle cx="40" cy="30" r="3" strokeWidth="0.4" />
-                {/* Left leaves */}
-                <path d="M55 85 Q45 75 55 70" />
-                <path d="M42 70 Q32 65 42 58" />
-                {/* Right branch with flowers */}
-                <path d="M90 100 Q120 80 150 90 Q160 70 145 55 Q155 40 140 30" />
-                <circle cx="145" cy="55" r="8" strokeWidth="0.6" />
-                <circle cx="145" cy="55" r="4" strokeWidth="0.4" />
-                <circle cx="140" cy="30" r="6" strokeWidth="0.6" />
-                <circle cx="140" cy="30" r="3" strokeWidth="0.4" />
-                {/* Right leaves */}
-                <path d="M125 85 Q135 75 125 70" />
-                <path d="M138 70 Q148 65 138 58" />
-                {/* Center top flower */}
-                <path d="M90 100 Q90 60 90 25" />
-                <circle cx="90" cy="20" r="10" strokeWidth="0.6" />
-                <circle cx="90" cy="20" r="5" strokeWidth="0.4" />
-                <circle cx="90" cy="20" r="2" fill="currentColor" />
-                {/* Small buds */}
-                <circle cx="70" cy="45" r="4" strokeWidth="0.5" />
-                <circle cx="110" cy="45" r="4" strokeWidth="0.5" />
-                {/* Center leaves */}
-                <path d="M85 70 Q75 60 85 55" />
-                <path d="M95 70 Q105 60 95 55" />
-              </g>
-            </svg>
-          </motion.div>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="font-script text-4xl md:text-5xl mb-2"
-            style={{ color: C.text }}
-          >
-            {data.brideName?.split(" ")[0] || "Partner"} &amp;{" "}
-            {data.groomName?.split(" ")[0] || "Partner"}
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.15 }}
-            className="flex items-center justify-center gap-3 my-4"
-          >
-            <div
-              className="w-12 h-[1px]"
-              style={{ backgroundColor: C.goldLight }}
-            />
-            <Heart size={14} style={{ color: C.gold }} fill={C.gold} />
-            <div
-              className="w-12 h-[1px]"
-              style={{ backgroundColor: C.goldLight }}
-            />
-          </motion.div>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="text-xs tracking-[0.2em] uppercase"
-            style={{ color: C.textMuted, fontFamily: FONTS.body }}
-          >
-            {formatWeddingDate(data.weddingDate)}
-          </motion.p>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-            className="italic text-sm mt-6 mb-8"
-            style={{ color: C.textLight, fontFamily: FONTS.serif }}
-          >
-            We can&apos;t wait to celebrate with you
-          </motion.p>
-
-          {/* Bottom floral accent */}
-          <div className="flex justify-center mb-6">
-            <svg
-              width="120"
-              height="30"
-              viewBox="0 0 120 30"
-              fill="none"
-              style={{ color: C.gold, opacity: 0.5 }}
+              style={{ color: C.gold, opacity: 0.4 }}
             >
               <path
-                d="M0 15 Q15 5 30 15 Q45 25 60 15 Q75 5 90 15 Q105 25 120 15"
+                d="M0 80 Q50 30 100 50 Q150 70 200 40 Q250 10 300 50 Q350 70 400 30"
                 stroke="currentColor"
-                strokeWidth="0.8"
+                strokeWidth="1"
                 fill="none"
               />
-              <circle cx="30" cy="15" r="2" fill="currentColor" opacity="0.4" />
-              <circle
-                cx="60"
-                cy="15"
-                r="2.5"
-                fill="currentColor"
-                opacity="0.5"
+              <path
+                d="M0 80 Q50 50 100 65 Q150 80 200 55 Q250 30 300 65 Q350 80 400 50"
+                stroke="currentColor"
+                strokeWidth="0.5"
+                fill="none"
               />
-              <circle cx="90" cy="15" r="2" fill="currentColor" opacity="0.4" />
             </svg>
           </div>
 
-          <p
-            className="text-[10px] mt-4"
-            style={{ color: C.goldLight, fontFamily: FONTS.body }}
-          >
-            Made with love on ShubhAarambh
-          </p>
-        </div>
-      </footer>
+          <div className="max-w-md mx-auto px-6 relative z-10">
+            {mode === "edit" && (
+              <div className="mb-6 flex justify-center">
+                <SectionActionButton
+                  label="Remove Section"
+                  onClick={() =>
+                    onUpdate({
+                      sectionVisibility: {
+                        ...sectionVisibility,
+                        footer: false,
+                      },
+                    })
+                  }
+                />
+              </div>
+            )}
+            {/* Ending flowers illustration */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="flex justify-center mb-6"
+            >
+              <svg
+                width="180"
+                height="120"
+                viewBox="0 0 180 120"
+                fill="none"
+                style={{ color: C.ornament }}
+              >
+                <g stroke="currentColor" strokeWidth="0.8" fill="none">
+                  {/* Left branch with flowers */}
+                  <path d="M90 100 Q60 80 30 90 Q20 70 35 55 Q25 40 40 30" />
+                  <circle cx="35" cy="55" r="8" strokeWidth="0.6" />
+                  <circle cx="35" cy="55" r="4" strokeWidth="0.4" />
+                  <circle cx="40" cy="30" r="6" strokeWidth="0.6" />
+                  <circle cx="40" cy="30" r="3" strokeWidth="0.4" />
+                  {/* Left leaves */}
+                  <path d="M55 85 Q45 75 55 70" />
+                  <path d="M42 70 Q32 65 42 58" />
+                  {/* Right branch with flowers */}
+                  <path d="M90 100 Q120 80 150 90 Q160 70 145 55 Q155 40 140 30" />
+                  <circle cx="145" cy="55" r="8" strokeWidth="0.6" />
+                  <circle cx="145" cy="55" r="4" strokeWidth="0.4" />
+                  <circle cx="140" cy="30" r="6" strokeWidth="0.6" />
+                  <circle cx="140" cy="30" r="3" strokeWidth="0.4" />
+                  {/* Right leaves */}
+                  <path d="M125 85 Q135 75 125 70" />
+                  <path d="M138 70 Q148 65 138 58" />
+                  {/* Center top flower */}
+                  <path d="M90 100 Q90 60 90 25" />
+                  <circle cx="90" cy="20" r="10" strokeWidth="0.6" />
+                  <circle cx="90" cy="20" r="5" strokeWidth="0.4" />
+                  <circle cx="90" cy="20" r="2" fill="currentColor" />
+                  {/* Small buds */}
+                  <circle cx="70" cy="45" r="4" strokeWidth="0.5" />
+                  <circle cx="110" cy="45" r="4" strokeWidth="0.5" />
+                  {/* Center leaves */}
+                  <path d="M85 70 Q75 60 85 55" />
+                  <path d="M95 70 Q105 60 95 55" />
+                </g>
+              </svg>
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="font-script text-4xl md:text-5xl mb-2"
+              style={{ color: C.text }}
+            >
+              {data.brideName?.split(" ")[0] || "Partner"} &amp;{" "}
+              {data.groomName?.split(" ")[0] || "Partner"}
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.15 }}
+              className="flex items-center justify-center gap-3 my-4"
+            >
+              <div
+                className="w-12 h-[1px]"
+                style={{ backgroundColor: C.goldLight }}
+              />
+              <Heart size={14} style={{ color: C.gold }} fill={C.gold} />
+              <div
+                className="w-12 h-[1px]"
+                style={{ backgroundColor: C.goldLight }}
+              />
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="text-xs tracking-[0.2em] uppercase"
+              style={{ color: C.textMuted, fontFamily: FONTS.body }}
+            >
+              {formatWeddingDate(data.weddingDate)}
+            </motion.p>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="italic text-sm mt-6 mb-8"
+              style={{ color: C.textLight, fontFamily: FONTS.serif }}
+            >
+              We can&apos;t wait to celebrate with you
+            </motion.p>
+
+            {/* Bottom floral accent */}
+            <div className="flex justify-center mb-6">
+              <svg
+                width="120"
+                height="30"
+                viewBox="0 0 120 30"
+                fill="none"
+                style={{ color: C.gold, opacity: 0.5 }}
+              >
+                <path
+                  d="M0 15 Q15 5 30 15 Q45 25 60 15 Q75 5 90 15 Q105 25 120 15"
+                  stroke="currentColor"
+                  strokeWidth="0.8"
+                  fill="none"
+                />
+                <circle
+                  cx="30"
+                  cy="15"
+                  r="2"
+                  fill="currentColor"
+                  opacity="0.4"
+                />
+                <circle
+                  cx="60"
+                  cy="15"
+                  r="2.5"
+                  fill="currentColor"
+                  opacity="0.5"
+                />
+                <circle
+                  cx="90"
+                  cy="15"
+                  r="2"
+                  fill="currentColor"
+                  opacity="0.4"
+                />
+              </svg>
+            </div>
+
+            <p
+              className="text-[10px] mt-4"
+              style={{ color: C.goldLight, fontFamily: FONTS.body }}
+            >
+              Made with love on ShubhAarambh
+            </p>
+          </div>
+        </footer>
       )}
       {mode === "edit" && !sectionVisibility.footer && (
         <HiddenSectionPlaceholder
@@ -1359,7 +1393,7 @@ const VenueSection = ({
         <div className="w-full overflow-hidden bg-[#f3ede3]">
           <img
             src={VENUE_IMAGE_URL}
-            alt="Maharaja Palace"
+            alt="Wedding Venue"
             className="w-full object-contain"
             style={{ maxHeight: "360px" }}
           />
@@ -1371,7 +1405,7 @@ const VenueSection = ({
             className="font-script text-3xl md:text-4xl mb-6"
             style={{ color: "#7a6545" }}
           >
-            {event.venueName || "Maharaja Palace"}
+            {event.venueName || "The Venue"}
           </h3>
 
           <div
@@ -1661,8 +1695,8 @@ const AlternatingTimeline = ({
                   {event.venueName}
                 </p>
               )}
-              {event.venueAddress && (
-                event.mapsUrl ? (
+              {event.venueAddress &&
+                (event.mapsUrl ? (
                   <a
                     href={event.mapsUrl}
                     target="_blank"
@@ -1670,7 +1704,10 @@ const AlternatingTimeline = ({
                     className="block text-[11px] md:text-xs italic mt-0.5 hover:opacity-80 transition-opacity break-words"
                     style={{ color: C.gold, fontFamily: FONTS.serif }}
                   >
-                    <MapPin size={11} className="inline-block align-middle mr-0.5 shrink-0" />
+                    <MapPin
+                      size={11}
+                      className="inline-block align-middle mr-0.5 shrink-0"
+                    />
                     <span className="align-middle">{event.venueAddress}</span>
                   </a>
                 ) : (
@@ -1678,11 +1715,13 @@ const AlternatingTimeline = ({
                     className="block text-[11px] md:text-xs italic mt-0.5 break-words"
                     style={{ color: C.textLight, fontFamily: FONTS.serif }}
                   >
-                    <MapPin size={11} className="inline-block align-middle mr-0.5 shrink-0" />
+                    <MapPin
+                      size={11}
+                      className="inline-block align-middle mr-0.5 shrink-0"
+                    />
                     <span className="align-middle">{event.venueAddress}</span>
                   </p>
-                )
-              )}
+                ))}
             </>
           );
 

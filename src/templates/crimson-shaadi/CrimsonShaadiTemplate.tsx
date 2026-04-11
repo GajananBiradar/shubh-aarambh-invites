@@ -1080,7 +1080,7 @@ const HeroSection = ({
           )
         )}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 pointer-events-none"
           style={{
             background: `
               linear-gradient(180deg, rgba(35,10,10,0.18) 0%, rgba(56,20,18,0.34) 28%, rgba(58,16,16,0.74) 54%, rgba(31,8,8,0.98) 100%),
@@ -1090,7 +1090,7 @@ const HeroSection = ({
           }}
         />
         <div
-          className="absolute inset-x-0 bottom-0 h-[48%]"
+          className="absolute inset-x-0 bottom-0 h-[48%] pointer-events-none"
           style={{
             background: `
               radial-gradient(circle at 50% 0%, rgba(255,218,145,0.12), transparent 20%),
@@ -1199,7 +1199,7 @@ const HeroSection = ({
             />
           </div>
 
-          <div className="absolute inset-x-0 -bottom-[7.2rem] flex justify-center sm:-bottom-[8.6rem]">
+          <div className="absolute inset-x-0 -bottom-[7.2rem] flex justify-center sm:-bottom-[8.6rem] pointer-events-none">
             <div className="relative flex items-center justify-center">
               <motion.div
                 className="absolute left-1/2 top-1/2 h-[17.5rem] w-[17.5rem] -translate-x-1/2 -translate-y-1/2 sm:h-[22rem] sm:w-[22rem]"
@@ -1235,7 +1235,7 @@ const HeroSection = ({
                   opacity: { delay: 0.8, duration: 0.9, ease: "easeOut" },
                   scale: { delay: 0.8, duration: 0.9, ease: "easeOut" },
                 }}
-                className="relative z-10"
+                className="relative z-10 pointer-events-auto"
               >
                 <MandalaFrame size={220}>
                   {mode === "edit" ? (
@@ -1278,7 +1278,7 @@ const HeroSection = ({
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.1, duration: 0.8 }}
-          className="mt-28 flex flex-col items-center sm:mt-36"
+          className="mt-32 flex flex-col items-center sm:mt-40"
         >
           <p
             className="text-[10px] uppercase tracking-[0.38em] sm:text-xs sm:tracking-[0.5em]"
@@ -1328,6 +1328,9 @@ const HeroSection = ({
                   backgroundColor: "rgba(58,20,20,0.78)",
                   borderColor: `${C.gold}66`,
                   color: C.cream,
+                  colorScheme: "dark",
+                  position: "relative" as const,
+                  zIndex: 20,
                 }}
               />
             </div>

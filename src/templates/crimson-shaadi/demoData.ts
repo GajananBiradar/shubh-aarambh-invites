@@ -102,14 +102,6 @@ const crimsonDemoData = {
       venueAddress: "Hadapsar, Pune",
       mapsUrl: defaultMaps.wedding,
     },
-    {
-      eventName: "Reception",
-      eventDate: "2027-02-14",
-      eventTime: "19:00:00",
-      venueName: "Sheraton Grand Pune",
-      venueAddress: "Bund Garden Road, Pune",
-      mapsUrl: defaultMaps.reception,
-    },
   ],
   musicUrl:
     "https://pub-ae188d768af94d25a7750692051dfeea.r2.dev/music/music.mp3?v=2026-04-08-2",

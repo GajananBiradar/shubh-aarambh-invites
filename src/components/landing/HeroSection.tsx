@@ -125,7 +125,7 @@ const HeroSection = () => {
             Browse Templates
           </button>
           <a
-            href="/templates/crimson/demo"
+            href="/templates/1/demo"
             target="_blank"
             rel="noopener noreferrer"
             className="btn-outline-accent px-10 py-4 rounded-xl text-base font-body"

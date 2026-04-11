@@ -242,7 +242,7 @@ const TemplateDemoPage = () => {
         <div className="relative w-full max-w-[280px] rounded-[2rem] border-[3px] border-neutral-900 bg-neutral-950 p-[4px] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
           <div className="absolute left-1/2 top-[7px] z-20 h-[12px] w-[60px] -translate-x-1/2 rounded-full bg-neutral-900" />
           <div
-            className="overflow-hidden rounded-[1.7rem] bg-background"
+            className="group relative overflow-hidden rounded-[1.7rem] bg-background"
             style={{ height: "calc(100vh - 7rem)" }}
           >
             <iframe
@@ -256,6 +256,25 @@ const TemplateDemoPage = () => {
                 transformOrigin: "top left",
               }}
             />
+            {/* Scroll hint overlay */}
+            <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex flex-col items-center gap-1 bg-gradient-to-t from-black/60 to-transparent pb-4 pt-10">
+              <svg
+                className="h-5 w-5 animate-bounce text-white/90"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+              <span className="text-[10px] font-medium tracking-wide text-white/80">
+                Scroll to explore
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -329,7 +348,7 @@ const TemplateDemoPage = () => {
               className={`${isFree ? "btn-emerald" : "btn-gold"} rounded-full px-5 py-2 text-sm flex items-center gap-1.5`}
             >
               <Sparkles size={14} />
-              {isFree ? "Start for Free →" : `Get This for ₹${priceInr} →`}
+              Customize &amp; Make It Yours →
             </button>
           </div>
         </div>

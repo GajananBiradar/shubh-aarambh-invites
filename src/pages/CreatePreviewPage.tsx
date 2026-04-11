@@ -62,7 +62,7 @@ const CreatePreviewPage = () => {
           setTemplateComp(() => component);
         } else {
           toast.error("Template not found");
-          window.close();
+          navigate(`/create/${numTemplateId}`);
         }
       } finally {
         setLoading(false);
@@ -86,7 +86,7 @@ const CreatePreviewPage = () => {
 
     if (!sessionData) {
       toast.error("No form data found. Going back to editor...");
-      setTimeout(() => window.close(), 2000);
+      setTimeout(() => navigate(`/create/${numTemplateId}`), 2000);
       return;
     }
 
@@ -148,7 +148,7 @@ const CreatePreviewPage = () => {
     } catch (error) {
       console.error("Failed to parse session data:", error);
       toast.error("Failed to load preview");
-      window.close();
+      navigate(`/create/${numTemplateId}`);
     }
   }, [sessionKey, numTemplateId, templateId]);
 
@@ -216,7 +216,7 @@ const CreatePreviewPage = () => {
 
   // Handle Back to Editing
   const handleBackToEditing = () => {
-    window.close();
+    navigate(`/create/${numTemplateId}`);
   };
 
   const theme = getTemplateTheme(templateId);
@@ -372,10 +372,10 @@ const CreatePreviewPage = () => {
                 </button>
 
                 <button
-                  onClick={() => window.close()}
+                  onClick={() => navigate(`/create/${numTemplateId}`)}
                   className="font-body text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Close This Tab
+                  Back to Editing
                 </button>
               </div>
             </motion.div>

@@ -555,8 +555,8 @@ const CreateInvitationPage = ({
       JSON.stringify({ ...data, ...previewData }),
     );
 
-    // Open preview in new tab - NO API CALL
-    window.open(`/create/${numTemplateId}/preview`, "_blank");
+    // Navigate to preview in same tab
+    navigate(`/create/${numTemplateId}/preview`);
   };
 
   // Get template theme for styling

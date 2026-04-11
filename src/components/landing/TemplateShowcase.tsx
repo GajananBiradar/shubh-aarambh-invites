@@ -194,7 +194,7 @@ const TemplateShowcase = () => {
             Find Your Perfect Invitation
           </h2>
           <p className="text-muted-foreground font-body mb-16 max-w-lg mx-auto font-light">
-            Start free. Upgrade when you're ready.
+            Every design, handcrafted to make your day unforgettable.
           </p>
         </motion.div>
 

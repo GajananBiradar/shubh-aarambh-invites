@@ -1,31 +1,39 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
 
 const faqs = [
   {
-    q: 'Are the free templates really free? No catch?',
-    a: 'Absolutely! 3 of our templates are completely free — forever. No trial period, no hidden fees, no watermark. You get all animations, RSVP, gallery, music, and a lifetime shareable link.',
+    q: "Are the free templates really free? No catch?",
+    a: "Absolutely! Our free templates are completely free — forever. No trial period, no hidden fees, no watermark. You get all animations, RSVP, music, and a lifetime shareable link.",
   },
   {
-    q: 'How is the price determined for paid templates?',
-    a: 'Each template has its own price set individually based on its design complexity and features. Check the price badge on each template card. Prices range from ₹349 to ₹699.',
+    q: "Are the templates fully editable?",
+    a: "Yes, everything on the template is fully editable! You can add or remove any section you want. For example, if you don't need the events section, gallery, or any other part — just click Edit and remove it. You have complete control over your invitation.",
   },
   {
-    q: 'Can I edit my invitation after publishing?',
-    a: 'Yes! You can edit any detail — events, photos, music — anytime from your dashboard. Changes go live instantly on your shared link.',
+    q: "Can I edit my invitation after publishing?",
+    a: "Yes! You can edit any detail — events, photos, music — anytime from your dashboard. Changes go live instantly on your shared link.",
   },
   {
-    q: 'Will it work on all phones and devices?',
-    a: 'Our invitations are mobile-first and work beautifully on all phones, tablets, and desktops. No app needed — just a browser link.',
+    q: "Will it work on all phones and devices?",
+    a: "Our invitations are mobile-first and work beautifully on all phones, tablets, and desktops. No app needed — just a browser link.",
   },
   {
-    q: 'Can I add multiple ceremonies (Haldi, Mehendi, Sangeet)?',
-    a: 'Yes! You can add up to 8 events including Haldi, Mehendi, Sangeet, Wedding, Reception, and custom events. Each with its own date, time, and venue.',
+    q: "How do guests RSVP?",
+    a: "Each invitation has a built-in RSVP form. Guests simply tap the RSVP button, fill in their details, and you'll see all responses in your dashboard — no spreadsheets needed.",
   },
   {
-    q: 'Is the payment secure?',
-    a: 'Yes, we use Razorpay — India\'s most trusted payment gateway. Your payment details are encrypted and never stored on our servers.',
+    q: "Can I share my invitation on WhatsApp?",
+    a: "Absolutely! Every invitation comes with a unique shareable link. You can send it directly via WhatsApp, SMS, email, or any messaging app. There's even a one-tap WhatsApp share button built in.",
+  },
+  {
+    q: "Is the payment secure?",
+    a: "Yes, we use industry-leading payment gateways. Your payment details are encrypted and never stored on our servers.",
+  },
+  {
+    q: "How long does it take to create an invitation?",
+    a: "Most couples finish their invitation in under 10 minutes! Just pick a template, fill in your details, upload photos, and publish. It's that simple.",
   },
 ];
 
@@ -69,12 +77,14 @@ const FAQSection = () => {
                 {open === i && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
+                    animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                     className="overflow-hidden"
                   >
-                    <p className="px-6 pb-6 font-body text-sm text-muted-foreground font-light leading-relaxed">{faq.a}</p>
+                    <p className="px-6 pb-6 font-body text-sm text-muted-foreground font-light leading-relaxed">
+                      {faq.a}
+                    </p>
                   </motion.div>
                 )}
               </AnimatePresence>

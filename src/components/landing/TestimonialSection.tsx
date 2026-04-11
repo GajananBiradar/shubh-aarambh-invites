@@ -1,24 +1,27 @@
-import { motion } from 'framer-motion';
-import { Star } from 'lucide-react';
+import { motion } from "framer-motion";
+import { Star } from "lucide-react";
 
 const testimonials = [
   {
-    name: 'Priya & Arjun',
-    city: 'Mumbai',
-    initials: 'PA',
-    quote: "Our guests couldn't stop talking about how beautiful the invite was. The Sangeet card had everyone emotional before the event even started.",
+    name: "Elena & Marco",
+    city: "Milan",
+    initials: "EM",
+    quote:
+      "Our guests told us this was the most unique invitation they had ever received. They said they'll never forget it.",
   },
   {
-    name: 'Fatima & Zaid',
-    city: 'Hyderabad',
-    initials: 'FZ',
-    quote: 'The Midnight Nawab template was exactly what we wanted. Elegant, dramatic, and perfectly us.',
+    name: "Sophie & Luca",
+    city: "London",
+    initials: "SL",
+    quote:
+      "The template was exactly what we wanted. Elegant, dramatic, and perfectly us.",
   },
   {
-    name: 'Sneha & Rohan',
-    city: 'Pune',
-    initials: 'SR',
-    quote: "We started with a free template and it looked so good we didn't even need to upgrade. Absolutely stunning.",
+    name: "Clara & Henrik",
+    city: "Amsterdam",
+    initials: "CH",
+    quote:
+      "So easy to set up and the result looked like it was designed by a professional studio. Our families were amazed.",
   },
 ];
 
@@ -31,7 +34,7 @@ const TestimonialSection = () => (
         viewport={{ once: true }}
         className="font-display text-3xl md:text-5xl font-semibold text-center mb-16"
       >
-        Loved by Couples Across India
+        Loved by Couples Everywhere
       </motion.h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
         {testimonials.map((t, i) => (
@@ -49,15 +52,19 @@ const TestimonialSection = () => (
               </div>
               <div>
                 <p className="font-display text-base font-semibold">{t.name}</p>
-                <p className="font-body text-xs text-muted-foreground">{t.city}</p>
+                <p className="font-body text-xs text-muted-foreground">
+                  {t.city}
+                </p>
               </div>
             </div>
             <div className="flex gap-0.5 mb-4">
-              {[1,2,3,4,5].map(s => (
+              {[1, 2, 3, 4, 5].map((s) => (
                 <Star key={s} className="w-4 h-4 fill-gold text-gold" />
               ))}
             </div>
-            <p className="font-body text-sm text-muted-foreground italic leading-relaxed">"{t.quote}"</p>
+            <p className="font-body text-sm text-muted-foreground italic leading-relaxed">
+              "{t.quote}"
+            </p>
           </motion.div>
         ))}
       </div>

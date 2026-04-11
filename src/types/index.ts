@@ -130,8 +130,9 @@ export interface QuoteRequest {
   name: string;
   email: string;
   phone?: string;
-  vision: string;
+  requirements: string;
   budget: string;
+  country: string;
   eventDate?: string;
 }
 

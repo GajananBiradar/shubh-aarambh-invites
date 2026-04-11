@@ -42,6 +42,38 @@
 }
 
 /* ═══════════════════════════════════════
+   CUSTOM SCROLLBAR (matches dark gold theme)
+   ═══════════════════════════════════════ */
+
+/* Webkit (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(30 15% 10%);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(38 65% 50% / 0.4);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(38 65% 50% / 0.6);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(38 65% 50% / 0.4) hsl(30 15% 10%);
+}
+
+select {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(38 65% 50% / 0.4) hsl(30 15% 10%);
+}
+
+/* ═══════════════════════════════════════
    INVITATION THEME VARIANTS
    Applied via data-theme on invite wrapper
    ═══════════════════════════════════════ */

@@ -1,10 +1,25 @@
-import { motion } from 'framer-motion';
-import { Palette, PenTool, Share2 } from 'lucide-react';
+import { motion } from "framer-motion";
+import { Palette, PenTool, Share2 } from "lucide-react";
 
 const steps = [
-  { icon: Palette, num: '01', title: 'Choose Your Template', desc: 'Browse our designer-crafted collection. 3 free templates to start.' },
-  { icon: PenTool, num: '02', title: 'Add Your Details', desc: 'Fill in your story, events, photos, and music. Save as draft anytime.' },
-  { icon: Share2, num: '03', title: 'Share With Your Guests', desc: 'Publish and share one beautiful link with everyone, everywhere.' },
+  {
+    icon: Palette,
+    num: "01",
+    title: "Choose Your Template",
+    desc: "Pick from our curated collection of free and premium designs.",
+  },
+  {
+    icon: PenTool,
+    num: "02",
+    title: "Add Your Details",
+    desc: "Fill in your story, events, photos, and music. Edit anything, anytime.",
+  },
+  {
+    icon: Share2,
+    num: "03",
+    title: "Share With Your Guests",
+    desc: "Publish and share one beautiful link via WhatsApp, SMS, or email.",
+  },
 ];
 
 const HowItWorks = () => (
@@ -35,15 +50,25 @@ const HowItWorks = () => (
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: i * 0.2, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            transition={{
+              delay: i * 0.2,
+              duration: 0.6,
+              ease: [0.16, 1, 0.3, 1],
+            }}
             className="flex-1 text-center relative z-10"
           >
             <div className="w-24 h-24 mx-auto rounded-full bg-card border border-border flex items-center justify-center mb-5 shadow-lg">
               <s.icon className="w-10 h-10 text-gold" />
             </div>
-            <span className="font-body text-xs font-bold text-gold uppercase tracking-[0.2em]">{s.num}</span>
-            <h3 className="font-display text-xl font-semibold mt-2 mb-3">{s.title}</h3>
-            <p className="font-body text-sm text-muted-foreground font-light max-w-[220px] mx-auto leading-relaxed">{s.desc}</p>
+            <span className="font-body text-xs font-bold text-gold uppercase tracking-[0.2em]">
+              {s.num}
+            </span>
+            <h3 className="font-display text-xl font-semibold mt-2 mb-3">
+              {s.title}
+            </h3>
+            <p className="font-body text-sm text-muted-foreground font-light max-w-[220px] mx-auto leading-relaxed">
+              {s.desc}
+            </p>
           </motion.div>
         ))}
       </div>

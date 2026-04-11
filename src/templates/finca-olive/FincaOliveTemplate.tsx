@@ -636,7 +636,7 @@ const FincaOliveTemplate = ({
             </p>
           )}
           <p className="font-body text-[10px] text-muted-foreground/50 mt-10">
-            Made with love on ShubhAarambh
+            Made with love on LuxEnvelope
           </p>
         </div>
       </footer>

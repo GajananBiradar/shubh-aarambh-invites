@@ -599,7 +599,7 @@ const CrimsonShaadiTemplate = ({
           accountNameLine={getCustomText(
             data,
             "giftAccountNameLine",
-            "A/C Name: Shubh Aarambh Couple Fund",
+            "A/C Name: Couple Fund",
           )}
           accountNumberLine={getCustomText(
             data,
@@ -726,10 +726,10 @@ const CrimsonShaadiTemplate = ({
             )}
             {(mode === "edit" || data.footerNote) && (
               <EditableText
-                value={data.footerNote || "Made with love on ShubhAarambh"}
+                value={data.footerNote || "Made with love on LuxEnvelope"}
                 onSave={(val) => onUpdate({ footerNote: val })}
                 mode={mode}
-                placeholder="Made with love on ShubhAarambh"
+                placeholder="Made with love on LuxEnvelope"
                 className="text-[10px] mt-8 block"
                 as="p"
               />
@@ -2775,7 +2775,7 @@ const CrimsonDetailsSection = ({
                         onUpdateCustomText("giftAccountNameLine", val)
                       }
                       mode={mode}
-                      placeholder="A/C Name: Shubh Aarambh Couple Fund"
+                      placeholder="A/C Name: Couple Fund"
                       inputClassName="text-center"
                       as="p"
                     />

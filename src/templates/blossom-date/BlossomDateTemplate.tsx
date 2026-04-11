@@ -257,8 +257,7 @@ const BlossomSectionAction = ({
     onClick={onClick}
     className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] uppercase tracking-[0.22em] transition-all"
     style={{
-      borderColor:
-        variant === "add" ? `${C.sage}88` : `${C.textLight}44`,
+      borderColor: variant === "add" ? `${C.sage}88` : `${C.textLight}44`,
       background:
         variant === "add"
           ? `linear-gradient(135deg, ${C.sage}28, ${C.sage}10)`
@@ -472,248 +471,259 @@ const BlossomDateTemplate = ({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.65, delay: 0.08 }}
         >
-            {/* Hero: Couple Photo */}
-            <HeroSection
+          {/* Hero: Couple Photo */}
+          <HeroSection
+            mode={mode}
+            data={data}
+            onUpdate={onUpdate}
+            templateId={templateId}
+            sessionUUID={sessionUUID}
+            uploadStage={uploadStage}
+          />
+
+          {/* Welcome + Inline Music Toggle */}
+          <EditorialWelcomeSection
+            mode={mode}
+            data={data}
+            onUpdate={onUpdate}
+            effectiveMusicUrl={effectiveMusicUrl}
+          />
+
+          {/* Calendar Date with hand-drawn circle */}
+          <EditorialCalendarDateSection
+            mode={mode}
+            weddingDate={data.weddingDate}
+            onUpdate={onUpdate}
+          />
+
+          {/* Animated S-Curve Timeline */}
+          {sectionVisibility.timeline !== false && (
+            <EditorialTimelineSection
+              mode={mode}
+              data={data}
+              onUpdate={onUpdate}
+              sectionVisibility={sectionVisibility}
+            />
+          )}
+          {mode === "edit" && sectionVisibility.timeline === false && (
+            <BlossomHiddenPlaceholder
+              title="Timeline"
+              onAdd={() =>
+                onUpdate({
+                  sectionVisibility: { ...sectionVisibility, timeline: true },
+                })
+              }
+            />
+          )}
+
+          {/* Venue */}
+          {sectionVisibility.venue !== false && data.events[0] && (
+            <EditorialVenueSection
+              mode={mode}
+              event={data.events[0]}
+              venueTitle={getCustomText(data, "venueTitle", "Venue")}
+              routeLabel={getCustomText(data, "venueRouteLabel", "Plan Route")}
+              onUpdateCustomText={updateCustomText}
+              onUpdate={onUpdate}
+              sectionVisibility={sectionVisibility}
+            />
+          )}
+          {mode === "edit" && sectionVisibility.venue === false && (
+            <BlossomHiddenPlaceholder
+              title="Venue"
+              onAdd={() =>
+                onUpdate({
+                  sectionVisibility: { ...sectionVisibility, venue: true },
+                })
+              }
+            />
+          )}
+
+          {/* Dress Code */}
+          {sectionVisibility.dressCode !== false && (
+            <EditorialDressCodeSection
+              mode={mode}
+              title={getCustomText(data, "dressCodeTitle", "Dress Code")}
+              body={getCustomText(
+                data,
+                "dressCodeBody",
+                "We would be grateful if you could follow the colour palette of our wedding.",
+              )}
+              onUpdateCustomText={updateCustomText}
+              data={data}
+              onUpdate={onUpdate}
+              sectionVisibility={sectionVisibility}
+            />
+          )}
+          {mode === "edit" && sectionVisibility.dressCode === false && (
+            <BlossomHiddenPlaceholder
+              title="Dress Code"
+              onAdd={() =>
+                onUpdate({
+                  sectionVisibility: { ...sectionVisibility, dressCode: true },
+                })
+              }
+            />
+          )}
+
+          {/* Gallery */}
+          {sectionVisibility.gallery && (
+            <GallerySection
               mode={mode}
               data={data}
               onUpdate={onUpdate}
               templateId={templateId}
               sessionUUID={sessionUUID}
               uploadStage={uploadStage}
+              sectionVisibility={sectionVisibility}
             />
+          )}
+          {mode === "edit" && !sectionVisibility.gallery && (
+            <BlossomHiddenPlaceholder
+              title="Gallery"
+              onAdd={() =>
+                onUpdate({
+                  sectionVisibility: { ...sectionVisibility, gallery: true },
+                })
+              }
+            />
+          )}
 
-            {/* Welcome + Inline Music Toggle */}
-            <EditorialWelcomeSection
+          {/* Details */}
+          {sectionVisibility.details !== false && (
+            <EditorialDetailsSection
               mode={mode}
-              data={data}
+              title={getCustomText(
+                data,
+                "giftSectionLabel",
+                "Gifts & Blessings",
+              )}
+              heading={getCustomText(
+                data,
+                "giftSectionHeading",
+                "Your Presence Is The Real Gift",
+              )}
+              body={getCustomText(
+                data,
+                "giftSectionBody",
+                "If you still wish to contribute to the couple's new beginning, you can use the bank details below.",
+              )}
+              revealLabel={getCustomText(
+                data,
+                "giftRevealLabel",
+                "Bank Details",
+              )}
+              revealPrompt={getCustomText(
+                data,
+                "giftRevealPrompt",
+                "Tap to reveal",
+              )}
+              paymentLabel={getCustomText(
+                data,
+                "giftPaymentLabel",
+                "Payment Option",
+              )}
+              paymentTitle={getCustomText(
+                data,
+                "giftPaymentTitle",
+                "UPI / Bank Transfer",
+              )}
+              upiLine={getCustomText(
+                data,
+                "giftUpiLine",
+                "UPI ID: weddingfamily@okaxis",
+              )}
+              accountNameLine={getCustomText(
+                data,
+                "giftAccountNameLine",
+                "A/C Name: Couple Fund",
+              )}
+              accountNumberLine={getCustomText(
+                data,
+                "giftAccountNumberLine",
+                "A/C No: 1234 5678 9012",
+              )}
+              ifscLine={getCustomText(
+                data,
+                "giftIfscLine",
+                "IFSC: SBIN0001234",
+              )}
+              note={getCustomText(
+                data,
+                "giftSectionNote",
+                "Your presence will mean the most",
+              )}
+              onUpdateCustomText={updateCustomText}
+              sectionVisibility={sectionVisibility}
               onUpdate={onUpdate}
-              effectiveMusicUrl={effectiveMusicUrl}
             />
-
-            {/* Calendar Date with hand-drawn circle */}
-            <EditorialCalendarDateSection
-              mode={mode}
-              weddingDate={data.weddingDate}
-              onUpdate={onUpdate}
+          )}
+          {mode === "edit" && sectionVisibility.details === false && (
+            <BlossomHiddenPlaceholder
+              title="Gifts & Details"
+              onAdd={() =>
+                onUpdate({
+                  sectionVisibility: { ...sectionVisibility, details: true },
+                })
+              }
             />
+          )}
 
-            {/* Animated S-Curve Timeline */}
-            {sectionVisibility.timeline !== false && (
-              <EditorialTimelineSection
-                mode={mode}
-                data={data}
-                onUpdate={onUpdate}
-                sectionVisibility={sectionVisibility}
-              />
-            )}
-            {mode === "edit" && sectionVisibility.timeline === false && (
-              <BlossomHiddenPlaceholder
-                title="Timeline"
-                onAdd={() =>
-                  onUpdate({
-                    sectionVisibility: { ...sectionVisibility, timeline: true },
-                  })
-                }
-              />
-            )}
-
-            {/* Venue */}
-            {sectionVisibility.venue !== false && data.events[0] && (
-              <EditorialVenueSection
-                mode={mode}
-                event={data.events[0]}
-                venueTitle={getCustomText(data, "venueTitle", "Venue")}
-                routeLabel={getCustomText(data, "venueRouteLabel", "Plan Route")}
-                onUpdateCustomText={updateCustomText}
-                onUpdate={onUpdate}
-                sectionVisibility={sectionVisibility}
-              />
-            )}
-            {mode === "edit" && sectionVisibility.venue === false && (
-              <BlossomHiddenPlaceholder
-                title="Venue"
-                onAdd={() =>
-                  onUpdate({
-                    sectionVisibility: { ...sectionVisibility, venue: true },
-                  })
-                }
-              />
-            )}
-
-            {/* Dress Code */}
-            {sectionVisibility.dressCode !== false && (
-              <EditorialDressCodeSection
-                mode={mode}
-                title={getCustomText(data, "dressCodeTitle", "Dress Code")}
-                body={getCustomText(
-                  data,
-                  "dressCodeBody",
-                  "We would be grateful if you could follow the colour palette of our wedding.",
-                )}
-                onUpdateCustomText={updateCustomText}
-                data={data}
-                onUpdate={onUpdate}
-                sectionVisibility={sectionVisibility}
-              />
-            )}
-            {mode === "edit" && sectionVisibility.dressCode === false && (
-              <BlossomHiddenPlaceholder
-                title="Dress Code"
-                onAdd={() =>
-                  onUpdate({
-                    sectionVisibility: { ...sectionVisibility, dressCode: true },
-                  })
-                }
-              />
-            )}
-
-            {/* Gallery */}
-            {sectionVisibility.gallery && (
-              <GallerySection
-                mode={mode}
-                data={data}
-                onUpdate={onUpdate}
-                templateId={templateId}
-                sessionUUID={sessionUUID}
-                uploadStage={uploadStage}
-                sectionVisibility={sectionVisibility}
-              />
-            )}
-            {mode === "edit" && !sectionVisibility.gallery && (
-              <BlossomHiddenPlaceholder
-                title="Gallery"
-                onAdd={() =>
-                  onUpdate({
-                    sectionVisibility: { ...sectionVisibility, gallery: true },
-                  })
-                }
-              />
-            )}
-
-            {/* Details */}
-            {sectionVisibility.details !== false && (
-              <EditorialDetailsSection
-                mode={mode}
-                title={getCustomText(data, "giftSectionLabel", "Gifts & Blessings")}
-                heading={getCustomText(
-                  data,
-                  "giftSectionHeading",
-                  "Your Presence Is The Real Gift",
-                )}
-                body={getCustomText(
-                  data,
-                  "giftSectionBody",
-                  "If you still wish to contribute to the couple's new beginning, you can use the bank details below.",
-                )}
-                revealLabel={getCustomText(
-                  data,
-                  "giftRevealLabel",
-                  "Bank Details",
-                )}
-                revealPrompt={getCustomText(
-                  data,
-                  "giftRevealPrompt",
-                  "Tap to reveal",
-                )}
-                paymentLabel={getCustomText(
-                  data,
-                  "giftPaymentLabel",
-                  "Payment Option",
-                )}
-                paymentTitle={getCustomText(
-                  data,
-                  "giftPaymentTitle",
-                  "UPI / Bank Transfer",
-                )}
-                upiLine={getCustomText(
-                  data,
-                  "giftUpiLine",
-                  "UPI ID: weddingfamily@okaxis",
-                )}
-                accountNameLine={getCustomText(
-                  data,
-                  "giftAccountNameLine",
-                  "A/C Name: Shubh Aarambh Couple Fund",
-                )}
-                accountNumberLine={getCustomText(
-                  data,
-                  "giftAccountNumberLine",
-                  "A/C No: 1234 5678 9012",
-                )}
-                ifscLine={getCustomText(data, "giftIfscLine", "IFSC: SBIN0001234")}
-                note={getCustomText(
-                  data,
-                  "giftSectionNote",
-                  "Your presence will mean the most",
-                )}
-                onUpdateCustomText={updateCustomText}
-                sectionVisibility={sectionVisibility}
-                onUpdate={onUpdate}
-              />
-            )}
-            {mode === "edit" && sectionVisibility.details === false && (
-              <BlossomHiddenPlaceholder
-                title="Gifts & Details"
-                onAdd={() =>
-                  onUpdate({
-                    sectionVisibility: { ...sectionVisibility, details: true },
-                  })
-                }
-              />
-            )}
-
-            {/* Music Editor (edit only) */}
-            {mode === "edit" && sectionVisibility.music && (
-              <section className="py-16" style={{ backgroundColor: C.cream }}>
-                <div className="max-w-xl mx-auto px-6">
-                  <div className="mb-4 flex justify-end">
-                    <BlossomSectionAction
-                      label="Remove Music"
-                      onClick={() =>
-                        onUpdate({
-                          sectionVisibility: { ...sectionVisibility, music: false },
-                        })
-                      }
-                    />
-                  </div>
-                  <EditableMusicPlayer
-                    musicUrl={data.musicUrl}
-                    musicName={data.musicName}
-                    defaultMusicUrl={data.templateDefaults.defaultMusicUrl}
-                    defaultMusicName={data.templateDefaults.defaultMusicName}
-                    onUpdate={(url, name) =>
-                      onUpdate({ musicUrl: url, musicName: name })
+          {/* Music Editor (edit only) */}
+          {mode === "edit" && sectionVisibility.music && (
+            <section className="py-16" style={{ backgroundColor: C.cream }}>
+              <div className="max-w-xl mx-auto px-6">
+                <div className="mb-4 flex justify-end">
+                  <BlossomSectionAction
+                    label="Remove Music"
+                    onClick={() =>
+                      onUpdate({
+                        sectionVisibility: {
+                          ...sectionVisibility,
+                          music: false,
+                        },
+                      })
                     }
-                    mode={mode}
-                    templateId={templateId}
-                    sessionUUID={sessionUUID}
-                    uploadStage={uploadStage}
-                    invitationId={data.invitationId ?? undefined}
                   />
                 </div>
-              </section>
-            )}
-            {mode === "edit" && !sectionVisibility.music && (
-              <BlossomHiddenPlaceholder
-                title="Music"
-                onAdd={() =>
-                  onUpdate({
-                    sectionVisibility: { ...sectionVisibility, music: true },
-                  })
-                }
-              />
-            )}
+                <EditableMusicPlayer
+                  musicUrl={data.musicUrl}
+                  musicName={data.musicName}
+                  defaultMusicUrl={data.templateDefaults.defaultMusicUrl}
+                  defaultMusicName={data.templateDefaults.defaultMusicName}
+                  onUpdate={(url, name) =>
+                    onUpdate({ musicUrl: url, musicName: name })
+                  }
+                  mode={mode}
+                  templateId={templateId}
+                  sessionUUID={sessionUUID}
+                  uploadStage={uploadStage}
+                  invitationId={data.invitationId ?? undefined}
+                />
+              </div>
+            </section>
+          )}
+          {mode === "edit" && !sectionVisibility.music && (
+            <BlossomHiddenPlaceholder
+              title="Music"
+              onAdd={() =>
+                onUpdate({
+                  sectionVisibility: { ...sectionVisibility, music: true },
+                })
+              }
+            />
+          )}
 
-            {/* RSVP */}
-            {mode !== "edit" && data.rsvpEnabled !== false && (
-              <RsvpSection
-                invitationId={data.invitationId}
-                isDemo={mode === "demo"}
-              />
-            )}
+          {/* RSVP */}
+          {mode !== "edit" && data.rsvpEnabled !== false && (
+            <RsvpSection
+              invitationId={data.invitationId}
+              isDemo={mode === "demo"}
+            />
+          )}
 
-            {/* Footer */}
-            {sectionVisibility.footer && (
+          {/* Footer */}
+          {sectionVisibility.footer && (
             <footer
               className={cn(
                 "relative py-16 text-center overflow-hidden",
@@ -728,7 +738,10 @@ const BlossomDateTemplate = ({
                       label="Remove Section"
                       onClick={() =>
                         onUpdate({
-                          sectionVisibility: { ...sectionVisibility, footer: false },
+                          sectionVisibility: {
+                            ...sectionVisibility,
+                            footer: false,
+                          },
                         })
                       }
                     />
@@ -785,33 +798,33 @@ const BlossomDateTemplate = ({
                     className="text-[10px] mt-8"
                     style={{ color: `${C.cream}50` }}
                   >
-                    Made with love on ShubhAarambh
+                    Made with love on LuxEnvelope
                   </p>
                 </motion.div>
               </div>
             </footer>
-            )}
-            {mode === "edit" && !sectionVisibility.footer && (
-              <BlossomHiddenPlaceholder
-                title="Footer"
-                onAdd={() =>
-                  onUpdate({
-                    sectionVisibility: { ...sectionVisibility, footer: true },
-                  })
-                }
-              />
-            )}
+          )}
+          {mode === "edit" && !sectionVisibility.footer && (
+            <BlossomHiddenPlaceholder
+              title="Footer"
+              onAdd={() =>
+                onUpdate({
+                  sectionVisibility: { ...sectionVisibility, footer: true },
+                })
+              }
+            />
+          )}
 
-            {mode === "edit" && (
-              <EditModeToolbar
-                onSaveDraft={onSaveDraft}
-                onPublish={onPublish}
-                isSaving={isSaving}
-                isPublishing={isPublishing}
-                invitationId={data.invitationId}
-                hasUnsavedChanges={true}
-              />
-            )}
+          {mode === "edit" && (
+            <EditModeToolbar
+              onSaveDraft={onSaveDraft}
+              onPublish={onPublish}
+              isSaving={isSaving}
+              isPublishing={isPublishing}
+              invitationId={data.invitationId}
+              hasUnsavedChanges={true}
+            />
+          )}
         </motion.div>
       </AnimatePresence>
     </div>
@@ -2560,141 +2573,141 @@ const EditorialVenueSection = ({
   sectionVisibility: SectionVisibility;
 }) => {
   return (
-  <section style={{ backgroundColor: C.cream }}>
-    <div className="mx-auto max-w-xl px-6 py-14 text-center md:py-16">
-      {mode === "edit" && (
-        <div className="mb-6 flex justify-center">
-          <BlossomSectionAction
-            label="Remove Section"
-            onClick={() =>
-              onUpdate({
-                sectionVisibility: { ...sectionVisibility, venue: false },
-              })
-            }
-          />
-        </div>
-      )}
-      <HeartPin className="mx-auto mb-5" />
-      <motion.h2
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="mb-4 text-5xl md:text-6xl"
-        style={{ fontFamily: FONTS.script, color: C.text }}
-      >
-        <EditableText
-          value={venueTitle}
-          onSave={(val) => onUpdateCustomText("venueTitle", val)}
-          mode={mode}
-          placeholder="Venue"
-          className="block"
-          as="span"
-        />
-      </motion.h2>
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.15 }}
-      >
-        <p
-          className="text-2xl md:text-[2rem]"
-          style={{ color: C.text, fontFamily: FONTS.heading }}
-        >
-          <EditableText
-            value={event.venueName || ""}
-            onSave={(val) => onUpdateCustomText("venueNameOverride", val)}
-            mode={mode}
-            placeholder="Venue Name"
-            className="block"
-            as="span"
-          />
-        </p>
-        <p
-          className="mx-auto mt-3 max-w-md text-base leading-relaxed"
-          style={{ color: C.textMuted }}
-        >
-          <EditableText
-            value={event.venueAddress || ""}
-            onSave={(val) => onUpdateCustomText("venueAddressOverride", val)}
-            mode={mode}
-            placeholder="Venue Address"
-            className="block"
-            as="span"
-          />
-        </p>
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.25 }}
-        className="mt-8"
-      >
-        {event.mapsUrl && mode !== "edit" ? (
-          <a
-            href={event.mapsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex h-32 w-32 items-center justify-center rounded-full border-[10px] text-center transition-transform hover:scale-105"
-            style={{
-              backgroundColor: C.sage,
-              borderColor: "#d6d0bf",
-              color: C.cream,
-            }}
-          >
-            <div>
-              <MapPin size={18} className="mx-auto mb-2" />
-              <EditableText
-                value={routeLabel}
-                onSave={(val) => onUpdateCustomText("venueRouteLabel", val)}
-                mode={mode}
-                placeholder="Plan Route"
-                className="text-[11px] uppercase tracking-[0.16em]"
-                as="span"
-              />
-            </div>
-          </a>
-        ) : (
-          <div
-            className="inline-flex h-32 w-32 items-center justify-center rounded-full border-[10px] text-center"
-            style={{
-              backgroundColor: C.sage,
-              borderColor: "#d6d0bf",
-              color: C.cream,
-            }}
-          >
-            <div>
-              <MapPin size={18} className="mx-auto mb-2" />
-              <EditableText
-                value={routeLabel}
-                onSave={(val) => onUpdateCustomText("venueRouteLabel", val)}
-                mode={mode}
-                placeholder="Plan Route"
-                className="text-[11px] uppercase tracking-[0.16em]"
-                as="span"
-              />
-            </div>
+    <section style={{ backgroundColor: C.cream }}>
+      <div className="mx-auto max-w-xl px-6 py-14 text-center md:py-16">
+        {mode === "edit" && (
+          <div className="mb-6 flex justify-center">
+            <BlossomSectionAction
+              label="Remove Section"
+              onClick={() =>
+                onUpdate({
+                  sectionVisibility: { ...sectionVisibility, venue: false },
+                })
+              }
+            />
           </div>
         )}
+        <HeartPin className="mx-auto mb-5" />
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-4 text-5xl md:text-6xl"
+          style={{ fontFamily: FONTS.script, color: C.text }}
+        >
+          <EditableText
+            value={venueTitle}
+            onSave={(val) => onUpdateCustomText("venueTitle", val)}
+            mode={mode}
+            placeholder="Venue"
+            className="block"
+            as="span"
+          />
+        </motion.h2>
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.15 }}
+        >
+          <p
+            className="text-2xl md:text-[2rem]"
+            style={{ color: C.text, fontFamily: FONTS.heading }}
+          >
+            <EditableText
+              value={event.venueName || ""}
+              onSave={(val) => onUpdateCustomText("venueNameOverride", val)}
+              mode={mode}
+              placeholder="Venue Name"
+              className="block"
+              as="span"
+            />
+          </p>
+          <p
+            className="mx-auto mt-3 max-w-md text-base leading-relaxed"
+            style={{ color: C.textMuted }}
+          >
+            <EditableText
+              value={event.venueAddress || ""}
+              onSave={(val) => onUpdateCustomText("venueAddressOverride", val)}
+              mode={mode}
+              placeholder="Venue Address"
+              className="block"
+              as="span"
+            />
+          </p>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.25 }}
+          className="mt-8"
+        >
+          {event.mapsUrl && mode !== "edit" ? (
+            <a
+              href={event.mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-32 w-32 items-center justify-center rounded-full border-[10px] text-center transition-transform hover:scale-105"
+              style={{
+                backgroundColor: C.sage,
+                borderColor: "#d6d0bf",
+                color: C.cream,
+              }}
+            >
+              <div>
+                <MapPin size={18} className="mx-auto mb-2" />
+                <EditableText
+                  value={routeLabel}
+                  onSave={(val) => onUpdateCustomText("venueRouteLabel", val)}
+                  mode={mode}
+                  placeholder="Plan Route"
+                  className="text-[11px] uppercase tracking-[0.16em]"
+                  as="span"
+                />
+              </div>
+            </a>
+          ) : (
+            <div
+              className="inline-flex h-32 w-32 items-center justify-center rounded-full border-[10px] text-center"
+              style={{
+                backgroundColor: C.sage,
+                borderColor: "#d6d0bf",
+                color: C.cream,
+              }}
+            >
+              <div>
+                <MapPin size={18} className="mx-auto mb-2" />
+                <EditableText
+                  value={routeLabel}
+                  onSave={(val) => onUpdateCustomText("venueRouteLabel", val)}
+                  mode={mode}
+                  placeholder="Plan Route"
+                  className="text-[11px] uppercase tracking-[0.16em]"
+                  as="span"
+                />
+              </div>
+            </div>
+          )}
+        </motion.div>
+      </div>
+      <motion.div
+        initial={{ opacity: 0, scale: 1.04 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.9 }}
+        className="relative overflow-hidden"
+      >
+        <img
+          src={DEFAULT_VENUE_PHOTO}
+          alt="Wedding Venue"
+          className="h-[360px] w-full object-cover md:h-[460px]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
+        <PaperDivider className="absolute inset-x-0 -bottom-8 z-20" />
       </motion.div>
-    </div>
-    <motion.div
-      initial={{ opacity: 0, scale: 1.04 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.9 }}
-      className="relative overflow-hidden"
-    >
-      <img
-        src={DEFAULT_VENUE_PHOTO}
-        alt="Wedding Venue"
-        className="h-[360px] w-full object-cover md:h-[460px]"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
-      <PaperDivider className="absolute inset-x-0 -bottom-8 z-20" />
-    </motion.div>
-  </section>
+    </section>
   );
 };
 
@@ -2720,7 +2733,9 @@ const EditorialDressCodeSection = ({
     if (saved) {
       try {
         return JSON.parse(saved);
-      } catch { /* fall through */ }
+      } catch {
+        /* fall through */
+      }
     }
     return DRESS_COLORS;
   };
@@ -2733,7 +2748,10 @@ const EditorialDressCodeSection = ({
   };
 
   const addColor = () => {
-    const updated = [...colors, { hex: "#cccccc", name: `Color ${colors.length + 1}` }];
+    const updated = [
+      ...colors,
+      { hex: "#cccccc", name: `Color ${colors.length + 1}` },
+    ];
     onUpdateCustomText("dressCodeColors", JSON.stringify(updated));
   };
 
@@ -2975,7 +2993,9 @@ const EditorialDetailsSection = ({
                     />
                     <EditableText
                       value={revealLabel}
-                      onSave={(val) => onUpdateCustomText("giftRevealLabel", val)}
+                      onSave={(val) =>
+                        onUpdateCustomText("giftRevealLabel", val)
+                      }
                       mode={mode}
                       placeholder="Bank Details"
                       className="text-[11px] uppercase tracking-[0.34em]"
@@ -3002,7 +3022,9 @@ const EditorialDetailsSection = ({
                   >
                     <EditableText
                       value={paymentLabel}
-                      onSave={(val) => onUpdateCustomText("giftPaymentLabel", val)}
+                      onSave={(val) =>
+                        onUpdateCustomText("giftPaymentLabel", val)
+                      }
                       mode={mode}
                       placeholder="Payment Option"
                       className="text-[11px] uppercase tracking-[0.34em]"
@@ -3011,7 +3033,9 @@ const EditorialDetailsSection = ({
                     />
                     <EditableText
                       value={paymentTitle}
-                      onSave={(val) => onUpdateCustomText("giftPaymentTitle", val)}
+                      onSave={(val) =>
+                        onUpdateCustomText("giftPaymentTitle", val)
+                      }
                       mode={mode}
                       placeholder="UPI / Bank Transfer"
                       className="text-2xl"
@@ -3036,7 +3060,7 @@ const EditorialDetailsSection = ({
                           onUpdateCustomText("giftAccountNameLine", val)
                         }
                         mode={mode}
-                        placeholder="A/C Name: Shubh Aarambh Couple Fund"
+                        placeholder="A/C Name: Couple Fund"
                         inputClassName="text-center"
                         as="p"
                       />
@@ -3052,7 +3076,9 @@ const EditorialDetailsSection = ({
                       />
                       <EditableText
                         value={ifscLine}
-                        onSave={(val) => onUpdateCustomText("giftIfscLine", val)}
+                        onSave={(val) =>
+                          onUpdateCustomText("giftIfscLine", val)
+                        }
                         mode={mode}
                         placeholder="IFSC: SBIN0001234"
                         inputClassName="text-center"

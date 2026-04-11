@@ -662,7 +662,7 @@ const PremiumEleganteTemplate = ({
               className="text-[10px] mt-4"
               style={{ color: C.goldLight, fontFamily: FONTS.body }}
             >
-              Made with love on ShubhAarambh
+              Made with love on LuxEnvelope
             </p>
           </div>
         </footer>

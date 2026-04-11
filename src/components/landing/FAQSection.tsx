@@ -35,6 +35,10 @@ const faqs = [
     q: "How long does it take to create an invitation?",
     a: "Most couples finish their invitation in under 10 minutes! Just pick a template, fill in your details, upload photos, and publish. It's that simple.",
   },
+  {
+    q: "How can I contact support?",
+    a: "You can reach us anytime at info@luxenvelope.com. We typically respond within 24 hours.",
+  },
 ];
 
 const FAQSection = () => {

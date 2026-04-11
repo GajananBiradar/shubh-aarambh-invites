@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
-import { Heart, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -33,9 +33,9 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5 group">
-          <Heart className="w-5 h-5 text-gold fill-gold group-hover:scale-110 transition-transform" />
+          <img src="/Logo.png" alt="LuxEnvelope" className="h-8 w-8 object-contain group-hover:scale-110 transition-transform" />
           <span className="font-display text-xl font-semibold text-foreground">
-            WeddingInvites.in
+            LuxEnvelope
           </span>
         </Link>
 

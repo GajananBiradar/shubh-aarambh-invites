@@ -150,7 +150,7 @@ const PublicInvitationPage = () => {
             invitation.invitationData?.groom_family_names || "",
           footerNote:
             invitation.invitationData?.footer_note ||
-            "Made with love on ShubhAarambh",
+            "Made with love on LuxEnvelope",
           customTexts: invitation.invitationData?.custom_texts || {},
           storyMilestones: invitation.invitationData?.story_milestones || [],
           sectionVisibility: invitation.invitationData?.section_visibility || {

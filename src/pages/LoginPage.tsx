@@ -57,11 +57,11 @@ const LoginPage = () => {
         <div className="relative z-10 flex flex-col items-center justify-center w-full px-12 text-center">
           <Heart className="w-12 h-12 text-gold fill-gold mb-6" />
           <h2 className="font-display text-4xl font-semibold mb-4">
-            WeddingInvites.in
+            LuxEnvelope
           </h2>
           <p className="font-body text-muted-foreground font-light max-w-sm">
-            Premium digital wedding invitations crafted for the modern Indian
-            couple.
+            Beautifully designed digital invitations that celebrate your story
+            with elegance and tradition.
           </p>
         </div>
       </div>

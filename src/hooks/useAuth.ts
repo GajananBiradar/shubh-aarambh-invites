@@ -35,7 +35,7 @@ export const useAuth = () => {
       }
       const data = await registerApi(name, email, password);
       login(data.token, data.user);
-      toast.success('Welcome to WeddingInvites.in! 🎉');
+      toast.success('Welcome to LuxEnvelope! 🎉');
       navigate('/dashboard');
     } catch {
       toast.error('Registration failed. Try again.');

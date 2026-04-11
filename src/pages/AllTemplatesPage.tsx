@@ -233,7 +233,7 @@ const TemplateCard = ({
         </h3>
         {template.category && (
           <span className="inline-block mt-1.5 font-body text-[10px] tracking-wide uppercase text-muted-foreground/70 border border-border/50 rounded-full px-2.5 py-0.5">
-            {template.category.replace(/_/g, ' ')}
+            {template.category.replace(/_/g, " ")}
           </span>
         )}
       </div>

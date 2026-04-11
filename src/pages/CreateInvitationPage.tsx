@@ -326,7 +326,7 @@ const CreateInvitationPage = ({
         groomFamilyNames: editData.invitationData?.groom_family_names || "",
         footerNote:
           editData.invitationData?.footer_note ||
-          "Made with love on ShubhAarambh",
+          "Made with love on LuxEnvelope",
         customTexts: editData.invitationData?.custom_texts || {},
         storyMilestones: editData.invitationData?.story_milestones || [
           {

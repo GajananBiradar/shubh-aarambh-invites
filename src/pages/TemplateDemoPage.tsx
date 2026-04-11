@@ -172,7 +172,7 @@ const TemplateDemoPage = () => {
     brideFamilyNames: templateOverrides.brideFamilyNames || "Sharma Family",
     groomFamilyNames: templateOverrides.groomFamilyNames || "Mehta Family",
     footerNote:
-      templateOverrides.footerNote || "Made with love on ShubhAarambh",
+      templateOverrides.footerNote || "Made with love on LuxEnvelope",
     storyMilestones: templateOverrides.storyMilestones || [],
     sectionVisibility: templateOverrides.sectionVisibility || {
       story: true,

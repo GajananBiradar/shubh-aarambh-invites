@@ -84,7 +84,7 @@ const RegisterPage = () => {
         <div className="relative z-10 flex flex-col items-center justify-center w-full px-12 text-center">
           <Heart className="w-12 h-12 text-gold fill-gold mb-6" />
           <h2 className="font-display text-4xl font-semibold mb-4">
-            WeddingInvites.in
+            LuxEnvelope
           </h2>
           <p className="font-body text-muted-foreground font-light max-w-sm">
             Create stunning digital invitations that your guests will never

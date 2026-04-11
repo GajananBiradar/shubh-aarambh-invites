@@ -52,7 +52,7 @@ export const usePayment = () => {
         order_id: order.razorpayOrderId,
         amount: order.amount,
         currency: order.currency || 'INR',
-        name: 'WeddingInvites.in',
+        name: 'LuxEnvelope',
         description: 'Wedding Invitation',
         theme: { color: '#B8860B' },
         prefill: { name: user?.name, email: user?.email },

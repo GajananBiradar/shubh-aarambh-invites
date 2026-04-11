@@ -106,7 +106,7 @@ const CreatePreviewPage = () => {
         groomBio: parsed.groomBio || "",
         brideFamilyNames: parsed.brideFamilyNames || "",
         groomFamilyNames: parsed.groomFamilyNames || "",
-        footerNote: parsed.footerNote || "Made with love on ShubhAarambh",
+        footerNote: parsed.footerNote || "Made with love on LuxEnvelope",
         customTexts: parsed.customTexts || {},
         storyMilestones: parsed.storyMilestones || [],
         sectionVisibility: parsed.sectionVisibility || {

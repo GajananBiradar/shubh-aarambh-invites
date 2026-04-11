@@ -30,7 +30,7 @@ const crimsonDemoData = {
     "Beloved son, warm host, and the calm strength behind every joyful gathering.",
   brideFamilyNames: "Daughter of Smt. Kavita Sharma & Shri Rajesh Sharma",
   groomFamilyNames: "Son of Smt. Sunita Mehta & Shri Rakesh Mehta",
-  footerNote: "Made with love on ShubhAarambh",
+  footerNote: "Made with love on LuxEnvelope",
   couplePhotoUrl: `${basePhotoUrl}/couple.jpg`,
   bridePhotoUrl: `${basePhotoUrl}/couple.jpg`,
   galleryPhotos: galleryPhotos.map((photoUrl, sortOrder) => ({

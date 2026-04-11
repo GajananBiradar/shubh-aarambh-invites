@@ -1,4 +1,3 @@
-import { Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Footer = () => (
@@ -7,14 +6,18 @@ const Footer = () => (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
         <div>
           <Link to="/" className="flex items-center gap-2.5 mb-4">
-            <Heart className="w-5 h-5 text-gold fill-gold" />
+            <img
+              src="/Logo.png"
+              alt="LuxEnvelope"
+              className="h-8 w-8 object-contain"
+            />
             <span className="font-display text-xl font-semibold">
-              WeddingInvites.in
+              LuxEnvelope
             </span>
           </Link>
           <p className="font-body text-sm text-muted-foreground font-light leading-relaxed">
-            Premium digital wedding invitations crafted for the modern Indian
-            couple.
+            Beautifully designed digital invitations that celebrate your story
+            with elegance and tradition.
           </p>
         </div>
         <div>
@@ -47,7 +50,7 @@ const Footer = () => (
               FAQ
             </a>
             <a
-              href="mailto:hello@weddinginvites.in"
+              href="mailto:info@luxenvelope.com"
               className="font-body text-sm text-muted-foreground hover:text-gold transition-colors"
             >
               Contact
@@ -82,7 +85,7 @@ const Footer = () => (
       </div>
       <div className="border-t border-border pt-8 text-center">
         <p className="font-body text-xs text-muted-foreground mt-1.5">
-          © 2025 WeddingInvites.in. All rights reserved.
+          © 2025 LuxEnvelope. All rights reserved.
         </p>
       </div>
     </div>

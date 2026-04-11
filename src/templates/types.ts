@@ -141,7 +141,7 @@ export const createEmptyInvitationData = (
   welcomeMessage: 'Together with our families, we joyfully invite you to be part of our celebration of love and new beginnings.',
   brideFamilyNames: '',
   groomFamilyNames: '',
-  footerNote: 'Made with love on ShubhAarambh',
+  footerNote: 'Made with love on LuxEnvelope',
   customTexts: {},
   storyMilestones: [
     {

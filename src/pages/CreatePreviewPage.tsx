@@ -144,7 +144,7 @@ const CreatePreviewPage = () => {
         effectiveMusicUrl: parsed.musicUrl || parsed.effectiveMusicUrl || "",
         effectiveMusicName: parsed.musicName || parsed.effectiveMusicName || "",
         locale: "en",
-        slug: "",
+        slug: parsed.slug || "",
         accessCode: null,
         status: "DRAFT",
         rsvpEnabled: parsed.rsvpEnabled !== false,
@@ -183,6 +183,7 @@ const CreatePreviewPage = () => {
         galleryPhotos: data.galleryPhotos,
         musicUrl: data.musicUrl,
         musicName: data.musicName,
+        slug: data.slug || null,
         invitationData: {
           hashtag: data.hashtag,
           welcome_message: data.welcomeMessage,

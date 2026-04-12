@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
+import api from '@/api/axios';
 import { Heart, Loader2 } from 'lucide-react';
 
 const OAuthCallbackPage = () => {
@@ -10,12 +11,27 @@ const OAuthCallbackPage = () => {
 
   useEffect(() => {
     const token = searchParams.get('token');
-    if (token) {
-      login(token, { id: '1', name: 'User', email: 'user@example.com' });
-      navigate('/dashboard');
-    } else {
-      navigate('/login');
-    }
+
+    const finishOAuthLogin = async () => {
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      try {
+        localStorage.setItem('token', token);
+        const { data: user } = await api.get('/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        login(token, user);
+        navigate('/dashboard');
+      } catch (error) {
+        localStorage.removeItem('token');
+        navigate('/login');
+      }
+    };
+
+    finishOAuthLogin();
   }, [searchParams, login, navigate]);
 
   return (

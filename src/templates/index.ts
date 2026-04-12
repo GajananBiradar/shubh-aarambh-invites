@@ -10,8 +10,14 @@ const BlushAffairTemplate = () => import('./blush-affair/BlushEditorialTemplate'
 const FincaOliveTemplate = () => import('./finca-olive/FincaOliveTemplate');
 const PremiumEleganteTemplate = () => import('./premium-elegante/PremiumEleganteTemplate');
 
+type RegistryEntry = TemplateRegistryEntry & {
+  loader: () => Promise<{ default: TemplateComponent }>;
+  editorTemplateId?: string;
+  isPublic?: boolean;
+};
+
 // Registry mapping template slug/id to metadata
-const templateRegistry: Record<string, TemplateRegistryEntry & { loader: () => Promise<{ default: TemplateComponent }> }> = {
+const templateRegistry: Record<string, RegistryEntry> = {
   'crimson': {
     loader: CrimsonShaadiTemplate,
     component: null as unknown as TemplateComponent,
@@ -95,6 +101,15 @@ const templateRegistry: Record<string, TemplateRegistryEntry & { loader: () => P
     name: 'Blush Affair',
     theme: 'blush',
     category: 'Engagement',
+  },
+  'custom-opaline-story': {
+    loader: BlushAffairTemplate,
+    component: null as unknown as TemplateComponent,
+    name: 'Custom Opaline Story',
+    theme: 'blush',
+    category: 'Custom',
+    editorTemplateId: '6',
+    isPublic: false,
   },
   'finca': {
     loader: FincaOliveTemplate,
@@ -193,6 +208,11 @@ export const getTemplateMetadata = (slugOrId: string): Omit<TemplateRegistryEntr
   };
 };
 
+export const getTemplateEditorId = (slugOrId: string): string | null => {
+  const slug = idToSlugMap[slugOrId] || slugOrId.toLowerCase();
+  return templateRegistry[slug]?.editorTemplateId || idToSlugMap[slugOrId] || null;
+};
+
 /**
  * Get theme name by slug or id
  */
@@ -213,7 +233,9 @@ export const templateExists = (slugOrId: string): boolean => {
  * Get all available template slugs
  */
 export const getAvailableTemplates = (): string[] => {
-  return Object.keys(templateRegistry).filter(key => !idToSlugMap[key]);
+  return Object.keys(templateRegistry).filter(
+    (key) => !idToSlugMap[key] && templateRegistry[key]?.isPublic !== false,
+  );
 };
 
 export type { TemplateComponent, TemplateRegistryEntry };

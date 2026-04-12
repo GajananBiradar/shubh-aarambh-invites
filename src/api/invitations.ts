@@ -62,12 +62,19 @@ export const getInvitationPreview = async (id: string): Promise<Invitation> => {
   }
 };
 
-export const checkSlug = async (slug: string): Promise<boolean> => {
+export const checkSlug = async (
+  slug: string,
+  invitationId?: number | null,
+): Promise<{ available: boolean; suggestion?: string }> => {
   try {
-    const { data } = await api.get(`/api/invitations/check-slug?slug=${slug}`);
-    return data.available;
+    const params = new URLSearchParams({ slug });
+    if (invitationId) {
+      params.set("invitationId", String(invitationId));
+    }
+    const { data } = await api.get(`/api/invitations/check-slug?${params.toString()}`);
+    return data;
   } catch {
-    return true;
+    return { available: true, suggestion: slug };
   }
 };
 

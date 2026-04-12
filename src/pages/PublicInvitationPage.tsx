@@ -11,6 +11,7 @@ import { getInvitationBySlug } from "@/api/invitations";
 import { SAMPLE_INVITATION } from "@/mock/sampleInvitation";
 import api from "@/api/axios";
 import { resolveWorkingMusic } from "@/lib/defaultMusic";
+import { getInvitationTemplateKey } from "@/lib/invitationTemplate";
 import { Heart } from "lucide-react";
 
 const PublicInvitationPage = () => {
@@ -48,15 +49,12 @@ const PublicInvitationPage = () => {
         }
 
         // 3. Determine template
-        const templateSlug =
-          invitation.template?.themeKey ||
-          invitation.templateTheme ||
-          "crimson";
+        const templateSlug = getInvitationTemplateKey(invitation);
         const templateIdStr =
           invitation.template?.id?.toString() ||
           invitation.templateId?.toString();
         const component = await getTemplateComponent(
-          templateIdStr || templateSlug,
+          templateSlug || templateIdStr,
         );
 
         if (!component) {

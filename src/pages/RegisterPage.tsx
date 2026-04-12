@@ -62,17 +62,19 @@ const RegisterPage = () => {
     setLoading(false);
   };
 
-  const handleOAuth = (provider: string) => {
+  const handleGoogleOAuth = () => {
     if (import.meta.env.VITE_DEV_MODE === "true") {
-      toast(`${provider} login — coming soon!`);
+      toast("Google login is coming soon!");
       return;
     }
-    window.location.href = `/oauth2/authorization/${provider.toLowerCase()}`;
+
+    const authBaseUrl =
+      import.meta.env.VITE_API_BASE_URL || window.location.origin;
+    window.location.href = `${authBaseUrl}/oauth2/authorization/google`;
   };
 
   return (
     <div className="min-h-screen flex">
-      {/* Left */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-background via-secondary to-background" />
         <div
@@ -93,7 +95,6 @@ const RegisterPage = () => {
         </div>
       </div>
 
-      {/* Right */}
       <div className="flex-1 flex items-center justify-center p-6 bg-background">
         <div className="w-full max-w-md">
           <div className="text-center mb-6 lg:hidden">
@@ -154,7 +155,7 @@ const RegisterPage = () => {
                   {...register("password")}
                   type={showPass ? "text" : "password"}
                   className="w-full rounded-xl border border-border bg-card px-4 py-3 pr-10 font-body text-sm focus:outline-none focus:ring-2 focus:ring-gold/30"
-                  placeholder="••••••••"
+                  placeholder="********"
                 />
                 <button
                   type="button"
@@ -170,7 +171,6 @@ const RegisterPage = () => {
                 </p>
               )}
 
-              {/* Strength bar */}
               {password.length > 0 && (
                 <div className="mt-2">
                   <div className="h-1 bg-border rounded-full overflow-hidden">
@@ -205,7 +205,7 @@ const RegisterPage = () => {
                 {...register("confirmPassword")}
                 type="password"
                 className="w-full rounded-xl border border-border bg-card px-4 py-3 font-body text-sm focus:outline-none focus:ring-2 focus:ring-gold/30"
-                placeholder="••••••••"
+                placeholder="********"
               />
               {errors.confirmPassword && (
                 <p className="text-destructive text-xs mt-1 font-body">
@@ -225,34 +225,25 @@ const RegisterPage = () => {
           <div className="flex items-center gap-4 my-6">
             <div className="flex-1 h-px bg-border" />
             <span className="font-body text-xs text-muted-foreground">
-              or continue with
+              or continue with Google
             </span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <button
-              onClick={() => handleOAuth("Google")}
-              className="flex items-center justify-center py-3 rounded-xl border border-border bg-card hover:bg-secondary transition-colors font-body text-sm"
+              onClick={handleGoogleOAuth}
+              className="flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-card hover:bg-secondary transition-colors font-body text-sm"
             >
-              G
+              <span className="font-semibold">G</span>
+              <span>Continue with Google</span>
             </button>
-            <button
-              onClick={() => handleOAuth("Facebook")}
-              className="flex items-center justify-center py-3 rounded-xl border border-border bg-card hover:bg-secondary transition-colors font-body text-sm"
-            >
-              f
-            </button>
-            <button
-              onClick={() => handleOAuth("Apple")}
-              className="flex items-center justify-center py-3 rounded-xl border border-border bg-card hover:bg-secondary transition-colors font-body text-sm"
-            ></button>
           </div>
 
           <p className="text-center mt-8 font-body text-sm text-muted-foreground">
-            Already have an account?{" "}
+            Already have an account?{' '}
             <Link to="/login" className="text-gold font-medium hover:underline">
-              Login →
+              Login
             </Link>
           </p>
         </div>

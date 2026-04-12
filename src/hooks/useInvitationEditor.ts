@@ -131,6 +131,7 @@ export const useInvitationEditor = ({
     return {
       templateId: data.templateId,
       locale: data.locale,
+      slug: data.slug || null,
       brideName: data.brideName || '',
       groomName: data.groomName || '',
       couplePhotoUrl: data.couplePhotoUrl || null,

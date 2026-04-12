@@ -20,6 +20,10 @@ import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { deleteInvitation } from "@/api/invitations";
 import { getRsvps, RsvpResponseItem } from "@/api/rsvp";
+import {
+  getInvitationTemplateName,
+  isCustomInvitationTemplate,
+} from "@/lib/invitationTemplate";
 
 const DashboardPage = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -247,8 +251,10 @@ const DashboardPage = () => {
                       {(inv.groomName || "").split(" ")[0]}
                     </h3>
                     <p className="font-body text-xs text-muted-foreground mt-1">
-                      {inv.templateTheme || inv.template?.name || "Template"}{" "}
-                      template
+                      {getInvitationTemplateName(inv)}
+                      {isCustomInvitationTemplate(inv)
+                        ? " private invite"
+                        : " template"}
                     </p>
                   </div>
                   <span

@@ -14,11 +14,16 @@ import {
   createEmptyInvitationData,
 } from "@/templates/types";
 import { getTemplateById, getTemplateDemoData } from "@/api/templates";
+import { checkSlug } from "@/api/invitations";
 import { useInvitationEditor } from "@/hooks/useInvitationEditor";
 import { useSessionManager } from "@/hooks/useSessionManager";
 import { usePayment } from "@/hooks/usePayment";
 import { EditModeToolbar } from "@/components/inline-editor";
 import { resolveWorkingMusic } from "@/lib/defaultMusic";
+import {
+  getInvitationEditorTemplateId,
+  getInvitationTemplateKey,
+} from "@/lib/invitationTemplate";
 import { Loader2, X, Copy, Check, Eye, Heart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -166,11 +171,15 @@ const CreateInvitationPage = ({
   );
   const [loading, setLoading] = useState(true);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [slugStatus, setSlugStatus] = useState<
+    "checking" | "available" | "taken" | "idle"
+  >("idle");
 
   const isDevMode = import.meta.env.VITE_DEV_MODE === "true";
 
   // Session management for three-stage upload flow
-  const numTemplateId = parseInt(templateId || "1");
+  const parsedTemplateId = parseInt(templateId || "1");
+  const numTemplateId = Number.isNaN(parsedTemplateId) ? 1 : parsedTemplateId;
   const {
     sessionUUID,
     isInitialized: sessionInitialized,
@@ -181,10 +190,11 @@ const CreateInvitationPage = ({
 
   // Determine effective template ID
   const effectiveTemplateId = editMode
-    ? editData?.template?.id?.toString() ||
-      editData?.templateId?.toString() ||
-      "1"
+    ? getInvitationEditorTemplateId(editData)
     : templateId || "1";
+  const effectiveTemplateKey = editMode
+    ? getInvitationTemplateKey(editData)
+    : effectiveTemplateId;
 
   // Fetch template data
   const { data: template, isLoading: templateLoading } = useQuery({
@@ -199,7 +209,7 @@ const CreateInvitationPage = ({
     queryKey: ["templateDemoData", effectiveTemplateId],
     queryFn: async () => {
       const backendData = await getTemplateDemoData(effectiveTemplateId);
-      const slug = getTemplateTheme(effectiveTemplateId);
+      const slug = getTemplateTheme(effectiveTemplateKey);
       const frontendData = await loadTemplateDemoData(slug);
 
       const mergedData = {
@@ -240,7 +250,7 @@ const CreateInvitationPage = ({
   useEffect(() => {
     const loadTemplate = async () => {
       setLoading(true);
-      const component = await getTemplateComponent(effectiveTemplateId);
+      const component = await getTemplateComponent(effectiveTemplateKey);
       if (component) {
         setTemplateComp(() => component);
       } else {
@@ -251,12 +261,11 @@ const CreateInvitationPage = ({
     };
 
     loadTemplate();
-  }, [effectiveTemplateId, navigate]);
+  }, [effectiveTemplateKey, navigate]);
 
   // Build initial invitation data
   const buildInitialData = (): InvitationData => {
-    const theme = getTemplateTheme(effectiveTemplateId);
-    const metadata = getTemplateMetadata(effectiveTemplateId);
+    const theme = getTemplateTheme(effectiveTemplateKey);
 
     // Check localStorage for unsaved draft (for new invitations only)
     if (!editMode) {
@@ -488,6 +497,25 @@ const CreateInvitationPage = ({
     updateData,
   ]);
 
+  useEffect(() => {
+    const currentSlug = data.slug?.trim();
+    if (!currentSlug) {
+      setSlugStatus("idle");
+      return;
+    }
+
+    setSlugStatus("checking");
+    const timer = window.setTimeout(async () => {
+      const result = await checkSlug(currentSlug, data.invitationId);
+      setSlugStatus(result.available ? "available" : "taken");
+      if (!result.available && result.suggestion && result.suggestion !== currentSlug) {
+        updateData({ slug: result.suggestion });
+      }
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [data.slug, data.invitationId]);
+
   // Add beforeunload listener for unsaved changes (fresh create flow only)
   useEffect(() => {
     if (!editMode && isDirty && !data.invitationId) {
@@ -541,6 +569,7 @@ const CreateInvitationPage = ({
       templateDefaults: data.templateDefaults,
       hashtag: data.hashtag,
       welcomeMessage: data.welcomeMessage,
+      slug: data.slug,
       showCountdown: data.showCountdown,
       rsvpEnabled: data.rsvpEnabled,
       invitationId: data.invitationId || null,
@@ -560,8 +589,7 @@ const CreateInvitationPage = ({
   };
 
   // Get template theme for styling
-  const theme = getTemplateTheme(effectiveTemplateId);
-  const metadata = getTemplateMetadata(effectiveTemplateId);
+  const theme = getTemplateTheme(effectiveTemplateKey);
 
   const isLoading =
     loading ||
@@ -703,6 +731,9 @@ const CreateInvitationPage = ({
         isPublishing={isPublishing}
         invitationId={data.invitationId}
         hasUnsavedChanges={isDirty}
+        slug={data.slug}
+        onSlugChange={(slug) => updateData({ slug })}
+        slugStatus={slugStatus}
         showPreviewMode={!publishedUrl}
       />
     </div>

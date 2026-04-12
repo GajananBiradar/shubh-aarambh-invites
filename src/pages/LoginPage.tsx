@@ -35,17 +35,19 @@ const LoginPage = () => {
     setLoading(false);
   };
 
-  const handleOAuth = (provider: string) => {
+  const handleGoogleOAuth = () => {
     if (import.meta.env.VITE_DEV_MODE === "true") {
-      toast(`${provider} login — coming soon!`);
+      toast("Google login is coming soon!");
       return;
     }
-    window.location.href = `/oauth2/authorization/${provider.toLowerCase()}`;
+
+    const authBaseUrl =
+      import.meta.env.VITE_API_BASE_URL || window.location.origin;
+    window.location.href = `${authBaseUrl}/oauth2/authorization/google`;
   };
 
   return (
     <div className="min-h-screen flex">
-      {/* Left: Atmospheric image */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-background via-secondary to-background" />
         <div
@@ -66,7 +68,6 @@ const LoginPage = () => {
         </div>
       </div>
 
-      {/* Right: Form */}
       <div className="flex-1 flex items-center justify-center p-6 bg-background">
         <div className="w-full max-w-md">
           <div className="text-center mb-8 lg:hidden">
@@ -112,7 +113,7 @@ const LoginPage = () => {
                   {...register("password")}
                   type={showPass ? "text" : "password"}
                   className="w-full rounded-xl border border-border bg-card px-4 py-3 pr-10 font-body text-sm focus:outline-none focus:ring-2 focus:ring-gold/30"
-                  placeholder="••••••••"
+                  placeholder="********"
                 />
                 <button
                   type="button"
@@ -148,39 +149,28 @@ const LoginPage = () => {
           <div className="flex items-center gap-4 my-6">
             <div className="flex-1 h-px bg-border" />
             <span className="font-body text-xs text-muted-foreground">
-              or continue with
+              or continue with Google
             </span>
             <div className="flex-1 h-px bg-border" />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <button
-              onClick={() => handleOAuth("Google")}
+              onClick={handleGoogleOAuth}
               className="flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-card hover:bg-secondary transition-colors font-body text-sm"
             >
-              <span className="text-base">G</span>
-            </button>
-            <button
-              onClick={() => handleOAuth("Facebook")}
-              className="flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-card hover:bg-secondary transition-colors font-body text-sm"
-            >
-              <span className="text-base">f</span>
-            </button>
-            <button
-              onClick={() => handleOAuth("Apple")}
-              className="flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-card hover:bg-secondary transition-colors font-body text-sm"
-            >
-              <span className="text-base"></span>
+              <span className="text-base font-semibold">G</span>
+              <span>Continue with Google</span>
             </button>
           </div>
 
           <p className="text-center mt-8 font-body text-sm text-muted-foreground">
-            Don't have an account?{" "}
+            Don't have an account?{' '}
             <Link
               to="/register"
               className="text-gold font-medium hover:underline"
             >
-              Create one →
+              Create one
             </Link>
           </p>
         </div>

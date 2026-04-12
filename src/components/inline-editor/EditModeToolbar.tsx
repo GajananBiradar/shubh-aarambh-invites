@@ -16,6 +16,9 @@ interface EditModeToolbarProps {
   isPublishing: boolean;
   invitationId: number | null;
   hasUnsavedChanges: boolean;
+  slug?: string;
+  onSlugChange?: (slug: string) => void;
+  slugStatus?: "checking" | "available" | "taken" | "idle";
   className?: string;
   showPreviewMode?: boolean;
 }
@@ -28,6 +31,9 @@ const EditModeToolbar = ({
   isPublishing,
   invitationId,
   hasUnsavedChanges,
+  slug = "",
+  onSlugChange,
+  slugStatus = "idle",
   className = "",
   showPreviewMode = false,
 }: EditModeToolbarProps) => {
@@ -53,7 +59,7 @@ const EditModeToolbar = ({
         className,
       )}
     >
-      <div className="container mx-auto max-w-4xl flex items-center justify-between gap-3">
+      <div className="container mx-auto max-w-5xl flex items-center justify-between gap-3">
         {/* Left: Back button with auto-save */}
         <button
           onClick={handleBack}
@@ -63,8 +69,27 @@ const EditModeToolbar = ({
           <span className="hidden sm:inline">Back to Templates</span>
         </button>
 
-        {/* Center: Action buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3 flex-1 justify-center">
+          <div className="hidden md:flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2 min-w-[280px]">
+            <span className="font-body text-xs text-muted-foreground">Slug</span>
+            <input
+              value={slug}
+              onChange={(e) => onSlugChange?.(e.target.value)}
+              placeholder="your-invite-slug"
+              className="flex-1 bg-transparent outline-none font-body text-sm"
+            />
+            <span className="font-body text-[11px] text-muted-foreground">
+              {slugStatus === "checking"
+                ? "Checking..."
+                : slugStatus === "taken"
+                  ? "Taken"
+                  : slugStatus === "available"
+                    ? "Available"
+                    : ""}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
           {/* Save Draft - only show in edit mode (when invitationId exists) */}
           {invitationId && (
             <button
@@ -116,6 +141,7 @@ const EditModeToolbar = ({
               </>
             )}
           </button>
+          </div>
         </div>
 
         {/* Right: Save status */}

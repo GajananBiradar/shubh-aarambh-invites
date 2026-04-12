@@ -24,8 +24,11 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import api from "@/api/axios";
+import { getTemplateById } from "@/api/templates";
+import { formatTemplatePrice } from "@/lib/pricing";
 
 const InvitationPreviewPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,6 +41,13 @@ const InvitationPreviewPage = () => {
   const [publishedUrl, setPublishedUrl] = useState("");
   const [copiedLink, setCopiedLink] = useState(false);
   const isDevMode = import.meta.env.VITE_DEV_MODE === "true";
+  const templateId = invitation?.template?.id || invitation?.templateId;
+
+  const { data: pricedTemplate } = useQuery({
+    queryKey: ["template", String(templateId)],
+    queryFn: () => getTemplateById(String(templateId)),
+    enabled: Boolean(templateId),
+  });
 
   useEffect(() => {
     const load = async () => {
@@ -175,8 +185,7 @@ const InvitationPreviewPage = () => {
     musicName: resolvedMusic.name,
   };
 
-  const isFree = invitation.template?.isFree;
-  const priceInr = invitation.template?.priceInr || 0;
+  const isFree = invitation.template?.isFree ?? pricedTemplate?.isFree;
 
   return (
     <div
@@ -224,7 +233,7 @@ const InvitationPreviewPage = () => {
                 <Sparkles size={12} />{" "}
                 {isFree
                   ? "Publish Now — It's Free!"
-                  : `Buy & Publish — ₹${priceInr}`}
+                  : `Buy & Publish — ${pricedTemplate ? formatTemplatePrice(pricedTemplate) : ""}`}
               </>
             )}
           </button>

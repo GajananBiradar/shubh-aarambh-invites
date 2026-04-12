@@ -162,6 +162,22 @@ export const getTemplateComponent = async (slugOrId: string): Promise<TemplateCo
 };
 
 /**
+ * Preload a template chunk without mounting it.
+ */
+export const preloadTemplate = async (slugOrId: string): Promise<void> => {
+  const slug = idToSlugMap[slugOrId] || slugOrId.toLowerCase();
+  const entry = templateRegistry[slug];
+
+  if (!entry) return;
+
+  try {
+    await entry.loader();
+  } catch (error) {
+    console.error(`Failed to preload template: ${slugOrId}`, error);
+  }
+};
+
+/**
  * Get template metadata by slug or id
  */
 export const getTemplateMetadata = (slugOrId: string): Omit<TemplateRegistryEntry, 'component'> | null => {

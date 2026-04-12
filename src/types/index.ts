@@ -3,6 +3,9 @@ export interface User {
   name: string;
   email: string;
   role?: string;
+  isFreeUser?: boolean;
+  preferredLocale?: string;
+  countryCode?: string;
 }
 
 export interface AuthResponse {
@@ -92,6 +95,10 @@ export interface Template {
   priceInr: number;
   priceUsd?: number;
   priceEur?: number;
+  displayPrice?: number;
+  displayCurrency?: string;
+  displayCurrencySymbol?: string;
+  displayCountryCode?: string;
   isFree: boolean;
   isPremium?: boolean;
   isActive?: boolean;
@@ -118,6 +125,7 @@ export interface PaymentOrder {
   amount: number;
   currency: string;
   keyId: string;
+  countryCode?: string;
 }
 
 export interface PaymentVerification {

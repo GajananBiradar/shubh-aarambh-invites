@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   getTemplateComponent,
@@ -11,7 +11,10 @@ import { getTemplateById, getTemplateDemoData } from "@/api/templates";
 import { loadTemplateDemoData, DemoDataOverrides } from "@/templates/demoData";
 import { SAMPLE_TEMPLATES } from "@/mock/sampleInvitation";
 import { usePayment } from "@/hooks/usePayment";
+import { useAuthStore } from "@/store/authStore";
 import { Loader2, Sparkles } from "lucide-react";
+import { formatTemplatePrice } from "@/lib/pricing";
+import { isInvalidDefaultMusicUrl } from "@/lib/defaultMusic";
 
 const MOBILE_PREVIEW_HEIGHT = 844;
 const SHARED_TEMPLATE_MUSIC_URL =
@@ -41,6 +44,8 @@ const TemplateDemoPage = () => {
   const { templateId } = useParams<{ templateId: string }>();
   const [searchParams] = useSearchParams();
   const { triggerPaymentFlow } = usePayment();
+  const { isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
   const [showMobilePreview, setShowMobilePreview] = useState(false);
 
   const [TemplateComp, setTemplateComp] = useState<TemplateComponent | null>(
@@ -144,9 +149,9 @@ const TemplateDemoPage = () => {
     ];
 
   const effectiveMusicUrl =
-    demoData?.musicUrl ||
-    templateOverrides.musicUrl ||
-    templateOverrides.templateDefaults?.defaultMusicUrl ||
+    (!isInvalidDefaultMusicUrl(demoData?.musicUrl) ? demoData?.musicUrl : null) ||
+    (!isInvalidDefaultMusicUrl(templateOverrides.musicUrl) ? templateOverrides.musicUrl : null) ||
+    (!isInvalidDefaultMusicUrl(templateOverrides.templateDefaults?.defaultMusicUrl) ? templateOverrides.templateDefaults?.defaultMusicUrl : null) ||
     SHARED_TEMPLATE_MUSIC_URL;
   const effectiveMusicName =
     templateOverrides.musicName ||
@@ -230,11 +235,9 @@ const TemplateDemoPage = () => {
 
   const showWatermark = demoData?.showWatermark !== false && !isEmbeddedPreview;
   const isFree = template?.isFree ?? false;
-  const priceInr = template?.priceInr ?? 0;
-
   const ctaText = isFree
     ? "Start Free — No Payment Needed"
-    : `Use This Template — ₹${priceInr}`;
+    : `Use This Template — ${template ? formatTemplatePrice(template) : ""}`;
 
   const previewContent =
     showMobilePreview && !isFrameOnly ? (
@@ -321,7 +324,7 @@ const TemplateDemoPage = () => {
               {showMobilePreview ? "Desktop View" : "Mobile View"}
             </button>
             <button
-              onClick={() => triggerPaymentFlow(template?.id || "1")}
+              onClick={() => triggerPaymentFlow(template?.id || "1", template)}
               className={`${isFree ? "btn-emerald" : "btn-gold"} rounded-lg px-4 py-1.5 text-xs flex items-center gap-1.5`}
             >
               <Sparkles size={12} />
@@ -344,7 +347,14 @@ const TemplateDemoPage = () => {
               Like what you see?
             </span>
             <button
-              onClick={() => triggerPaymentFlow(template?.id || "1")}
+              onClick={() => {
+                const tid = template?.id || templateId || "1";
+                if (!isAuthenticated) {
+                  navigate("/login", { state: { redirectTo: `/create/${tid}` } });
+                } else {
+                  navigate(`/create/${tid}`);
+                }
+              }}
               className={`${isFree ? "btn-emerald" : "btn-gold"} rounded-full px-5 py-2 text-sm flex items-center gap-1.5`}
             >
               <Sparkles size={14} />

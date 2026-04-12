@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
   Eye,
@@ -8,7 +8,6 @@ import {
   Crown,
   Search,
   AlertCircle,
-  Loader2,
   Pencil,
   Trash2,
 } from "lucide-react";
@@ -21,6 +20,9 @@ import { getMyDrafts } from "@/api/invitations";
 import { deleteInvitation } from "@/api/invitations";
 import { SkeletonGrid } from "@/components/ui/SkeletonLoading";
 import toast from "react-hot-toast";
+import LazyTemplatePreview from "@/components/ui/LazyTemplatePreview";
+import { warmTemplateExperience } from "@/lib/preloadTemplateExperience";
+import { formatTemplatePrice } from "@/lib/pricing";
 
 interface DraftInfo {
   invitationId: number;
@@ -29,81 +31,6 @@ interface DraftInfo {
   groomName: string;
   updatedAt: string;
 }
-
-/**
- * Dynamic Template Preview Component
- * Uses an iframe to render the template demo at a true mobile viewport width,
- * ensuring responsive Tailwind breakpoints behave correctly.
- */
-const DynamicTemplatePreview = ({
-  templateId,
-}: {
-  templateId: string | number;
-  theme: string;
-}) => {
-  const MOBILE_WIDTH = 390;
-  const MOBILE_HEIGHT = 844;
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.5);
-  const [iframeLoaded, setIframeLoaded] = useState(false);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const updateScale = () => {
-      const containerWidth = el.clientWidth;
-      if (containerWidth > 0) {
-        setScale(containerWidth / MOBILE_WIDTH);
-      }
-    };
-    updateScale();
-    const ro = new ResizeObserver(updateScale);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  return (
-    <div
-      ref={containerRef}
-      className="w-full h-full overflow-hidden relative bg-black"
-    >
-      {!iframeLoaded && (
-        <div className="absolute inset-0 z-10 bg-muted/30 flex items-center justify-center">
-          <Loader2 className="w-6 h-6 text-primary animate-spin" />
-        </div>
-      )}
-      <iframe
-        src={`/templates/${templateId}/demo?embed=1&frame=1`}
-        title="Template preview"
-        onLoad={() => setIframeLoaded(true)}
-        className="pointer-events-none border-0 origin-top-left absolute top-0 left-0"
-        scrolling="no"
-        style={{
-          width: `${MOBILE_WIDTH}px`,
-          height: `${MOBILE_HEIGHT}px`,
-          transform: `scale(${scale})`,
-          transformOrigin: "top left",
-        }}
-        tabIndex={-1}
-        loading="lazy"
-      />
-    </div>
-  );
-};
-
-/**
- * Template preview image with fallback chain:
- * Renders template demo in iframe at mobile viewport width
- */
-const TemplatePreviewImage = ({
-  template,
-  theme,
-}: {
-  template: Template;
-  theme: string;
-}) => {
-  return <DynamicTemplatePreview templateId={template.id} theme={theme} />;
-};
 
 const TemplateCard = ({
   template,
@@ -116,9 +43,12 @@ const TemplateCard = ({
 }) => {
   const { triggerPaymentFlow } = usePayment();
   const navigate = useNavigate();
-  const templateTheme = template.themeKey || template.theme || "crimson";
+  const queryClient = useQueryClient();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const warmPreview = () => {
+    warmTemplateExperience(queryClient, template.id);
+  };
 
   const handleDeleteDraft = async () => {
     if (!draftInfo) return;
@@ -143,6 +73,9 @@ const TemplateCard = ({
       exit={{ opacity: 0, scale: 0.95 }}
       className="group max-w-[260px] mx-auto w-full cursor-pointer"
       onClick={() => window.open(`/templates/${template.id}/demo`, "_blank")}
+      onMouseEnter={warmPreview}
+      onFocus={warmPreview}
+      onTouchStart={warmPreview}
     >
       {/* iPhone Frame */}
       <div className="relative rounded-[2rem] border-[3px] border-neutral-800 bg-neutral-900 p-[3px] shadow-xl shadow-black/20 group-hover:shadow-2xl group-hover:shadow-gold/10 group-hover:border-neutral-700 transition-all duration-500 group-hover:scale-[1.02]">
@@ -153,7 +86,17 @@ const TemplateCard = ({
         <div className="relative rounded-[1.7rem] overflow-hidden aspect-[9/19.5] bg-black">
           {/* Template preview inside screen */}
           <div className="absolute inset-0">
-            <TemplatePreviewImage template={template} theme={templateTheme} />
+            <LazyTemplatePreview
+              templateId={template.id}
+              posterSrc={
+                template.thumbnailUrl ||
+                template.previewImageUrl ||
+                template.previewImage ||
+                template.defaultPhotos?.[0]?.photoUrl ||
+                null
+              }
+              title={template.name}
+            />
           </div>
 
           {/* Top badges */}
@@ -173,7 +116,7 @@ const TemplateCard = ({
             </div>
           ) : (
             <div className="absolute top-5 right-2.5 z-10 btn-gold text-[10px] px-2.5 py-1 rounded-full backdrop-blur-sm">
-              ₹{template.priceInr}
+              {formatTemplatePrice(template)}
             </div>
           )}
 
@@ -214,7 +157,7 @@ const TemplateCard = ({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    triggerPaymentFlow(template.id);
+                    triggerPaymentFlow(template.id, template);
                   }}
                   className={`flex-1 ${template.isFree ? "bg-emerald-500 hover:bg-emerald-600" : "bg-amber-600 hover:bg-amber-700"} text-white px-1.5 py-1.5 rounded-lg text-[10px] font-body font-semibold flex items-center justify-center gap-1 transition-colors`}
                 >

@@ -35,17 +35,13 @@ export const checkPaymentStatus = async (templateId: string): Promise<PaymentChe
   }
 };
 
-export const initiatePayment = async (templateId: string, currency: string = 'INR'): Promise<PaymentOrder> => {
-  const { data } = await api.post('/api/payments/initiate', { templateId, currency });
+export const initiatePayment = async (templateId: string, countryCode: string): Promise<PaymentOrder> => {
+  const { data } = await api.post('/api/payments/initiate', { templateId, countryCode });
   return data;
 };
 
 export const verifyRazorpay = async (verification: PaymentVerification & { templateId: string }): Promise<void> => {
   await api.post('/api/payments/verify/razorpay', verification);
-};
-
-export const verifyStripe = async (data: any): Promise<void> => {
-  await api.post('/api/payments/verify/stripe', data);
 };
 
 export const devBypass = async (templateId: string): Promise<void> => {

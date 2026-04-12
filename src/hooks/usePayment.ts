@@ -2,25 +2,21 @@ import toast from 'react-hot-toast';
 import { initiatePayment, verifyRazorpay, devBypass } from '@/api/payments';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigate } from 'react-router-dom';
-import { SAMPLE_TEMPLATES } from '@/mock/sampleInvitation';
+import { getPricingContext } from '@/lib/pricing';
+import { Template } from '@/types';
 
 export const usePayment = () => {
   const { user, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
 
-  const getTemplate = (templateId: string) => {
-    return SAMPLE_TEMPLATES.find(t => t.id === templateId) || SAMPLE_TEMPLATES[0];
-  };
-
-  const triggerPaymentFlow = async (templateId: string) => {
+  const triggerPaymentFlow = async (templateId: string, template?: Pick<Template, 'isFree'>) => {
     if (!isAuthenticated) {
       navigate('/login', { state: { redirectTo: `/create/${templateId}` } });
       return;
     }
 
     // Free templates go straight to create
-    const template = getTemplate(templateId);
-    if (template.isFree) {
+    if (template?.isFree) {
       navigate(`/create/${templateId}`);
       return;
     }
@@ -36,7 +32,8 @@ export const usePayment = () => {
     }
 
     try {
-      const order = await initiatePayment(templateId);
+      const { countryCode } = getPricingContext(user);
+      const order = await initiatePayment(templateId, countryCode);
       loadRazorpay(order, templateId);
     } catch {
       toast.error('Could not create payment order. Please try again.');
@@ -48,7 +45,7 @@ export const usePayment = () => {
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.onload = () => {
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: order.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID,
         order_id: order.razorpayOrderId,
         amount: order.amount,
         currency: order.currency || 'INR',
@@ -79,5 +76,5 @@ export const usePayment = () => {
     document.body.appendChild(script);
   };
 
-  return { triggerPaymentFlow, getTemplate };
+  return { triggerPaymentFlow };
 };

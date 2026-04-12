@@ -18,10 +18,15 @@ import {
   TemplateComponent,
   createEmptyInvitationData,
 } from "@/templates/types";
-import { Loader2, X, Check, Copy, Heart, Eye } from "lucide-react";
+import { Loader2, X, Check, Copy, Heart, Eye, ShoppingCart, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import api from "@/api/axios";
+import { usePayment } from "@/hooks/usePayment";
+import { useQuery } from "@tanstack/react-query";
+import { getTemplateById } from "@/api/templates";
+import { formatTemplatePrice } from "@/lib/pricing";
+import { SAMPLE_TEMPLATES } from "@/mock/sampleInvitation";
 
 interface SaveDraftResponse {
   id: number;
@@ -48,9 +53,17 @@ const CreatePreviewPage = () => {
   const [invitationId, setInvitationId] = useState<number | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  const { triggerPaymentFlow } = usePayment();
   const numTemplateId = parseInt(templateId || "1");
   const sessionKey = `session_${numTemplateId}`;
   const isFrameOnly = searchParams.get("frame") === "1";
+
+  const { data: template } = useQuery({
+    queryKey: ["template", templateId],
+    queryFn: () => getTemplateById(templateId || "1"),
+    placeholderData: SAMPLE_TEMPLATES[0],
+  });
+  const isFree = template?.isFree ?? false;
 
   // Load template component on mount
   useEffect(() => {
@@ -305,28 +318,40 @@ const CreatePreviewPage = () => {
             </button>
 
             {!showSuccessModal && (
-              <button
-                onClick={handleSaveDraft}
-                disabled={saving}
-                className="btn-primary px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {saving ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <motion.span
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ repeat: Infinity, duration: 1.5 }}
-                    >
-                      ✨
-                    </motion.span>
-                    Save as Draft
-                  </>
-                )}
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleSaveDraft}
+                  disabled={saving}
+                  className="btn-outline-accent px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <motion.span
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ repeat: Infinity, duration: 1.5 }}
+                      >
+                        ✨
+                      </motion.span>
+                      Save as Draft
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => triggerPaymentFlow(templateId || "1", template)}
+                  className={`${isFree ? "btn-emerald" : "btn-gold"} px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2`}
+                >
+                  <Sparkles size={16} />
+                  {isFree
+                    ? "Start Free"
+                    : `Buy Now — ${template ? formatTemplatePrice(template) : ""}`}
+                </button>
+              </div>
             )}
           </div>
         </div>

@@ -2,6 +2,7 @@ import { useAuthStore } from '@/store/authStore';
 import { loginApi, registerApi } from '@/api/auth';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { detectCountryCode } from '@/lib/pricing';
 
 export const useAuth = () => {
   const { login, logout, user, isAuthenticated } = useAuthStore();
@@ -27,13 +28,14 @@ export const useAuth = () => {
 
   const handleRegister = async (name: string, email: string, password: string) => {
     try {
+      const countryCode = detectCountryCode();
       if (import.meta.env.VITE_DEV_MODE === 'true') {
-        login('dev-token-123', { id: '1', name, email });
+        login('dev-token-123', { id: '1', name, email, countryCode });
         toast.success('Account created! (Dev Mode)');
         navigate('/dashboard');
         return;
       }
-      const data = await registerApi(name, email, password);
+      const data = await registerApi(name, email, password, countryCode);
       login(data.token, data.user);
       toast.success('Welcome to LuxEnvelope! 🎉');
       navigate('/dashboard');

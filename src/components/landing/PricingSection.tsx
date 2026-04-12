@@ -1,5 +1,9 @@
 import { motion } from "framer-motion";
 import { Check, Lock, Zap, RefreshCcw } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getTemplates } from "@/api/templates";
+import { Template } from "@/types";
+import { formatTemplatePrice } from "@/lib/pricing";
 
 const freeFeatures = [
   "All cinematic animations",
@@ -9,7 +13,22 @@ const freeFeatures = [
   "Free updates forever",
 ];
 
-const PricingSection = () => (
+const PricingSection = () => {
+  const { data: templates = [] as Template[] } = useQuery<Template[]>({
+    queryKey: ["templates"],
+    queryFn: () => getTemplates(),
+  });
+
+  const freeCount = templates.filter((template) => template.isFree).length;
+  const lowestPremium = [...templates]
+    .filter((template) => !template.isFree)
+    .sort(
+      (left, right) =>
+        (left.displayPrice ?? left.priceInr ?? 0) -
+        (right.displayPrice ?? right.priceInr ?? 0),
+    )[0];
+
+  return (
   <section id="pricing" className="py-24 bg-secondary/30">
     <div className="container mx-auto px-4">
       <motion.div
@@ -41,7 +60,7 @@ const PricingSection = () => (
               Free
             </span>
             <h3 className="font-display text-2xl font-semibold mt-2">
-              3 Beautiful Templates
+              {freeCount || 0} Beautiful Templates
             </h3>
             <p className="font-body text-sm text-muted-foreground mt-1">
               Completely free. No catch, no trial.
@@ -93,7 +112,7 @@ const PricingSection = () => (
               From{" "}
             </span>
             <span className="font-display text-5xl font-bold text-gold">
-              ₹349
+              {lowestPremium ? formatTemplatePrice(lowestPremium) : "₹0"}
             </span>
             <p className="font-body text-xs text-muted-foreground mt-1">
               per invitation · one-time
@@ -135,6 +154,7 @@ const PricingSection = () => (
       </div>
     </div>
   </section>
-);
+  );
+};
 
 export default PricingSection;

@@ -9,15 +9,21 @@ export const usePayment = () => {
   const { user, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
 
-  const triggerPaymentFlow = async (templateId: string, template?: Pick<Template, 'isFree'>) => {
+  const triggerPaymentFlow = async (
+    templateId: string,
+    template?: Pick<Template, 'isFree'>,
+    redirectAfterPayment?: string,
+  ) => {
+    const defaultRedirect = `/create/${templateId}`;
+
     if (!isAuthenticated) {
-      navigate('/login', { state: { redirectTo: `/create/${templateId}` } });
+      navigate('/login', { state: { redirectTo: redirectAfterPayment || defaultRedirect } });
       return;
     }
 
     // Free templates go straight to create
     if (template?.isFree) {
-      navigate(`/create/${templateId}`);
+      navigate(redirectAfterPayment || defaultRedirect);
       return;
     }
 
@@ -27,20 +33,20 @@ export const usePayment = () => {
         await devBypass(templateId);
       } catch { /* ignore in dev */ }
       toast.success('Dev mode — payment bypassed! 🛠️');
-      navigate(`/create/${templateId}`);
+      navigate(redirectAfterPayment || defaultRedirect);
       return;
     }
 
     try {
       const { countryCode } = getPricingContext(user);
       const order = await initiatePayment(templateId, countryCode);
-      loadRazorpay(order, templateId);
+      loadRazorpay(order, templateId, redirectAfterPayment || defaultRedirect);
     } catch {
       toast.error('Could not create payment order. Please try again.');
     }
   };
 
-  const loadRazorpay = (order: any, templateId: string) => {
+  const loadRazorpay = (order: any, templateId: string, redirectTo: string) => {
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.onload = () => {
@@ -62,7 +68,7 @@ export const usePayment = () => {
               templateId,
             });
             toast.success('Payment successful! 🎉 Let\'s build your invite.');
-            navigate(`/create/${templateId}`);
+            navigate(redirectTo);
           } catch {
             toast.error('Payment verification failed');
           }

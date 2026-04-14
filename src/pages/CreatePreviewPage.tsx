@@ -18,7 +18,7 @@ import {
   TemplateComponent,
   createEmptyInvitationData,
 } from "@/templates/types";
-import { Loader2, X, Check, Copy, Heart, Eye, ShoppingCart, Sparkles } from "lucide-react";
+import { Loader2, X, Check, Copy, Heart, Eye, ShoppingCart, Sparkles, Rocket } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import api from "@/api/axios";
@@ -48,15 +48,18 @@ const CreatePreviewPage = () => {
   );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [copiedLink, setCopiedLink] = useState(false);
   const [data, setData] = useState<InvitationData | null>(null);
   const [invitationId, setInvitationId] = useState<number | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const { triggerPaymentFlow } = usePayment();
   const numTemplateId = parseInt(templateId || "1");
   const sessionKey = `session_${numTemplateId}`;
   const isFrameOnly = searchParams.get("frame") === "1";
+  const hasPaid = searchParams.get("paid") === "1";
 
   const { data: template } = useQuery({
     queryKey: ["template", templateId],
@@ -200,10 +203,19 @@ const CreatePreviewPage = () => {
         },
       };
 
-      const res = await api.post<SaveDraftResponse>(
-        "/api/invitations",
-        payload,
-      );
+      let res;
+      if (invitationId) {
+        // Update existing draft instead of creating a new one
+        res = await api.put<SaveDraftResponse>(
+          `/api/invitations/${invitationId}`,
+          payload,
+        );
+      } else {
+        res = await api.post<SaveDraftResponse>(
+          "/api/invitations",
+          payload,
+        );
+      }
       const newInvitationId = res.data.id;
 
       // Store invitationId in sessionStorage
@@ -225,6 +237,44 @@ const CreatePreviewPage = () => {
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Handle Publish (after payment)
+  const handlePublish = async () => {
+    if (!data) return;
+    setPublishing(true);
+    try {
+      // First save the draft
+      await handleSaveDraft();
+      const id = invitationId;
+      if (!id) {
+        toast.error('Please save as draft first.');
+        setPublishing(false);
+        return;
+      }
+      // Publish the invitation
+      const publishRes = await api.post(`/api/invitations/${id}/publish`);
+      const publicUrl = publishRes.data.publicUrl || '';
+      const fullUrl = publicUrl.startsWith('http')
+        ? publicUrl
+        : `${window.location.origin}${publicUrl}`;
+      setPublishedUrl(fullUrl);
+      setShowSuccessModal(true);
+      toast.success('Your invitation is now live! 🎉');
+    } catch (error: any) {
+      console.error('Failed to publish:', error);
+      toast.error(error?.response?.data?.error || 'Failed to publish. Try again.');
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const handleCopyLink = () => {
+    if (publishedUrl) {
+      navigator.clipboard.writeText(publishedUrl);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
     }
   };
 
@@ -322,7 +372,7 @@ const CreatePreviewPage = () => {
               <div className="flex items-center gap-3">
                 <button
                   onClick={handleSaveDraft}
-                  disabled={saving}
+                  disabled={saving || publishing}
                   className="btn-outline-accent px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {saving ? (
@@ -343,15 +393,37 @@ const CreatePreviewPage = () => {
                   )}
                 </button>
 
-                <button
-                  onClick={() => triggerPaymentFlow(templateId || "1", template)}
-                  className={`${isFree ? "btn-emerald" : "btn-gold"} px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2`}
-                >
-                  <Sparkles size={16} />
-                  {isFree
-                    ? "Start Free"
-                    : `Buy Now — ${template ? formatTemplatePrice(template) : ""}`}
-                </button>
+                {hasPaid || isFree ? (
+                  <button
+                    onClick={handlePublish}
+                    disabled={publishing || saving}
+                    className="btn-gold px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {publishing ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Publishing...
+                      </>
+                    ) : (
+                      <>
+                        <Rocket size={16} />
+                        Publish My Invitation
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => triggerPaymentFlow(
+                      templateId || "1",
+                      template,
+                      `/create/${numTemplateId}/preview?paid=1`,
+                    )}
+                    className={`${isFree ? "btn-emerald" : "btn-gold"} px-6 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2`}
+                  >
+                    <Sparkles size={16} />
+                    {`Buy Now — ${template ? formatTemplatePrice(template) : ""}`}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -383,25 +455,54 @@ const CreatePreviewPage = () => {
               </p>
 
               <div className="flex flex-col gap-3">
-                <button
-                  onClick={() => navigate(`/edit/${invitationId}`)}
-                  className="btn-primary px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
-                >
-                  <span>✏️</span> Edit Invitation
-                </button>
+                {publishedUrl ? (
+                  <>
+                    <div className="bg-muted rounded-xl p-3 mb-2">
+                      <p className="font-body text-xs text-muted-foreground break-all select-all text-center">
+                        {publishedUrl}
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleCopyLink}
+                      className="btn-outline-accent px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"
+                    >
+                      {copiedLink ? (
+                        <><Check size={16} /> Copied!</>
+                      ) : (
+                        <><Copy size={16} /> Copy Link</>
+                      )}
+                    </button>
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(`You're invited! Open our wedding invitation: ${publishedUrl}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-emerald-600 text-white font-body font-medium px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-emerald-700 transition-colors"
+                    >
+                      <Heart size={16} /> Share on WhatsApp
+                    </a>
+                    <button
+                      onClick={() => window.open(publishedUrl, '_blank')}
+                      className="btn-outline-accent px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"
+                    >
+                      <Eye size={16} /> View My Invitation
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => navigate(`/edit/${invitationId}`)}
+                      className="btn-primary px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
+                    >
+                      <span>✏️</span> Edit Invitation
+                    </button>
+                  </>
+                )}
 
                 <button
                   onClick={() => navigate("/dashboard")}
                   className="btn-outline-accent px-4 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2"
                 >
                   <span>📋</span> Go to Dashboard
-                </button>
-
-                <button
-                  onClick={() => navigate(`/create/${numTemplateId}`)}
-                  className="font-body text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Back to Editing
                 </button>
               </div>
             </motion.div>

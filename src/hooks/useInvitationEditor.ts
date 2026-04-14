@@ -15,6 +15,8 @@ interface UseInvitationEditorReturn {
   isDirty: boolean;
   isSaving: boolean;
   isPublishing: boolean;
+  publishProgress: number;
+  publishStatus: string;
   hasError: boolean;
   errorMessages: string[];
   
@@ -47,6 +49,8 @@ export const useInvitationEditor = ({
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [publishProgress, setPublishProgress] = useState(0);
+  const [publishStatus, setPublishStatus] = useState('');
   const [hasError, setHasError] = useState(false);
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
@@ -262,6 +266,8 @@ export const useInvitationEditor = ({
   // Publish
   const publish = useCallback(async (): Promise<boolean> => {
     setIsPublishing(true);
+    setPublishProgress(10);
+    setPublishStatus('Saving your invitation');
     setHasError(false);
     setErrorMessages([]);
 
@@ -271,17 +277,33 @@ export const useInvitationEditor = ({
     const savedId = await saveDraftInternal(false);
     
     if (!savedId) {
+      setPublishProgress(0);
+      setPublishStatus('');
       setIsPublishing(false);
       return false;
     }
 
     try {
+      const numericSavedId = Number(savedId);
+      if (!Number.isNaN(numericSavedId)) {
+        setData(prev => ({
+          ...prev,
+          invitationId: numericSavedId,
+          status: prev.status === 'PUBLISHED' ? prev.status : 'DRAFT',
+        }));
+      }
+
+      setPublishProgress(35);
+      setPublishStatus('Checking payment');
+
       // Check payment status
       const paymentCheck = await api.get(`/api/payments/check?templateId=${data.templateId}`);
       const { requiresPayment } = paymentCheck.data;
 
       if (requiresPayment === false || isDevMode) {
         // Free to publish
+        setPublishProgress(70);
+        setPublishStatus('Publishing your invitation');
         const publishRes = await api.post(`/api/invitations/${savedId}/publish`);
         const publicUrl = publishRes.data.publicUrl || '';
 
@@ -290,15 +312,20 @@ export const useInvitationEditor = ({
           ? publicUrl
           : `${window.location.origin}${publicUrl}`;
 
+        setData(prev => ({ ...prev, invitationId: numericSavedId, status: 'PUBLISHED' }));
         setPublishedUrl(fullUrl);
         setShowSuccessModal(true);
         setIsDirty(false);
+        setPublishProgress(100);
+        setPublishStatus('Invitation published');
         toast.success('Your invitation is now live!');
         setIsPublishing(false);
         return true;
       } else {
         // Payment required - redirect to payment flow
         // In production, you'd show a payment modal here
+        setPublishProgress(100);
+        setPublishStatus('Redirecting to payment');
         navigate(`/invitations/${savedId}/preview`);
         toast.error('Review your invitation and complete payment to publish.');
         setIsPublishing(false);
@@ -306,8 +333,15 @@ export const useInvitationEditor = ({
       }
     } catch (error: any) {
       handleApiError(error);
+      setPublishProgress(0);
+      setPublishStatus('');
       setIsPublishing(false);
       return false;
+    } finally {
+      setTimeout(() => {
+        setPublishProgress(0);
+        setPublishStatus('');
+      }, 400);
     }
   }, [data.templateId, saveDraftInternal, handleApiError, navigate]);
 
@@ -321,6 +355,8 @@ export const useInvitationEditor = ({
     isDirty,
     isSaving,
     isPublishing,
+    publishProgress,
+    publishStatus,
     hasError,
     errorMessages,
     updateData,

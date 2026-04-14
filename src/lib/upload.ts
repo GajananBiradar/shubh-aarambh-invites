@@ -20,6 +20,26 @@ interface UploadFileParams {
   oldPublicUrl?: string;
 }
 
+type UploadLifecycleEvent = 'start' | 'progress' | 'complete' | 'error';
+
+interface UploadLifecycleDetail {
+  id: string;
+  fileName: string;
+  uploadType: UploadType;
+  progress: number;
+  phase: UploadLifecycleEvent;
+}
+
+const dispatchUploadLifecycle = (detail: UploadLifecycleDetail) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(
+    new CustomEvent<UploadLifecycleDetail>('lux-upload-progress', { detail })
+  );
+};
+
 interface PresignedUrlParams {
   file: File;
   uploadType: UploadType;
@@ -135,9 +155,62 @@ export const uploadToR2 = (
  */
 export const uploadFile = async (params: UploadFileParams): Promise<string> => {
   const { file, uploadType, onProgress, uploadStage, invitationId, templateId, sessionUUID } = params;
+  const uploadId =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  dispatchUploadLifecycle({
+    id: uploadId,
+    fileName: file.name,
+    uploadType,
+    progress: 0,
+    phase: 'start',
+  });
+
+  try {
+    const presignedUpload = await getPresignedUrl({
+      file,
+      uploadType,
+      uploadStage,
+      invitationId,
+      templateId,
+      sessionUUID,
+    });
+
+    await uploadToR2(file, presignedUpload.uploadUrl, (progress) => {
+      onProgress?.(progress);
+      dispatchUploadLifecycle({
+        id: uploadId,
+        fileName: file.name,
+        uploadType,
+        progress,
+        phase: 'progress',
+      });
+    });
+
+    dispatchUploadLifecycle({
+      id: uploadId,
+      fileName: file.name,
+      uploadType,
+      progress: 100,
+      phase: 'complete',
+    });
+
+    return presignedUpload.publicUrl;
+  } catch (error) {
+    dispatchUploadLifecycle({
+      id: uploadId,
+      fileName: file.name,
+      uploadType,
+      progress: 0,
+      phase: 'error',
+    });
+    throw error;
+  }
 
   // Get presigned URL with stage
-  const { uploadUrl, publicUrl } = await getPresignedUrl({
+  const { uploadUrl: fallbackUploadUrl, publicUrl: fallbackPublicUrl } = await getPresignedUrl({
     file,
     uploadType,
     uploadStage,
@@ -147,11 +220,11 @@ export const uploadFile = async (params: UploadFileParams): Promise<string> => {
   });
 
   // Upload to R2
-  await uploadToR2(file, uploadUrl, onProgress);
+  await uploadToR2(file, fallbackUploadUrl, onProgress);
 
   // Delete old file in background (fire and forget)
   // BUT: Do NOT delete temp files — they auto-expire via R2 lifecycle
-  return publicUrl;
+  return fallbackPublicUrl;
 };
 
 /**

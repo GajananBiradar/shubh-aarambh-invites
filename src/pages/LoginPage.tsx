@@ -41,6 +41,11 @@ const LoginPage = () => {
       return;
     }
 
+    // Persist redirectTo so OAuthCallbackPage can use it after redirect
+    if (redirectTo) {
+      localStorage.setItem("oauth_redirect_to", redirectTo);
+    }
+
     const authBaseUrl =
       import.meta.env.VITE_API_BASE_URL || window.location.origin;
     window.location.href = `${authBaseUrl}/oauth2/authorization/google`;

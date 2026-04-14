@@ -14,6 +14,7 @@ interface EditModeToolbarProps {
   onPreview?: () => void;
   isSaving: boolean;
   isPublishing: boolean;
+  publishProgress?: number;
   invitationId: number | null;
   hasUnsavedChanges: boolean;
   slug?: string;
@@ -29,6 +30,7 @@ const EditModeToolbar = ({
   onPreview,
   isSaving,
   isPublishing,
+  publishProgress = 0,
   invitationId,
   hasUnsavedChanges,
   slug = "",
@@ -70,77 +72,60 @@ const EditModeToolbar = ({
         </button>
 
         <div className="flex items-center gap-3 flex-1 justify-center">
-          <div className="hidden md:flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2 min-w-[280px]">
-            <span className="font-body text-xs text-muted-foreground">Slug</span>
-            <input
-              value={slug}
-              onChange={(e) => onSlugChange?.(e.target.value)}
-              placeholder="your-invite-slug"
-              className="flex-1 bg-transparent outline-none font-body text-sm"
-            />
-            <span className="font-body text-[11px] text-muted-foreground">
-              {slugStatus === "checking"
-                ? "Checking..."
-                : slugStatus === "taken"
-                  ? "Taken"
-                  : slugStatus === "available"
-                    ? "Available"
-                    : ""}
-            </span>
-          </div>
-
           <div className="flex items-center gap-2">
-          {/* Save Draft - only show in edit mode (when invitationId exists) */}
-          {invitationId && (
+            {/* Save Draft - only show in edit mode (when invitationId exists) */}
+            {invitationId && (
+              <button
+                onClick={onSaveDraft}
+                disabled={isDisabled}
+                className={cn(
+                  "flex items-center gap-1.5 px-4 py-2 rounded-xl",
+                  "font-body text-sm font-medium",
+                  "border border-border bg-card hover:bg-secondary transition-colors",
+                  isDisabled && "opacity-50 cursor-not-allowed",
+                )}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save size={14} />
+                    <span>Save Draft</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Preview/Publish button */}
             <button
-              onClick={onSaveDraft}
+              onClick={showPreviewMode && onPreview ? onPreview : onPublish}
               disabled={isDisabled}
               className={cn(
-                "flex items-center gap-1.5 px-4 py-2 rounded-xl",
+                "flex items-center gap-1.5 px-5 py-2 rounded-xl",
                 "font-body text-sm font-medium",
-                "border border-border bg-card hover:bg-secondary transition-colors",
+                showPreviewMode ? "btn-outline-accent" : "btn-gold",
                 isDisabled && "opacity-50 cursor-not-allowed",
               )}
             >
-              {isSaving ? (
+              {isPublishing ? (
                 <>
                   <Loader2 size={14} className="animate-spin" />
-                  <span>Saving...</span>
+                  <span>
+                    {showPreviewMode
+                      ? "Loading Preview..."
+                      : `Publishing... ${Math.max(0, Math.round(publishProgress))}%`}
+                  </span>
                 </>
               ) : (
                 <>
-                  <Save size={14} />
-                  <span>Save Draft</span>
+                  <Sparkles size={14} />
+                  <span>{showPreviewMode ? "Preview" : "Publish"}</span>
                 </>
               )}
             </button>
-          )}
-
-          {/* Preview/Publish button */}
-          <button
-            onClick={showPreviewMode && onPreview ? onPreview : onPublish}
-            disabled={isDisabled}
-            className={cn(
-              "flex items-center gap-1.5 px-5 py-2 rounded-xl",
-              "font-body text-sm font-medium",
-              showPreviewMode ? "btn-outline-accent" : "btn-gold",
-              isDisabled && "opacity-50 cursor-not-allowed",
-            )}
-          >
-            {isPublishing ? (
-              <>
-                <Loader2 size={14} className="animate-spin" />
-                <span>
-                  {showPreviewMode ? "Loading Preview..." : "Publishing..."}
-                </span>
-              </>
-            ) : (
-              <>
-                <Sparkles size={14} />
-                <span>{showPreviewMode ? "Preview" : "Publish"}</span>
-              </>
-            )}
-          </button>
           </div>
         </div>
 

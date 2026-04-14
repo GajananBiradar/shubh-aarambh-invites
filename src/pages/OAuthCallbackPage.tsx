@@ -24,7 +24,11 @@ const OAuthCallbackPage = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         login(token, user);
-        navigate('/dashboard');
+
+        // Check for a stored redirect URL (set before OAuth redirect)
+        const redirectTo = localStorage.getItem('oauth_redirect_to');
+        localStorage.removeItem('oauth_redirect_to');
+        navigate(redirectTo || '/dashboard');
       } catch (error) {
         localStorage.removeItem('token');
         navigate('/login');

@@ -14,11 +14,11 @@ import {
   createEmptyInvitationData,
 } from "@/templates/types";
 import { getTemplateById, getTemplateDemoData } from "@/api/templates";
-import { checkSlug } from "@/api/invitations";
 import { useInvitationEditor } from "@/hooks/useInvitationEditor";
 import { useSessionManager } from "@/hooks/useSessionManager";
 import { usePayment } from "@/hooks/usePayment";
 import { EditModeToolbar } from "@/components/inline-editor";
+import { Progress } from "@/components/ui/progress";
 import { resolveWorkingMusic } from "@/lib/defaultMusic";
 import {
   getInvitationEditorTemplateId,
@@ -32,6 +32,12 @@ interface CreateInvitationPageProps {
   editMode?: boolean;
   editData?: any;
   editInvitationId?: string;
+}
+
+interface UploadOverlayState {
+  progress: number;
+  label: string;
+  count: number;
 }
 
 const buildDemoDataUpdates = (
@@ -171,9 +177,8 @@ const CreateInvitationPage = ({
   );
   const [loading, setLoading] = useState(true);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [slugStatus, setSlugStatus] = useState<
-    "checking" | "available" | "taken" | "idle"
-  >("idle");
+  // Slug status is always idle since slugs can be repeated (non-unique)
+  const slugStatus = "idle" as const;
 
   const isDevMode = import.meta.env.VITE_DEV_MODE === "true";
 
@@ -455,6 +460,8 @@ const CreateInvitationPage = ({
     isDirty,
     isSaving,
     isPublishing,
+    publishProgress,
+    publishStatus,
     updateData,
     saveDraft,
     publish,
@@ -465,6 +472,9 @@ const CreateInvitationPage = ({
     initialData: buildInitialData(),
     autosaveDelay: 30000, // Autosave every 30 seconds
   });
+  const [uploadOverlay, setUploadOverlay] = useState<UploadOverlayState | null>(
+    null,
+  );
 
   // Populate form with demo data once it's available (for new invitations only)
   useEffect(() => {
@@ -498,23 +508,66 @@ const CreateInvitationPage = ({
   ]);
 
   useEffect(() => {
-    const currentSlug = data.slug?.trim();
-    if (!currentSlug) {
-      setSlugStatus("idle");
-      return;
-    }
+    const activeUploads = new Map<string, { progress: number; fileName: string }>();
 
-    setSlugStatus("checking");
-    const timer = window.setTimeout(async () => {
-      const result = await checkSlug(currentSlug, data.invitationId);
-      setSlugStatus(result.available ? "available" : "taken");
-      if (!result.available && result.suggestion && result.suggestion !== currentSlug) {
-        updateData({ slug: result.suggestion });
+    const syncUploadOverlay = () => {
+      if (activeUploads.size === 0) {
+        setUploadOverlay(null);
+        return;
       }
-    }, 350);
 
-    return () => window.clearTimeout(timer);
-  }, [data.slug, data.invitationId]);
+      const uploads = Array.from(activeUploads.values());
+      const averageProgress = Math.round(
+        uploads.reduce((sum, upload) => sum + upload.progress, 0) / uploads.length,
+      );
+      const label =
+        uploads.length === 1
+          ? `Uploading ${uploads[0]?.fileName || "file"}`
+          : `Uploading ${uploads.length} files`;
+
+      setUploadOverlay({
+        progress: averageProgress,
+        label,
+        count: uploads.length,
+      });
+    };
+
+    const handleUploadProgress = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        id: string;
+        fileName: string;
+        progress: number;
+        phase: "start" | "progress" | "complete" | "error";
+      }>;
+      const detail = customEvent.detail;
+      if (!detail?.id) {
+        return;
+      }
+
+      if (detail.phase === "complete" || detail.phase === "error") {
+        activeUploads.delete(detail.id);
+      } else {
+        activeUploads.set(detail.id, {
+          progress: detail.progress,
+          fileName: detail.fileName,
+        });
+      }
+
+      syncUploadOverlay();
+    };
+
+    window.addEventListener(
+      "lux-upload-progress",
+      handleUploadProgress as EventListener,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "lux-upload-progress",
+        handleUploadProgress as EventListener,
+      );
+    };
+  }, []);
 
   // Add beforeunload listener for unsaved changes (fresh create flow only)
   useEffect(() => {
@@ -700,6 +753,37 @@ const CreateInvitationPage = ({
         )}
       </AnimatePresence>
 
+      {(uploadOverlay || isPublishing) && (
+        <div className="fixed top-4 right-4 z-[110] w-[min(360px,calc(100vw-2rem))] rounded-2xl border border-border bg-card/95 p-4 shadow-2xl backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <div className="min-w-0 flex-1">
+              <p className="font-body text-sm font-medium text-foreground">
+                {isPublishing
+                  ? publishStatus || "Publishing your invitation"
+                  : uploadOverlay?.label || "Uploading assets"}
+              </p>
+              <p className="font-body text-xs text-muted-foreground">
+                {isPublishing
+                  ? "Please wait while we make your invitation live."
+                  : uploadOverlay && uploadOverlay.count > 1
+                    ? `${uploadOverlay.count} uploads in progress`
+                    : "Please keep this page open until upload finishes."}
+              </p>
+            </div>
+            <span className="font-body text-sm font-semibold text-primary">
+              {isPublishing
+                ? `${Math.max(0, Math.round(publishProgress))}%`
+                : `${uploadOverlay?.progress ?? 0}%`}
+            </span>
+          </div>
+          <Progress
+            value={isPublishing ? publishProgress : uploadOverlay?.progress ?? 0}
+            className="mt-3 h-2"
+          />
+        </div>
+      )}
+
       {/* Template in Edit Mode */}
       <div className={isDevMode ? "pt-6" : ""}>
         <TemplateComp
@@ -722,6 +806,26 @@ const CreateInvitationPage = ({
         />
       </div>
 
+      {/* URL Preview Section - shown above the toolbar */}
+      <div className="fixed bottom-[60px] left-0 right-0 z-40 bg-card/90 backdrop-blur-sm border-t border-border px-4 py-2.5">
+        <div className="container mx-auto max-w-5xl">
+          <label className="font-body text-xs text-muted-foreground mb-1 block">
+            Your invitation will be published at:
+          </label>
+          <div className="flex items-center gap-1 rounded-lg border border-border bg-background px-3 py-2">
+            <span className="font-body text-xs text-muted-foreground whitespace-nowrap">
+              {window.location.origin}/{data.accessCode || "••••••"}/invite/
+            </span>
+            <input
+              value={data.slug}
+              onChange={(e) => updateData({ slug: e.target.value })}
+              placeholder="your-slug"
+              className="flex-1 bg-transparent outline-none font-body text-sm font-medium min-w-0"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Edit Mode Toolbar */}
       <EditModeToolbar
         onSaveDraft={saveDraft}
@@ -729,6 +833,7 @@ const CreateInvitationPage = ({
         onPreview={handlePreview}
         isSaving={isSaving}
         isPublishing={isPublishing}
+        publishProgress={publishProgress}
         invitationId={data.invitationId}
         hasUnsavedChanges={isDirty}
         slug={data.slug}
